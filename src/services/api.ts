@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://localhost:7122'
+  baseURL: 'https://api-distribucion-fkhpfeavh9c9gvay.canadacentral-01.azurewebsites.net'
 })
 
 api.interceptors.request.use(
