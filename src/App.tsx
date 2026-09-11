@@ -1,45 +1,36 @@
-import { useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
-import UsuarioPages from './pages/UsuarioPages'
+import Layout from './components/Layout'
+import UsuarioPage from './pages/UsuarioPages'
+import type { ReactNode } from 'react'
+import AgregarUsuarioPage from './pages/AgregarUsuarioPage'
 
-
-
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return !!localStorage.getItem('token')
-  })
-
-  const cerrarSesion = () => {
-    localStorage.removeItem('token')
-    setIsLoggedIn(false)
-  }
-
-  return (
-    <div>
-      {/* Si ya estamos logueados, mostramos el botón de cerrar sesión arriba */}
-      {isLoggedIn && (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          padding: '15px 30px', 
-          backgroundColor: '#1e293b',
-          borderBottom: '1px solid #334155'
-        }}>
-          <button className="btn btn-danger" onClick={cerrarSesion}>
-            Cerrar Sesión
-          </button>
-        </div>
-      )}
-
-     {/* Lógica principal: Si no está logueado, muestra Login. Si lo está, muestra Usuarios */}
-      {!isLoggedIn ? (
-        <Login onLoginSuccess={() => setIsLoggedIn(true)} />
-      ) : (
-        <UsuarioPages /> // 👈 Aquí se dibuja tu tabla de usuarios
-      )}
-    </div>
-  )
+function RutaProtegida({ children }: { children: ReactNode }) {
+  const estaLogueado = !!localStorage.getItem('token')
+  return estaLogueado ? children : <Navigate to="/" replace />
 }
 
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+
+        <Route
+          path="/dashboard"
+          element={
+            <RutaProtegida>
+              <Layout />
+            </RutaProtegida>
+          }
+        >
+          <Route index element={<Navigate to="/dashboard/usuarios" replace />} />
+          <Route path="usuarios" element={<UsuarioPage />} />
+          <Route path="usuarios/agregar" element={<AgregarUsuarioPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  )
+}
 
 export default App
