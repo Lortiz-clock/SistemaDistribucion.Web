@@ -1,0 +1,112 @@
+.producto-page {
+  min-height: 100vh;
+  background-color: #f5f7fb;
+  padding: 35px 20px;
+}
+
+.producto-container {
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.producto-header {
+  margin-bottom: 25px;
+}
+
+.producto-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.producto-subtitle {
+  margin-top: 6px;
+  margin-bottom: 0;
+  font-size: 15px;
+  color: #6b7280;
+}
+
+.producto-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+  padding: 25px;
+}
+
+.producto-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.producto-card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.producto-total {
+  font-size: 14px;
+  color: #6b7280;
+  background-color: #f3f4f6;
+  padding: 5px 12px;
+  border-radius: 20px;
+}
+
+.producto-mensaje {
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.producto-table-container {
+  overflow-x: auto;
+}
+
+.producto-table {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.producto-table thead {
+  background-color: #1f2937;
+  color: #ffffff;
+}
+
+.producto-table th,
+.producto-table td {
+  vertical-align: middle;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+.sin-registros {
+  text-align: center;
+  padding: 25px !important;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .producto-page {
+    padding: 20px 10px;
+  }
+
+  .producto-title {
+    font-size: 24px;
+  }
+
+  .producto-card {
+    padding: 18px;
+  }
+
+  .producto-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

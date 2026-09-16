@@ -20,6 +20,13 @@ function Layout() {
           >
             👥 Usuarios
           </NavLink>
+
+          <NavLink
+          to="/dashboard/productos"
+          className={({isActive}) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
+          >
+            📦 Productos
+          </NavLink>
         </nav>
       </aside>
 

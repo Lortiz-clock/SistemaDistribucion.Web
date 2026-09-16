@@ -5,6 +5,8 @@ import UsuarioPage from './pages/UsuarioPages'
 import type { ReactNode } from 'react'
 import AgregarUsuarioPage from './pages/AgregarUsuarioPage'
 import EditarUsuarioPage from './pages/EditarUsuarioPage'
+import ProductoPage from './pages/ProductoPage'
+import AgregarProductoPage from './pages/AgregarProductoPage'
 
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
@@ -29,6 +31,8 @@ function App() {
             <Route path="usuarios" element={<UsuarioPage />} />
             <Route path="usuarios/agregar" element={<AgregarUsuarioPage />} />
             <Route path="usuarios/editar/:codigoUsuario" element={<EditarUsuarioPage />} />
+            <Route path="productos" element={<ProductoPage />} />
+            <Route path="productos/agregar" element={<AgregarProductoPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
