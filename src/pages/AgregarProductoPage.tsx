@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { agregarProducto } from '../services/productoServices'
 import type { ProductoAgregar } from '../interfaces/ProductoAgregar'
 import './AgregarProductoPage.css'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 function AgregarProductoPage() {
 
