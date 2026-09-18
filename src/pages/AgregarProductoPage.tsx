@@ -7,8 +7,9 @@ import { useNavigate } from 'react-router-dom'
 export default function AgregarProductoPage() {
   const [producto, setProducto] = useState<ProductoAgregar>({
     codigoCategoria: 0,
-    marca: '',
+    codigoMarca: 0,
     nombre: '',
+    unidadesCaja: 0,
     estado: true,
   })
 
@@ -26,7 +27,7 @@ export default function AgregarProductoPage() {
     setProducto({
       ...producto,
       [name]:
-        name === 'codigoCategoria'
+        name === 'codigoCategoria' || name === 'codigoMarca' || name === 'unidadesCaja'
           ? Number(value)
           : name === 'estado'
           ? value === 'true'
@@ -46,8 +47,9 @@ export default function AgregarProductoPage() {
       if (respuesta.exito) {
         setProducto({
           codigoCategoria: 0,
-          marca: '',
+          codigoMarca: 0,
           nombre: '',
+          unidadesCaja: 0,
           estado: true,
         })
       }
@@ -98,21 +100,21 @@ export default function AgregarProductoPage() {
               </div>
 
               <div className="col-md-6 mb-3">
-                <label className="form-label">Marca</label>
+                <label className="form-label">Código Marca</label>
                 <input
-                  type="text"
+                  type="number"
                   className="form-control"
-                  name="marca"
-                  value={producto.marca}
+                  name="codigoMarca"
+                  value={producto.codigoMarca}
                   onChange={manejarCambio}
-                  maxLength={50}
+                  min="1"
                   required
                 />
               </div>
             </div>
 
             <div className="row">
-              <div className="col-md-8 mb-3">
+              <div className="col-md-6 mb-3">
                 <label className="form-label">Nombre del Producto</label>
                 <input
                   type="text"
@@ -125,7 +127,20 @@ export default function AgregarProductoPage() {
                 />
               </div>
 
-              <div className="col-md-4 mb-3">
+              <div className="col-md-3 mb-3">
+                <label className="form-label">Unidades por Caja</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  name="unidadesCaja"
+                  value={producto.unidadesCaja}
+                  onChange={manejarCambio}
+                  min="1"
+                  required
+                />
+              </div>
+
+              <div className="col-md-3 mb-3">
                 <label className="form-label">Estado</label>
                 <select
                   className="form-select"

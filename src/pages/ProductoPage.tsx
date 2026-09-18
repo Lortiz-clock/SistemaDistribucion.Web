@@ -17,7 +17,7 @@ export default function ProductoPage() {
     (item) =>
       item.codigoProducto.toString().includes(busqueda) ||
       item.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      item.marca.toLowerCase().includes(busqueda.toLowerCase())
+      item.codigoMarca.toString().includes(busqueda)
   )
 
   const verDetalle = (item: ProductoConsulta) => {
@@ -91,7 +91,7 @@ export default function ProductoPage() {
             <input
               type="text"
               className="form-control"
-              placeholder="Buscar por código, nombre o marca..."
+              placeholder="Buscar por código, nombre o código de marca..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
@@ -104,8 +104,9 @@ export default function ProductoPage() {
                 <tr>
                   <th className="col-codigo">Código</th>
                   <th className="col-categoria">Categoría</th>
-                  <th className="col-marca">Marca</th>
+                  <th className="col-marca">Cód. Marca</th>
                   <th className="col-nombre">Nombre</th>
+                  <th className="col-unidades">Unid. Caja</th>
                   <th className="col-estado">Estado</th>
                   <th className="col-acciones">Acciones</th>
                 </tr>
@@ -117,8 +118,9 @@ export default function ProductoPage() {
                     <tr key={item.codigoProducto}>
                       <td className="col-codigo">{item.codigoProducto}</td>
                       <td className="col-categoria">{item.codigoCategoria}</td>
-                      <td className="col-marca">{item.marca}</td>
+                      <td className="col-marca">{item.codigoMarca}</td>
                       <td className="col-nombre">{item.nombre}</td>
+                      <td className="col-unidades">{item.unidadesCaja}</td>
                       <td className="col-estado">
                         <span
                           className={`badge ${
@@ -140,7 +142,7 @@ export default function ProductoPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="sin-registros text-center">
+                    <td colSpan={7} className="sin-registros text-center">
                       No existen productos registrados.
                     </td>
                   </tr>
@@ -170,10 +172,14 @@ export default function ProductoPage() {
                 {productoSeleccionado.codigoCategoria}
               </p>
               <p>
-                <strong>Marca:</strong> {productoSeleccionado.marca}
+                <strong>Código Marca:</strong> {productoSeleccionado.codigoMarca}
               </p>
               <p>
                 <strong>Nombre:</strong> {productoSeleccionado.nombre}
+              </p>
+              <p>
+                <strong>Unidades por Caja:</strong>{' '}
+                {productoSeleccionado.unidadesCaja}
               </p>
               <p>
                 <strong>Estado:</strong>{' '}
