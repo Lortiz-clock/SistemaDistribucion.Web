@@ -27,6 +27,14 @@ function Layout() {
           >
             📦 Productos
           </NavLink>
+
+          <NavLink
+          to="/dashboard/productos"
+          className={({isActive}) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
+          >
+            📦 Proveedores
+          </NavLink>
+
         </nav>
       </aside>
 

@@ -8,6 +8,7 @@ import EditarUsuarioPage from './pages/EditarUsuarioPage'
 import ProductoPage from './pages/ProductoPage'
 import AgregarProductoPage from './pages/AgregarProductoPage'
 
+
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
   return estaLogueado ? children : <Navigate to="/" replace />
