@@ -131,12 +131,20 @@ export default function ProductoPage() {
                         </span>
                       </td>
                       <td className="col-acciones">
-                        <button
-                          className="btn btn-sm btn-outline-primary"
-                          onClick={() => verDetalle(item)}
-                        >
-                          Detalle
-                        </button>
+                        <div className="d-flex gap-2">
+                          <button
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => verDetalle(item)}
+                          >
+                            Detalle
+                          </button>
+                          <Link
+                            to={`/dashboard/productos/editar/${item.codigoProducto}`}
+                            className="btn btn-sm btn-outline-warning"
+                          >
+                            Editar
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))

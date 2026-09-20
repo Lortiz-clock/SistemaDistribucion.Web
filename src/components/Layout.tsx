@@ -1,9 +1,14 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import './Layout.css'
+import { obtenerNombreUsuario } from '../services/authService'
+
+
+
 
 function Layout() {
   const navigate = useNavigate()
-
+  const nombre = obtenerNombreUsuario()
+  
   const cerrarSesion = () => {
     localStorage.removeItem('token')
     navigate('/')
@@ -22,17 +27,18 @@ function Layout() {
           </NavLink>
 
           <NavLink
-          to="/dashboard/productos"
-          className={({isActive}) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
+            to="/dashboard/productos"
+            className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
           >
             📦 Productos
           </NavLink>
 
+          {/* 👇 AQUÍ ESTABA EL ERROR: Cambiado de /dashboard/productos a /dashboard/proveedores */}
           <NavLink
-          to="/dashboard/productos"
-          className={({isActive}) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
+            to="/dashboard/proveedores"
+            className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
           >
-            📦 Proveedores
+            🚚 Proveedores
           </NavLink>
 
         </nav>
@@ -40,7 +46,7 @@ function Layout() {
 
       <div className="layout-main">
         <header className="layout-header">
-          <h5 className="mb-0">Panel de Administración</h5>
+          <span className="text-white me-3">Hola bienvenido, {nombre}</span>
           <button className="btn btn-danger btn-sm" onClick={cerrarSesion}>
             Cerrar Sesión
           </button>

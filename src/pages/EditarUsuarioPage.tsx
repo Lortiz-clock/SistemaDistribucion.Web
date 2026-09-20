@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { buscarUsuario, editarUsuario } from '../services/usuarioService'
 import type { UsuarioEditar } from '../interfaces/UsuarioEditar'
 import './AgregarUsuarioPage.css'
@@ -187,11 +187,14 @@ function EditarUsuarioPage() {
               </div>
             </div>
 
-            <div className="agregar-usuario-actions">
-              <button type="submit" className="btn btn-primary">
-                Guardar Cambios
-              </button>
-            </div>
+            <div className="agregar-usuario-actions d-flex gap-2 justify-content-end">
+  <Link to="/dashboard/usuarios" className="btn btn-secondary">
+    Regresar
+  </Link>
+  <button type="submit" className="btn btn-primary">
+    Guardar Cambios
+  </button>
+</div>
 
           </form>
         </div>

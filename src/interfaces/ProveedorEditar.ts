@@ -2,6 +2,6 @@ export interface EditarProveedor{
     codigoProveedor: number
     nombre: string
     nit: string
-    telefon: string
+    telefono: string
     estado: boolean
 }
