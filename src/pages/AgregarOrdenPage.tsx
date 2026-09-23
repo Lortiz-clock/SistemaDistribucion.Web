@@ -1,28 +1,48 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { agregarOrdenCompra, agregarDetalleCompra } from '../services/ordenCompraService'
 import type { OrdenCompraAgregar } from '../interfaces/OrdenCompraAgregar'
+import api from '../services/api' // Para traer los proveedores y productos
 import './AgregarOrdenPage.css'
 
 function AgregarOrdenPage() {
   // 1. Estado del encabezado
-  const [orden, setOrden] = useState<OrdenCompraAgregar>({
-    codigoProveedor: 0,
-    fechaResep: ''
-  })
-
-   const [carrito, setCarrito] = useState<any[]>([])
+  const [orden, setOrden] = useState<OrdenCompraAgregar>({ codigoProveedor: 0, fechaResep: '' })
   
- 
+  // 2. Estado del carrito temporal (productos que se van agregando)
+  const [carrito, setCarrito] = useState<any[]>([])
+  
+  // 3. Estados para capturar un producto nuevo antes de agregarlo al carrito
   const [codigoProducto, setCodigoProducto] = useState(0)
   const [cantidadPedida, setCantidadPedida] = useState(0)
   const [precioCosto, setPrecioCosto] = useState(0)
   const [margenMinimoPct, setMargenMinimoPct] = useState(0)
   const [metaUtilidadPct, setMetaUtilidadPct] = useState(0)
 
+  // 4. Estados para las listas desplegables (Proveedores y Productos desde la BD)
+  const [proveedores, setProveedores] = useState<any[]>([])
+  const [productos, setProductos] = useState<any[]>([])
+
   const [mensaje, setMensaje] = useState('')
   const [exito, setExito] = useState<boolean | null>(null)
 
- 
+  // Cargar proveedores y productos al abrir la página
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        // Asegúrate de que estas rutas coincidan con tus controladores en C#
+        const resProv = await api.get('/api/Proveedor/ConsultarProveedor')
+        if (resProv.data.exito) setProveedores(resProv.data.datos)
+        
+        const resProd = await api.get('/api/Producto/ConsultarProducto')
+        if (resProd.data.exito) setProductos(resProd.data.datos)
+      } catch (error) {
+        console.error("Error al cargar datos", error)
+      }
+    }
+    cargarDatos()
+  }, [])
+
+  // Función para agregar al carrito visual (Aún no toca la BD)
   const agregarAlCarrito = () => {
     if (codigoProducto === 0 || cantidadPedida <= 0 || precioCosto <= 0) {
       setMensaje('Completa los datos del producto.')
@@ -30,26 +50,31 @@ function AgregarOrdenPage() {
       return
     }
 
+    // Calculamos en vivo para mostrarlo en la tabla de inmediato
+    const precioMinimo = precioCosto + (precioCosto * (margenMinimoPct / 100))
+    const precioSugerido = precioMinimo + (precioMinimo * (metaUtilidadPct / 100))
+
     const nuevoProducto = {
       codigoProducto,
       cantidadPedida,
       precioCosto,
       margenMinimoPct,
       metaUtilidadPct,
- 
-      precioMinimo: (precioCosto + (precioCosto * (margenMinimoPct / 100))).toFixed(2),
-      precioSugerido: ((precioCosto + (precioCosto * (margenMinimoPct / 100))) + ((precioCosto + (precioCosto * (margenMinimoPct / 100))) * (metaUtilidadPct / 100))).toFixed(2)
+      precioMinimo: precioMinimo.toFixed(2),
+      precioSugerido: precioSugerido.toFixed(2)
     }
 
     setCarrito([...carrito, nuevoProducto])
-    setMensaje('') 
+    setMensaje('') // Limpiamos errores previos
     
+    // Limpiamos inputs para el siguiente producto
     setCodigoProducto(0)
     setCantidadPedida(0)
     setPrecioCosto(0)
   }
 
-    const guardarOrdenCompleta = async (evento: React.FormEvent) => {
+  // EL CICLO MÁGICO: Guardar el encabezado y luego los detalles
+  const guardarOrdenCompleta = async (evento: React.FormEvent) => {
     evento.preventDefault()
     
     if (orden.codigoProveedor === 0 || carrito.length === 0) {
@@ -65,8 +90,9 @@ function AgregarOrdenPage() {
       // PASO 1: Guardamos el encabezado y obtenemos el CodigoCompra
       const respuestaOrden = await agregarOrdenCompra(orden)
       
-      if (respuestaOrden.exito) {
-        const nuevoCodigoCompra = respuestaOrden.datos.codigoCompra // Tu API en C# debe devolver esto
+      if (respuestaOrden.exito && respuestaOrden.datos) {
+        // 👇 Tu API en C# debe devolver el codigoCompra aquí
+        const nuevoCodigoCompra = respuestaOrden.datos.codigoCompra 
 
         // PASO 2: Recorremos el carrito y guardamos cada producto
         for (const producto of carrito) {
@@ -87,7 +113,7 @@ function AgregarOrdenPage() {
         setOrden({ codigoProveedor: 0, fechaResep: '' })
         setCarrito([])
       } else {
-        setMensaje(respuestaOrden.mensaje)
+        setMensaje(respuestaOrden.mensaje || 'Error al crear la orden.')
         setExito(false)
       }
     } catch {
@@ -126,8 +152,12 @@ function AgregarOrdenPage() {
                   required
                 >
                   <option value="0">Seleccione...</option>
-                  <option value="1">Distribuidora Norte</option>
-                  <option value="2">Carnicería Sur</option>
+                  {/* 👇 MAPEAMOS LOS PROVEEDORES DE LA BD */}
+                  {proveedores.map((p) => (
+                    <option key={p.codigoProveedor} value={p.codigoProveedor}>
+                      {p.nombreProveedor}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="col-md-6">
@@ -145,9 +175,21 @@ function AgregarOrdenPage() {
             {/* --- AGREGAR PRODUCTOS --- */}
             <h5>Agregar Producto</h5>
             <div className="row align-items-end mb-3">
-              <div className="col-md-2">
-                <label className="form-label">Cód. Producto:</label>
-                <input type="number" className="form-control" value={codigoProducto || ''} onChange={(e) => setCodigoProducto(Number(e.target.value))} />
+              <div className="col-md-3">
+                <label className="form-label">Producto:</label>
+                <select 
+                  className="form-select" 
+                  value={codigoProducto}
+                  onChange={(e) => setCodigoProducto(Number(e.target.value))}
+                >
+                  <option value="0">Seleccione...</option>
+                  {/* 👇 MAPEAMOS LOS PRODUCTOS DE LA BD */}
+                  {productos.map((p) => (
+                    <option key={p.codigoProducto} value={p.codigoProducto}>
+                      {p.nombre}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="col-md-2">
                 <label className="form-label">Cantidad:</label>
@@ -165,8 +207,8 @@ function AgregarOrdenPage() {
                 <label className="form-label">Meta Util (%):</label>
                 <input type="number" className="form-control" value={metaUtilidadPct || ''} onChange={(e) => setMetaUtilidadPct(Number(e.target.value))} />
               </div>
-              <div className="col-md-2">
-                <button type="button" className="btn btn-success w-100" onClick={agregarAlCarrito}>+ Agregar</button>
+              <div className="col-md-1">
+                <button type="button" className="btn btn-success w-100" onClick={agregarAlCarrito}>+</button>
               </div>
             </div>
 
