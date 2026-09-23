@@ -2,9 +2,6 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import './Layout.css'
 import { obtenerNombreUsuario } from '../services/authService'
 
-
-
-
 function Layout() {
   const navigate = useNavigate()
   const nombre = obtenerNombreUsuario()
@@ -33,12 +30,19 @@ function Layout() {
             📦 Productos
           </NavLink>
 
-          {/* 👇 AQUÍ ESTABA EL ERROR: Cambiado de /dashboard/productos a /dashboard/proveedores */}
           <NavLink
             to="/dashboard/proveedores"
             className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
           >
             🚚 Proveedores
+          </NavLink>
+
+          {/* 👇 NUEVO BOTÓN PARA ORDEN DE COMPRA */}
+          <NavLink
+            to="/dashboard/ordenes/nueva"
+            className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
+          >
+            🛒 Nueva Orden
           </NavLink>
 
         </nav>
