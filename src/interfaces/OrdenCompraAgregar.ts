@@ -1,4 +1,4 @@
-export interface OrdenCompraAgregar{
-    codigoProveedor: number
-    fechaResep: string
+export interface OrdenCompraAgregar {
+  codigoProveedor: number
+  fechaResep: string
 }

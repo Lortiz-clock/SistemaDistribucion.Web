@@ -1,48 +1,51 @@
 import { useState, useEffect } from 'react'
-import { agregarOrdenCompra, agregarDetalleCompra } from '../services/ordenCompraService'
-import type { OrdenCompraAgregar } from '../interfaces/OrdenCompraAgregar'
-import api from '../services/api' // Para traer los proveedores y productos
+import { agregarOrdenCompleta } from '../services/ordenCompraService'
+import type { DetalleCompraItem, OrdenCompraCompletaAgregar } from '../interfaces/OrdenCompraCompletaAgregar'
 import './AgregarOrdenPage.css'
+import { consultarProducto } from '../services/productoServices'
+import { consultarProveedor } from '../services/proveedorServices'
+
+interface ItemCarrito extends DetalleCompraItem {
+  nombreProducto: string
+  precioMinimo: string
+  precioSugerido: string
+}
 
 function AgregarOrdenPage() {
-  // 1. Estado del encabezado
-  const [orden, setOrden] = useState<OrdenCompraAgregar>({ codigoProveedor: 0, fechaResep: '' })
-  
-  // 2. Estado del carrito temporal (productos que se van agregando)
-  const [carrito, setCarrito] = useState<any[]>([])
-  
-  // 3. Estados para capturar un producto nuevo antes de agregarlo al carrito
+  const [orden, setOrden] = useState<Omit<OrdenCompraCompletaAgregar, 'detalles'>>({
+    codigoProveedor: 0,
+    fechaResep: ''
+  })
+
+  const [carrito, setCarrito] = useState<ItemCarrito[]>([])
+
   const [codigoProducto, setCodigoProducto] = useState(0)
   const [cantidadPedida, setCantidadPedida] = useState(0)
   const [precioCosto, setPrecioCosto] = useState(0)
   const [margenMinimoPct, setMargenMinimoPct] = useState(0)
   const [metaUtilidadPct, setMetaUtilidadPct] = useState(0)
 
-  // 4. Estados para las listas desplegables (Proveedores y Productos desde la BD)
   const [proveedores, setProveedores] = useState<any[]>([])
   const [productos, setProductos] = useState<any[]>([])
 
   const [mensaje, setMensaje] = useState('')
   const [exito, setExito] = useState<boolean | null>(null)
 
-  // Cargar proveedores y productos al abrir la página
   useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        // Asegúrate de que estas rutas coincidan con tus controladores en C#
-        const resProv = await api.get('/api/Proveedor/ConsultarProveedor')
-        if (resProv.data.exito) setProveedores(resProv.data.datos)
-        
-        const resProd = await api.get('/api/Producto/ConsultarProducto')
-        if (resProd.data.exito) setProductos(resProd.data.datos)
-      } catch (error) {
-        console.error("Error al cargar datos", error)
-      }
-    }
-    cargarDatos()
-  }, [])
+  const cargarDatos = async () => {
+    try {
+      const respuestaProveedores = await consultarProveedor()
+      if (respuestaProveedores.exito) setProveedores(respuestaProveedores.datos)
 
-  // Función para agregar al carrito visual (Aún no toca la BD)
+      const respuestaProductos = await consultarProducto()
+      if (respuestaProductos.exito) setProductos(respuestaProductos.datos)
+    } catch (error) {
+      console.error("Error al cargar datos", error)
+    }
+  }
+  cargarDatos()
+}, [])
+
   const agregarAlCarrito = () => {
     if (codigoProducto === 0 || cantidadPedida <= 0 || precioCosto <= 0) {
       setMensaje('Completa los datos del producto.')
@@ -50,12 +53,14 @@ function AgregarOrdenPage() {
       return
     }
 
-    // Calculamos en vivo para mostrarlo en la tabla de inmediato
+    const productoElegido = productos.find((p) => p.codigoProducto === codigoProducto)
+
     const precioMinimo = precioCosto + (precioCosto * (margenMinimoPct / 100))
     const precioSugerido = precioMinimo + (precioMinimo * (metaUtilidadPct / 100))
 
-    const nuevoProducto = {
+    const nuevoProducto: ItemCarrito = {
       codigoProducto,
+      nombreProducto: productoElegido?.nombre ?? '',
       cantidadPedida,
       precioCosto,
       margenMinimoPct,
@@ -65,18 +70,16 @@ function AgregarOrdenPage() {
     }
 
     setCarrito([...carrito, nuevoProducto])
-    setMensaje('') // Limpiamos errores previos
-    
-    // Limpiamos inputs para el siguiente producto
+    setMensaje('')
+
     setCodigoProducto(0)
     setCantidadPedida(0)
     setPrecioCosto(0)
   }
 
-  // EL CICLO MÁGICO: Guardar el encabezado y luego los detalles
   const guardarOrdenCompleta = async (evento: React.FormEvent) => {
     evento.preventDefault()
-    
+
     if (orden.codigoProveedor === 0 || carrito.length === 0) {
       setMensaje('Falta seleccionar proveedor o agregar productos.')
       setExito(false)
@@ -87,37 +90,31 @@ function AgregarOrdenPage() {
       setMensaje('Guardando orden...')
       setExito(true)
 
-      // PASO 1: Guardamos el encabezado y obtenemos el CodigoCompra
-      const respuestaOrden = await agregarOrdenCompra(orden)
-      
-      if (respuestaOrden.exito && respuestaOrden.datos) {
-        // 👇 Tu API en C# debe devolver el codigoCompra aquí
-        const nuevoCodigoCompra = respuestaOrden.datos.codigoCompra 
+      const ordenCompleta: OrdenCompraCompletaAgregar = {
+        codigoProveedor: orden.codigoProveedor,
+        fechaResep: orden.fechaResep,
+        detalles: carrito.map((item) => ({
+          codigoProducto: item.codigoProducto,
+          cantidadPedida: item.cantidadPedida,
+          precioCosto: item.precioCosto,
+          margenMinimoPct: item.margenMinimoPct,
+          metaUtilidadPct: item.metaUtilidadPct
+        }))
+      }
 
-        // PASO 2: Recorremos el carrito y guardamos cada producto
-        for (const producto of carrito) {
-          await agregarDetalleCompra({
-            codigoCompra: nuevoCodigoCompra,
-            codigoProducto: producto.codigoProducto,
-            cantidadPedida: producto.cantidadPedida,
-            precioCosto: producto.precioCosto,
-            margenMinimoPct: producto.margenMinimoPct,
-            metaUtilidadPct: producto.metaUtilidadPct
-          })
-        }
+      const respuesta = await agregarOrdenCompleta(ordenCompleta)
 
-        setMensaje('¡Orden de compra creada con éxito!')
+      if (respuesta.exito) {
+        setMensaje(`¡Orden de compra #${respuesta.datos} creada con éxito!`)
         setExito(true)
-        
-        // Limpiamos todo
         setOrden({ codigoProveedor: 0, fechaResep: '' })
         setCarrito([])
       } else {
-        setMensaje(respuestaOrden.mensaje || 'Error al crear la orden.')
+        setMensaje(respuesta.mensaje || 'Error al crear la orden.')
         setExito(false)
       }
-    } catch {
-      setMensaje('No fue posible comunicarse con la API.')
+    } catch (error: any) {
+      setMensaje(error.response?.data?.mensaje || 'No fue posible comunicarse con la API.')
       setExito(false)
     }
   }
@@ -125,14 +122,14 @@ function AgregarOrdenPage() {
   return (
     <div className="agregar-orden-page">
       <div className="agregar-orden-container">
-        
+
         <div className="agregar-orden-header">
           <h1 className="agregar-orden-title">Nueva Orden de Compra</h1>
           <p className="agregar-orden-subtitle">Registra un pedido a un proveedor.</p>
         </div>
 
         <div className="agregar-orden-card">
-          
+
           {mensaje && (
             <div className={exito ? 'alert alert-success' : 'alert alert-danger'}>
               {mensaje}
@@ -140,50 +137,46 @@ function AgregarOrdenPage() {
           )}
 
           <form onSubmit={guardarOrdenCompleta}>
-            
-            {/* --- ENCABEZADO DE LA ORDEN --- */}
+
             <div className="row mb-4">
               <div className="col-md-6">
                 <label className="form-label">Proveedor:</label>
-                <select 
-                  className="form-select" 
+                <select
+                  className="form-select"
                   value={orden.codigoProveedor}
-                  onChange={(e) => setOrden({...orden, codigoProveedor: Number(e.target.value)})}
+                  onChange={(e) => setOrden({ ...orden, codigoProveedor: Number(e.target.value) })}
                   required
                 >
                   <option value="0">Seleccione...</option>
-                  {/* 👇 MAPEAMOS LOS PROVEEDORES DE LA BD */}
                   {proveedores.map((p) => (
-                    <option key={p.codigoProveedor} value={p.codigoProveedor}>
-                      {p.nombreProveedor}
-                    </option>
-                  ))}
+  <option key={p.codigoProveedor} value={p.codigoProveedor}>
+    {p.nombre}
+  </option>
+))}
                 </select>
               </div>
               <div className="col-md-6">
                 <label className="form-label">Fecha de Recepción:</label>
-                <input 
-                  type="date" 
-                  className="form-control" 
+                <input
+                  type="date"
+                  className="form-control"
                   value={orden.fechaResep}
-                  onChange={(e) => setOrden({...orden, fechaResep: e.target.value})}
-                  required 
+                  onChange={(e) => setOrden({ ...orden, fechaResep: e.target.value })}
+                  required
                 />
               </div>
             </div>
 
-            {/* --- AGREGAR PRODUCTOS --- */}
             <h5>Agregar Producto</h5>
             <div className="row align-items-end mb-3">
               <div className="col-md-3">
                 <label className="form-label">Producto:</label>
-                <select 
-                  className="form-select" 
+                <select
+                  className="form-select"
                   value={codigoProducto}
                   onChange={(e) => setCodigoProducto(Number(e.target.value))}
                 >
                   <option value="0">Seleccione...</option>
-                  {/* 👇 MAPEAMOS LOS PRODUCTOS DE LA BD */}
                   {productos.map((p) => (
                     <option key={p.codigoProducto} value={p.codigoProducto}>
                       {p.nombre}
@@ -212,7 +205,6 @@ function AgregarOrdenPage() {
               </div>
             </div>
 
-            {/* --- TABLA DEL CARRITO TEMPORAL --- */}
             <div className="table-responsive mb-4">
               <table className="table table-bordered">
                 <thead className="table-dark">
@@ -232,7 +224,7 @@ function AgregarOrdenPage() {
                   ) : (
                     carrito.map((item, index) => (
                       <tr key={index}>
-                        <td>{item.codigoProducto}</td>
+                        <td>{item.nombreProducto}</td>
                         <td>{item.cantidadPedida}</td>
                         <td>Q{item.precioCosto}</td>
                         <td>{item.margenMinimoPct}%</td>

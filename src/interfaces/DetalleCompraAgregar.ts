@@ -1,8 +1,8 @@
 export interface DetalleCompraAgregar {
-  codigoCompra: number 
+  codigoCompra: number
   codigoProducto: number
   cantidadPedida: number
   precioCosto: number
   margenMinimoPct: number
   metaUtilidadPct: number
-}
+}   
