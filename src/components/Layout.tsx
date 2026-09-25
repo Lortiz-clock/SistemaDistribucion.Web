@@ -37,12 +37,19 @@ function Layout() {
             🚚 Proveedores
           </NavLink>
 
-          {/* 👇 NUEVO BOTÓN PARA ORDEN DE COMPRA */}
+          {/* 👇 BOTONES DEL MÓDULO ORDEN DE COMPRA */}
           <NavLink
             to="/dashboard/ordenes/nueva"
             className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
           >
             🛒 Nueva Orden
+          </NavLink>
+
+          <NavLink
+            to="/dashboard/ordenes/listar"
+            className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
+          >
+            📋 Órdenes de Compra
           </NavLink>
 
         </nav>

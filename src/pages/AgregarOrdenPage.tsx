@@ -147,7 +147,7 @@ function AgregarOrdenPage() {
                   onChange={(e) => setOrden({ ...orden, codigoProveedor: Number(e.target.value) })}
                   required
                 >
-                  <option value="0">Seleccione...</option>
+                  <option value="0">Seleccione Proveedor</option>
                   {proveedores.map((p) => (
   <option key={p.codigoProveedor} value={p.codigoProveedor}>
     {p.nombre}
@@ -176,7 +176,7 @@ function AgregarOrdenPage() {
                   value={codigoProducto}
                   onChange={(e) => setCodigoProducto(Number(e.target.value))}
                 >
-                  <option value="0">Seleccione...</option>
+                  <option value="0">Seleccione Producto</option>
                   {productos.map((p) => (
                     <option key={p.codigoProducto} value={p.codigoProducto}>
                       {p.nombre}
@@ -186,19 +186,19 @@ function AgregarOrdenPage() {
               </div>
               <div className="col-md-2">
                 <label className="form-label">Cantidad:</label>
-                <input type="number" className="form-control" value={cantidadPedida || ''} onChange={(e) => setCantidadPedida(Number(e.target.value))} />
+                <input type="number" className="form-control" placeholder="Cantidad" value={cantidadPedida || ''} onChange={(e) => setCantidadPedida(Number(e.target.value))} />
               </div>
               <div className="col-md-2">
                 <label className="form-label">Costo (Q):</label>
-                <input type="number" step="0.01" className="form-control" value={precioCosto || ''} onChange={(e) => setPrecioCosto(Number(e.target.value))} />
+                <input type="number" step="0.01" className="form-control" placeholder="Costo" value={precioCosto || ''} onChange={(e) => setPrecioCosto(Number(e.target.value))} />
               </div>
               <div className="col-md-2">
                 <label className="form-label">Margen Mín (%):</label>
-                <input type="number" className="form-control" value={margenMinimoPct || ''} onChange={(e) => setMargenMinimoPct(Number(e.target.value))} />
+                <input type="number" className="form-control" placeholder="Margen" value={margenMinimoPct || ''} onChange={(e) => setMargenMinimoPct(Number(e.target.value))} />
               </div>
               <div className="col-md-2">
                 <label className="form-label">Meta Util (%):</label>
-                <input type="number" className="form-control" value={metaUtilidadPct || ''} onChange={(e) => setMetaUtilidadPct(Number(e.target.value))} />
+                <input type="number" className="form-control" placeholder="Meta" value={metaUtilidadPct || ''} onChange={(e) => setMetaUtilidadPct(Number(e.target.value))} />
               </div>
               <div className="col-md-1">
                 <button type="button" className="btn btn-success w-100" onClick={agregarAlCarrito}>+</button>
@@ -220,7 +220,7 @@ function AgregarOrdenPage() {
                 </thead>
                 <tbody>
                   {carrito.length === 0 ? (
-                    <tr><td colSpan={7} className="text-center text-muted">No hay productos.</td></tr>
+                    <tr><td colSpan={7} className="text-center text-muted">No hay productos seleccionados.</td></tr>
                   ) : (
                     carrito.map((item, index) => (
                       <tr key={index}>

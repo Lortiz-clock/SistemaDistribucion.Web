@@ -14,8 +14,9 @@ import ProveedorPage from './pages/ProveedorPage'
 import AgregarProveedorPage from './pages/AgregarProveedorPage'
 import EditarProveedorPage from './pages/EditarProveedorPage'
 
-// Importación del módulo de Orden de Compra
+// Importaciones del módulo de Orden de Compra
 import AgregarOrdenPage from './pages/AgregarOrdenPage'
+import ListarOrdenesPage from './pages/ListarOrdenesPage'
 
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
@@ -52,6 +53,7 @@ function App() {
 
           {/* RUTAS DEL MÓDULO ORDEN DE COMPRA */}
           <Route path="ordenes/nueva" element={<AgregarOrdenPage />} />
+          <Route path="ordenes/listar" element={<ListarOrdenesPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
