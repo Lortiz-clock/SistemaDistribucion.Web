@@ -36,7 +36,7 @@ function ListarOrdenesPage() {
     const cargarOrdenes = async () => {
       try {
         const respuesta = await consultarOrdenesCompra()
-        if (respuesta.exito) {
+        if (respuesta.exito && respuesta.datos) {
           setOrdenes(respuesta.datos)
           setMensaje(respuesta.mensaje)
         } else {
