@@ -21,7 +21,7 @@ function UsuarioPage() {
 
       const respuesta = await consultarUsuario()
 
-      if (respuesta.exito) {
+      if (respuesta.exito && respuesta.datos) {
 
         setUsuario(respuesta.datos)
 
