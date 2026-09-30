@@ -23,6 +23,12 @@ function RutaProtegida({ children }: { children: ReactNode }) {
   return estaLogueado ? children : <Navigate to="/" replace />
 }
 
+// 👇 NUEVO: manda al primer módulo permitido del usuario en vez de uno fijo
+function InicioDashboard() {
+  const modulos = JSON.parse(localStorage.getItem('modulos') ?? '[]')
+  return <Navigate to={modulos[0]?.rutaFront ?? '/'} replace />
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -37,7 +43,7 @@ function App() {
             </RutaProtegida>
           }
         >
-          <Route index element={<Navigate to="/dashboard/usuarios" replace />} />
+          <Route index element={<InicioDashboard />} />
           <Route path="usuarios" element={<UsuarioPage />} />
           <Route path="usuarios/agregar" element={<AgregarUsuarioPage />} />
           <Route path="usuarios/editar/:codigoUsuario" element={<EditarUsuarioPage />} />

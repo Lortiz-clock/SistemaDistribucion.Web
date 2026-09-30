@@ -1,6 +1,6 @@
 export interface RespuestaApi<T> {
   exito: boolean
   mensaje: string
-  datos: T
+  datos: T | null
   detalle: string | null
 }

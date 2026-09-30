@@ -4,6 +4,7 @@ import type { DetalleCompraItem, OrdenCompraCompletaAgregar } from '../interface
 import './AgregarOrdenPage.css'
 import { consultarProducto } from '../services/productoServices'
 import { consultarProveedor } from '../services/proveedorServices'
+import ProductoBuscador from '../components/ProductoBuscador'
 
 interface ItemCarrito extends DetalleCompraItem {
   nombreProducto: string
@@ -35,10 +36,14 @@ function AgregarOrdenPage() {
   const cargarDatos = async () => {
     try {
       const respuestaProveedores = await consultarProveedor()
-      if (respuestaProveedores.exito) setProveedores(respuestaProveedores.datos)
+      if (respuestaProveedores.exito && respuestaProveedores.datos) {  
+        setProveedores(respuestaProveedores.datos)
+      }
 
       const respuestaProductos = await consultarProducto()
-      if (respuestaProductos.exito) setProductos(respuestaProductos.datos)
+      if (respuestaProductos.exito && respuestaProductos.datos) {      
+        setProductos(respuestaProductos.datos)
+      }
     } catch (error) {
       console.error("Error al cargar datos", error)
     }
@@ -75,6 +80,29 @@ function AgregarOrdenPage() {
     setCodigoProducto(0)
     setCantidadPedida(0)
     setPrecioCosto(0)
+    setMargenMinimoPct(0)
+    setMetaUtilidadPct(0)
+  }
+
+  const quitarDelCarrito = (index: number) => {
+    setCarrito(carrito.filter((_, i) => i !== index))
+  }
+
+  const cancelarOrden = () => {
+    if (carrito.length > 0) {
+      const confirmar = window.confirm('¿Seguro que deseas cancelar la orden? Se perderán los productos agregados.')
+      if (!confirmar) return
+    }
+
+    setCarrito([])
+    setOrden({ codigoProveedor: 0, fechaResep: '' })
+    setCodigoProducto(0)
+    setCantidadPedida(0)
+    setPrecioCosto(0)
+    setMargenMinimoPct(0)
+    setMetaUtilidadPct(0)
+    setMensaje('')
+    setExito(null)
   }
 
   const guardarOrdenCompleta = async (evento: React.FormEvent) => {
@@ -119,6 +147,11 @@ function AgregarOrdenPage() {
     }
   }
 
+  const totalOrden = carrito.reduce(
+    (total, item) => total + (item.cantidadPedida * item.precioCosto),
+    0
+  )
+
   return (
     <div className="agregar-orden-page">
       <div className="agregar-orden-container">
@@ -149,10 +182,10 @@ function AgregarOrdenPage() {
                 >
                   <option value="0">Seleccione Proveedor</option>
                   {proveedores.map((p) => (
-  <option key={p.codigoProveedor} value={p.codigoProveedor}>
-    {p.nombre}
-  </option>
-))}
+                    <option key={p.codigoProveedor} value={p.codigoProveedor}>
+                      {p.nombre}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="col-md-6">
@@ -171,18 +204,11 @@ function AgregarOrdenPage() {
             <div className="row align-items-end mb-3">
               <div className="col-md-3">
                 <label className="form-label">Producto:</label>
-                <select
-                  className="form-select"
-                  value={codigoProducto}
-                  onChange={(e) => setCodigoProducto(Number(e.target.value))}
-                >
-                  <option value="0">Seleccione Producto</option>
-                  {productos.map((p) => (
-                    <option key={p.codigoProducto} value={p.codigoProducto}>
-                      {p.nombre}
-                    </option>
-                  ))}
-                </select>
+                <ProductoBuscador
+                  productos={productos}
+                  seleccionado={codigoProducto}
+                  onSeleccionar={(p) => setCodigoProducto(p ? p.codigoProducto : 0)}
+                />
               </div>
               <div className="col-md-2">
                 <label className="form-label">Cantidad:</label>
@@ -216,11 +242,13 @@ function AgregarOrdenPage() {
                     <th>Meta %</th>
                     <th>Precio Mínimo</th>
                     <th>Precio Sugerido</th>
+                    <th>Subtotal</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {carrito.length === 0 ? (
-                    <tr><td colSpan={7} className="text-center text-muted">No hay productos seleccionados.</td></tr>
+                    <tr><td colSpan={9} className="text-center text-muted">No hay productos seleccionados.</td></tr>
                   ) : (
                     carrito.map((item, index) => (
                       <tr key={index}>
@@ -231,6 +259,17 @@ function AgregarOrdenPage() {
                         <td>{item.metaUtilidadPct}%</td>
                         <td><strong>Q{item.precioMinimo}</strong></td>
                         <td><strong>Q{item.precioSugerido}</strong></td>
+                        <td>Q{(item.cantidadPedida * item.precioCosto).toFixed(2)}</td>
+                        <td className="text-center">
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger"
+                            title="Quitar producto"
+                            onClick={() => quitarDelCarrito(index)}
+                          >
+                            🗑️
+                          </button>
+                        </td>
                       </tr>
                     ))
                   )}
@@ -238,7 +277,27 @@ function AgregarOrdenPage() {
               </table>
             </div>
 
-            <div className="text-end">
+            <div className="text-end mb-3">
+              <div className="d-inline-block text-start border rounded p-3" style={{ backgroundColor: '#f8f9fa', color: '#212529' }}>
+                <div className="d-flex justify-content-between gap-5">
+                  <span>Productos distintos:</span>
+                  <strong>{carrito.length}</strong>
+                </div>
+                <div className="d-flex justify-content-between gap-5">
+                  <span>Unidades totales:</span>
+                  <strong>{carrito.reduce((acc, item) => acc + item.cantidadPedida, 0)}</strong>
+                </div>
+                <hr className="my-2" />
+                <h5 className="mb-0">
+                  Total de la orden: <strong>Q{totalOrden.toFixed(2)}</strong>
+                </h5>
+              </div>
+            </div>
+
+            <div className="d-flex justify-content-end gap-2">
+              <button type="button" className="btn btn-outline-secondary btn-lg" onClick={cancelarOrden}>
+                ✖ Cancelar Orden
+              </button>
               <button type="submit" className="btn btn-primary btn-lg">💾 Guardar Orden Completa</button>
             </div>
 

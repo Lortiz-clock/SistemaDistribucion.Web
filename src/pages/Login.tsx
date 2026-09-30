@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { loginUsuario } from '../services/authService'
 import type { UsuarioLogin } from '../interfaces/UsuarioLogin'
-import './Login.css' // Asegúrate de tener tu CSS aquí
+import './Login.css'
 
 function Login() {
   const navigate = useNavigate()
@@ -20,13 +20,14 @@ function Login() {
     e.preventDefault()
     try {
       const respuesta = await loginUsuario(credenciales)
-      
-      if (respuesta.exito && respuesta.datos) {
-        localStorage.setItem('token', respuesta.datos)
-        // 🚀 AQUÍ ESTÁ LA MAGIA: Redirige al Dashboard automáticamente
-        navigate('/dashboard') 
+
+      if (respuesta.exito && respuesta.datos?.token) {
+        localStorage.setItem('token', respuesta.datos.token)
+        localStorage.setItem('nombreUsuario', respuesta.datos.nombreCompleto)
+        localStorage.setItem('modulos', JSON.stringify(respuesta.datos.modulos))
+        navigate('/dashboard')
       } else {
-        setMensaje(respuesta.mensaje || 'Credenciales incorrectas.')
+        setMensaje(respuesta.mensaje || 'Credenciales incorrectos.')
       }
     } catch (error) {
       setMensaje('No fue posible comunicarse con la API.')
@@ -37,7 +38,7 @@ function Login() {
     <div className="login-page">
       <div className="login-card">
         <h2 className="login-title">DISTRIBUCIÓN</h2>
-        
+
         {mensaje && (
           <div className="alert alert-danger" role="alert">
             {mensaje}
@@ -57,7 +58,7 @@ function Login() {
               autoFocus
             />
           </div>
-          
+
           <div className="mb-4">
             <label className="form-label">Contraseña</label>
             <input
@@ -69,7 +70,7 @@ function Login() {
               required
             />
           </div>
-          
+
           <button type="submit" className="btn btn-primary w-100">
             INGRESAR
           </button>

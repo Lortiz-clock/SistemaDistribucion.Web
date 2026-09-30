@@ -1,13 +1,42 @@
+import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import {
+  Users, Package, Truck, ShoppingCart, ClipboardList,
+  ShieldCheck, LayoutDashboard
+} from 'lucide-react'
 import './Layout.css'
 import { obtenerNombreUsuario } from '../services/authService'
+import type { Modulo } from '../interfaces/UsuarioLogin'
+
+// Diccionario: el texto guardado en la BD (columna Icono) → componente visual
+const iconosDisponibles: Record<string, any> = {
+  Users,
+  Package,
+  Truck,
+  ShoppingCart,
+  ClipboardList,
+  ShieldCheck
+}
 
 function Layout() {
   const navigate = useNavigate()
   const nombre = obtenerNombreUsuario()
-  
+
+  const [modulosPermitidos, setModulosPermitidos] = useState<Modulo[]>([])
+
+  useEffect(() => {
+    const guardados = localStorage.getItem('modulos')
+    if (guardados) {
+      setModulosPermitidos(JSON.parse(guardados))
+    } else {
+      navigate('/')
+    }
+  }, [navigate])
+
   const cerrarSesion = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('nombreUsuario')
+    localStorage.removeItem('modulos')
     navigate('/')
   }
 
@@ -16,42 +45,19 @@ function Layout() {
       <aside className="layout-sidebar">
         <h4 className="layout-sidebar-title">Distribución</h4>
         <nav className="nav flex-column">
-          <NavLink
-            to="/dashboard/usuarios"
-            className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
-          >
-            👥 Usuarios
-          </NavLink>
-
-          <NavLink
-            to="/dashboard/productos"
-            className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
-          >
-            📦 Productos
-          </NavLink>
-
-          <NavLink
-            to="/dashboard/proveedores"
-            className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
-          >
-            🚚 Proveedores
-          </NavLink>
-
-          {/* 👇 BOTONES DEL MÓDULO ORDEN DE COMPRA */}
-          <NavLink
-            to="/dashboard/ordenes/nueva"
-            className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
-          >
-            🛒 Nueva Orden
-          </NavLink>
-
-          <NavLink
-            to="/dashboard/ordenes/listar"
-            className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
-          >
-            📋 Órdenes de Compra
-          </NavLink>
-
+          {modulosPermitidos.map((modulo) => {
+            const IconoComponente = iconosDisponibles[modulo.icono] || LayoutDashboard
+            return (
+              <NavLink
+                to={modulo.rutaFront}
+                key={modulo.rutaFront}
+                className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
+              >
+                <IconoComponente size={18} style={{ marginRight: '10px' }} />
+                {modulo.nombre}
+              </NavLink>
+            )
+          })}
         </nav>
       </aside>
 
