@@ -18,12 +18,20 @@ import EditarProveedorPage from './pages/EditarProveedorPage'
 import AgregarOrdenPage from './pages/AgregarOrdenPage'
 import ListarOrdenesPage from './pages/ListarOrdenesPage'
 
+//Importar modulos
+import ModulosPage from './pages/ModulosPage'
+import AgregarModuloPage from './pages/AgregarModuloPage'
+import EditarModuloPage from './pages/EditarModuloPage'
+
+import RolesPage from './pages/RolesPage'
+import RolFormularioPage from './pages/RolFormularioPage'
+
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
   return estaLogueado ? children : <Navigate to="/" replace />
 }
 
-// 👇 NUEVO: manda al primer módulo permitido del usuario en vez de uno fijo
+
 function InicioDashboard() {
   const modulos = JSON.parse(localStorage.getItem('modulos') ?? '[]')
   return <Navigate to={modulos[0]?.rutaFront ?? '/'} replace />
@@ -52,14 +60,23 @@ function App() {
           <Route path="productos/agregar" element={<AgregarProductoPage />} />
           <Route path="productos/editar/:codigoProducto" element={<EditarProductoPage />} />
 
-          {/* RUTAS DEL MÓDULO PROVEEDORES */}
+         
           <Route path="proveedores" element={<ProveedorPage />} />
           <Route path="proveedores/agregar" element={<AgregarProveedorPage />} />
           <Route path="proveedores/editar/:codigoProveedor" element={<EditarProveedorPage />} />
 
-          {/* RUTAS DEL MÓDULO ORDEN DE COMPRA */}
+          
           <Route path="ordenes/nueva" element={<AgregarOrdenPage />} />
           <Route path="ordenes/listar" element={<ListarOrdenesPage />} />
+
+          <Route path="modulos" element={<ModulosPage />} />
+          <Route path="modulos/agregar" element={<AgregarModuloPage />} />
+          <Route path="modulos/editar/:codigoModulo" element={<EditarModuloPage/>} />
+
+          <Route path="roles" element={<RolesPage />} />
+          <Route path="roles/nuevo" element={<RolFormularioPage />} />
+          <Route path="roles/editar/:codigoRol" element={<RolFormularioPage />} />
+
         </Route>
       </Routes>
     </BrowserRouter>

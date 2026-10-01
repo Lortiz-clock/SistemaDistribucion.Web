@@ -173,7 +173,7 @@ function UsuarioPage() {
         </td>
 
         <td className="col-rol">
-          {item.nombreRol}
+          {item.nombre}
         </td>
 
         <td className="col-estado">

@@ -3,5 +3,5 @@ export interface UsuarioConsulta {
   nombreUsuario: string
   estado: boolean
   nombreCompleto: string
-  nombreRol: string
+  nombre: string
 }
