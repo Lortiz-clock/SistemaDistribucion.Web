@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { agregarRol, buscarRol, editarRol } from '../services/rolService'
+import { consultarModulos } from '../services/moduloService'   // 👈 NUEVO
 import type { ModuloPermiso, RolGuardar } from '../interfaces/Rol'
 import './RolesPage.css'
 
@@ -17,24 +18,48 @@ function RolFormularioPage() {
 
   const [mensaje, setMensaje] = useState('')
   const [exito, setExito] = useState<boolean | null>(null)
-  const [cargando, setCargando] = useState(esEdicion)
+  const [cargando, setCargando] = useState(true)   // 👈 ahora carga en AMBOS modos
 
-  // CARGA (solo edición): rol + todos los módulos con Asignado
   useEffect(() => {
-    if (!esEdicion) return
-
-    const cargarRol = async () => {
+    const cargar = async () => {
       try {
-        const respuesta = await buscarRol(Number(codigoRol))
+        if (esEdicion) {
+          // ═══ MODO EDITAR: el rol trae sus módulos con Asignado pre-marcado ═══
+          const respuesta = await buscarRol(Number(codigoRol))
 
-        if (respuesta.exito && respuesta.datos) {
-          setNombre(respuesta.datos.nombre)
-          setDescripcionRol(respuesta.datos.descripcionRol)
-          setEstado(respuesta.datos.estado)
-          setModulos(respuesta.datos.modulos)   // pre-llena los checkboxes
+          if (respuesta.exito && respuesta.datos) {
+            setNombre(respuesta.datos.nombre)
+            setDescripcionRol(respuesta.datos.descripcionRol)
+            setEstado(respuesta.datos.estado)
+            setModulos(respuesta.datos.modulos)
+          } else {
+            setMensaje(respuesta.mensaje || 'No se encontró el rol.')
+            setExito(false)
+          }
         } else {
-          setMensaje(respuesta.mensaje || 'No se encontró el rol.')
-          setExito(false)
+          // ═══ MODO AGREGAR: catálogo completo, todo sin asignar ═══
+          const respuesta = await consultarModulos()
+
+          if (respuesta.exito && respuesta.datos) {
+            setModulos(
+              respuesta.datos
+                .filter((m) => m.estado)   // solo módulos activos son asignables
+                .map((m) => ({
+                  codigoModulo: m.codigoModulo,
+                  nombre: m.nombre,
+                  rutaFront: m.rutaFront,
+                  icono: m.icono,
+                  asignado: false,
+                  permiteConsultar: false,
+                  permiteAgregar: false,
+                  permiteEditar: false,
+                  permiteAnular: false
+                }))
+            )
+          } else {
+            setMensaje(respuesta.mensaje || 'No se pudieron cargar los módulos.')
+            setExito(false)
+          }
         }
       } catch {
         setMensaje('No fue posible comunicarse con la API.')
@@ -44,17 +69,17 @@ function RolFormularioPage() {
       }
     }
 
-    cargarRol()
+    cargar()
   }, [codigoRol, esEdicion])
 
-  // Check maestro: asigna/desasigna el módulo completo
+  // ... toggleAsignado, togglePermiso y guardarRol IGUAL que antes ...
   const toggleAsignado = (codigoModulo: number) => {
     setModulos(modulos.map((m) =>
       m.codigoModulo === codigoModulo
         ? {
             ...m,
             asignado: !m.asignado,
-            permiteConsultar: !m.asignado,   // al asignar, Consultar va por defecto
+            permiteConsultar: !m.asignado,
             permiteAgregar: false,
             permiteEditar: false,
             permiteAnular: false
@@ -63,7 +88,6 @@ function RolFormularioPage() {
     ))
   }
 
-  // Check individual de cada permiso
   const togglePermiso = (
     codigoModulo: number,
     campo: 'permiteConsultar' | 'permiteAgregar' | 'permiteEditar' | 'permiteAnular'
@@ -73,7 +97,6 @@ function RolFormularioPage() {
     ))
   }
 
-  // GUARDAR: solo se envían los módulos marcados
   const guardarRol = async (evento: React.FormEvent) => {
     evento.preventDefault()
 
@@ -118,7 +141,7 @@ function RolFormularioPage() {
     return (
       <div className="roles-page">
         <div className="roles-container">
-          <p className="text-muted">Cargando rol...</p>
+          <p className="text-muted">Cargando...</p>
         </div>
       </div>
     )
@@ -149,17 +172,19 @@ function RolFormularioPage() {
 
           <form onSubmit={guardarRol} className="p-3">
 
-            {/* DATOS GENERALES */}
+            {/* ═══ DATOS GENERALES ═══ */}
             <div className="row mb-4">
               <div className="col-md-4 mb-3">
-                <label className="form-label">Nombre del Rol</label>
+                <label className="form-label">Nombre del Rol *</label>
                 <input
                   type="text"
                   className="form-control"
+                  placeholder="Nombre"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
                   required
                 />
+                <small className="text-muted"></small>
               </div>
 
               <div className="col-md-5 mb-3">
@@ -167,9 +192,11 @@ function RolFormularioPage() {
                 <input
                   type="text"
                   className="form-control"
+                  placeholder="Descripcion"
                   value={descripcionRol}
                   onChange={(e) => setDescripcionRol(e.target.value)}
                 />
+                <small className="text-muted"></small>
               </div>
 
               <div className="col-md-3 mb-3">
@@ -182,11 +209,15 @@ function RolFormularioPage() {
                   <option value="true">Activo</option>
                   <option value="false">Inactivo</option>
                 </select>
+                <small className="text-muted"></small>
               </div>
             </div>
 
-            {/* ═══════ TABLA DE CHECKBOXES ═══════ */}
-            <h5 className="mb-3">Módulos y Permisos</h5>
+            {/* ═══ TABLA DE CHECKBOXES ═══ */}
+            <h5 className="mb-1">Módulos y Permisos</h5>
+            <p className="text-muted mb-3" style={{ fontSize: '13px' }}>
+              Marca y <strong>Asigna</strong> los módulos para el rol
+            </p>
 
             <div className="table-responsive mb-4">
               <table className="table table-bordered align-middle permisos-table">
@@ -201,58 +232,67 @@ function RolFormularioPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {modulos.map((modulo) => (
-                    <tr
-                      key={modulo.codigoModulo}
-                      className={modulo.asignado ? '' : 'fila-no-asignada'}
-                    >
-                      <td className="text-center">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={modulo.asignado}
-                          onChange={() => toggleAsignado(modulo.codigoModulo)}
-                        />
-                      </td>
-                      <td>{modulo.nombre}</td>
-                      <td className="text-center">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={modulo.permiteConsultar}
-                          disabled={!modulo.asignado}
-                          onChange={() => togglePermiso(modulo.codigoModulo, 'permiteConsultar')}
-                        />
-                      </td>
-                      <td className="text-center">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={modulo.permiteAgregar}
-                          disabled={!modulo.asignado}
-                          onChange={() => togglePermiso(modulo.codigoModulo, 'permiteAgregar')}
-                        />
-                      </td>
-                      <td className="text-center">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={modulo.permiteEditar}
-                          disabled={!modulo.asignado}
-                          onChange={() => togglePermiso(modulo.codigoModulo, 'permiteEditar')}
-                        />
-                      </td>
-                      <td className="text-center">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={modulo.permiteAnular}
-                          disabled={!modulo.asignado}
-                          onChange={() => togglePermiso(modulo.codigoModulo, 'permiteAnular')}
-                        />
+                  {modulos.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center text-muted py-4">
+                        No hay módulos activos para asignar.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    modulos.map((modulo) => (
+                      <tr
+                        key={modulo.codigoModulo}
+                        className={modulo.asignado ? '' : 'fila-no-asignada'}
+                      >
+                        <td className="text-center">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            checked={modulo.asignado}
+                            onChange={() => toggleAsignado(modulo.codigoModulo)}
+                            title="Marcar para que este rol vea el módulo en su menú"
+                          />
+                        </td>
+                        <td>{modulo.nombre}</td>
+                        <td className="text-center">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            checked={modulo.permiteConsultar}
+                            disabled={!modulo.asignado}
+                            onChange={() => togglePermiso(modulo.codigoModulo, 'permiteConsultar')}
+                          />
+                        </td>
+                        <td className="text-center">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            checked={modulo.permiteAgregar}
+                            disabled={!modulo.asignado}
+                            onChange={() => togglePermiso(modulo.codigoModulo, 'permiteAgregar')}
+                          />
+                        </td>
+                        <td className="text-center">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            checked={modulo.permiteEditar}
+                            disabled={!modulo.asignado}
+                            onChange={() => togglePermiso(modulo.codigoModulo, 'permiteEditar')}
+                          />
+                        </td>
+                        <td className="text-center">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            checked={modulo.permiteAnular}
+                            disabled={!modulo.asignado}
+                            onChange={() => togglePermiso(modulo.codigoModulo, 'permiteAnular')}
+                          />
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
