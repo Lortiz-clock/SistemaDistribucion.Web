@@ -225,7 +225,7 @@ function RolFormularioPage() {
                   <tr>
                     <th style={{ width: '90px' }} className="text-center">Asignar</th>
                     <th>Módulo</th>
-                    <th className="text-center">Consultar</th>
+                    <th className="text-center">Consultar</th>  
                     <th className="text-center">Agregar</th>
                     <th className="text-center">Editar</th>
                     <th className="text-center">Anular</th>

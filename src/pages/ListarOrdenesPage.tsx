@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { consultarOrdenesCompra, buscarDetalleCompra } from '../services/ordenCompraService'
 import type { OrdenCompraConsultar } from '../interfaces/OrdenCompraConsultar'
 import type { DetalleCompraConsultar } from '../interfaces/DetalleCompraConsultar'
@@ -23,6 +24,7 @@ const calcularEstadoFecha = (fechaResep: string) => {
 }
 
 function ListarOrdenesPage() {
+  const navigate = useNavigate()
   const [ordenes, setOrdenes] = useState<OrdenCompraConsultar[]>([])
   const [mensaje, setMensaje] = useState('')
   const [busqueda, setBusqueda] = useState('')
@@ -102,15 +104,14 @@ function ListarOrdenesPage() {
                 <th>Código</th>
                 <th>Proveedor</th>
                 <th>Fecha Emisión</th>
-                <th>Estado Recepción</th> {/* 👈 Cambiamos el título */}
+                <th>Estado Recepción</th>
                 <th>Estado Orden</th>
-                <th>Acciones</th>
+                <th className="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {ordenesFiltradas.length > 0 ? (
                 ordenesFiltradas.map((orden) => {
-                  // 👇 Ejecutamos la función para saber de qué color pintar la fecha
                   const estadoFecha = calcularEstadoFecha(orden.fechaResep)
 
                   return (
@@ -119,7 +120,6 @@ function ListarOrdenesPage() {
                       <td>{orden.nombreProveedor}</td>
                       <td>{orden.fechaEmision}</td>
                       <td>
-                        {/* Mostramos la fecha y abajo el badge de colores */}
                         <small className="text-muted d-block">{orden.fechaResep}</small>
                         <span className={`badge ${estadoFecha.clase}`}>
                           {estadoFecha.texto}
@@ -130,13 +130,21 @@ function ListarOrdenesPage() {
                           {orden.estado}
                         </span>
                       </td>
-                      <td>
-                        <button 
-                          className="btn btn-sm btn-outline-primary"
-                          onClick={() => verDetalle(orden)}
-                        >
-                          Ver detalles
-                        </button>
+                      <td className="text-center">
+                        <div className="d-flex gap-2 justify-content-center">
+                          <button 
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => verDetalle(orden)}
+                          >
+                            Ver detalles
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-secondary"
+                            onClick={() => navigate(`/dashboard/ordenes/editar/${orden.codigoCompra}`)}
+                          >
+                            ✏️ Editar
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -151,7 +159,6 @@ function ListarOrdenesPage() {
         </div>
       </div>
 
-      {/* MODAL DE DETALLES */}
       {mostrarModal && ordenSeleccionada && (
         <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex={-1}>
           <div className="modal-dialog modal-lg">

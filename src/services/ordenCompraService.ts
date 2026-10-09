@@ -5,6 +5,7 @@ import type { DetalleCompraAgregar } from '../interfaces/DetalleCompraAgregar'
 import type { OrdenCompraCompletaAgregar } from '../interfaces/OrdenCompraCompletaAgregar'
 import type { OrdenCompraConsultar } from '../interfaces/OrdenCompraConsultar'
 import type { DetalleCompraConsultar } from '../interfaces/DetalleCompraConsultar'
+import type { DetalleEditar, OrdenEncabezado } from '../interfaces/OrdenCompraEditar'
 
 export const agregarOrdenCompleta = async (orden: OrdenCompraCompletaAgregar) => {
   const respuesta = await api.post<RespuestaApi<number>>(
@@ -28,7 +29,7 @@ export const buscarDetalleCompra = async (codigoCompra: number) => {
   return respuesta.data
 }
 
-// Endpoints antiguos (ya no se usan en la pantalla de nueva orden)
+
 export const agregarOrdenCompra = async (orden: OrdenCompraAgregar) => {
   const respuesta = await api.post<RespuestaApi<any>>('/api/Compra/AgregarOrdenCompra', orden)
   return respuesta.data
@@ -36,5 +37,27 @@ export const agregarOrdenCompra = async (orden: OrdenCompraAgregar) => {
 
 export const agregarDetalleCompra = async (detalle: DetalleCompraAgregar) => {
   const respuesta = await api.post<RespuestaApi<boolean>>('/api/DetalleCompra/AgregarDetalleCompra', detalle)
+  return respuesta.data
+}
+
+export const buscarOrdenCompra = async (codigoOrden: number) => {
+  const respuesta = await api.get<RespuestaApi<OrdenEncabezado>>(
+    `/api/Compra/BuscarOrdenCompra/${codigoOrden}`
+  )
+  return respuesta.data
+}
+
+export const editarDetalleCompra = async (detalle: DetalleEditar) => {
+  const respuesta = await api.put<RespuestaApi<boolean>>(
+    '/api/DetalleCompra/EditarDetalleCompra',
+    detalle
+  )
+  return respuesta.data
+}
+
+export const eliminarDetalleCompra = async (codigoDetalle: number) => {
+  const respuesta = await api.delete<RespuestaApi<boolean>>(
+    `/api/DetalleCompra/EliminarDetalleCompra/${codigoDetalle}`
+  )
   return respuesta.data
 }

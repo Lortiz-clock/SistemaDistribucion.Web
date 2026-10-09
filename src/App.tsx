@@ -8,23 +8,20 @@ import EditarUsuarioPage from './pages/EditarUsuarioPage'
 import ProductoPage from './pages/ProductoPage'
 import AgregarProductoPage from './pages/AgregarProductoPage'
 import EditarProductoPage from './pages/EditarProductoPage'
-
 // Importaciones del módulo de Proveedores
 import ProveedorPage from './pages/ProveedorPage'
 import AgregarProveedorPage from './pages/AgregarProveedorPage'
 import EditarProveedorPage from './pages/EditarProveedorPage'
-
 // Importaciones del módulo de Orden de Compra
 import AgregarOrdenPage from './pages/AgregarOrdenPage'
 import ListarOrdenesPage from './pages/ListarOrdenesPage'
-
 //Importar modulos
 import ModulosPage from './pages/ModulosPage'
 import AgregarModuloPage from './pages/AgregarModuloPage'
 import EditarModuloPage from './pages/EditarModuloPage'
-
 import RolesPage from './pages/RolesPage'
 import RolFormularioPage from './pages/RolFormularioPage'
+import EditarOrdenPage from './pages/EditarOrdenPage'
 
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
@@ -76,6 +73,7 @@ function App() {
           <Route path="roles" element={<RolesPage />} />
           <Route path="roles/nuevo" element={<RolFormularioPage />} />
           <Route path="roles/editar/:codigoRol" element={<RolFormularioPage />} />
+          <Route path="ordenes/editar/:codigoCompra" element={<EditarOrdenPage />} />
 
         </Route>
       </Routes>
