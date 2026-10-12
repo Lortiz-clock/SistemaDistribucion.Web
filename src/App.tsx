@@ -22,6 +22,7 @@ import EditarModuloPage from './pages/EditarModuloPage'
 import RolesPage from './pages/RolesPage'
 import RolFormularioPage from './pages/RolFormularioPage'
 import EditarOrdenPage from './pages/EditarOrdenPage'
+import RecepcionPage from './pages/RecepcionPage'
 
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
@@ -74,6 +75,7 @@ function App() {
           <Route path="roles/nuevo" element={<RolFormularioPage />} />
           <Route path="roles/editar/:codigoRol" element={<RolFormularioPage />} />
           <Route path="ordenes/editar/:codigoCompra" element={<EditarOrdenPage />} />
+          <Route path="recepcion" element={<RecepcionPage />} />
 
         </Route>
       </Routes>
