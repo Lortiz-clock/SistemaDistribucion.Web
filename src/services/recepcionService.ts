@@ -23,3 +23,10 @@ export const cerrarRecepcion = async (codigoRecepcion: number) => {
   )
   return respuesta.data
 }
+
+export const cancelarRecepcion = async (codigoRecepcion: number) => {
+  const respuesta = await api.put<RespuestaApi<boolean>>(
+    `/api/Recepcion/CancelarRecepcion/${codigoRecepcion}`
+  )
+  return respuesta.data
+}

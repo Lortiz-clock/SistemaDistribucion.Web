@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  abrirRecepcion, buscarRecepcion, cerrarRecepcion
+  abrirRecepcion, buscarRecepcion, cerrarRecepcion, cancelarRecepcion
 } from '../services/recepcionService'
 import {
-  buscarRecepcionDetalle, agregarDetalleRecepcion, resolverRecepcionDetalle
+  buscarRecepcionDetalle, agregarDetalleRecepcion, resolverRecepcionDetalle,
+  buscarPendientesAutorizacion
 } from '../services/recepcionDetalleService'
 import { consultarOrdenesCompra } from '../services/ordenCompraService'
-import type { RecepcionDetalleConsulta } from '../interfaces/Recepcion'
+import type { RecepcionDetalleConsulta, RecepcionPendiente } from '../interfaces/Recepcion'
 import './RecepcionPage.css'
+import { tienePermiso } from '../utils/permisos'
 
 function RecepcionPage() {
   const navigate = useNavigate()
@@ -32,19 +34,27 @@ function RecepcionPage() {
     comentario: string
   } | null>(null)
 
+  // ═══ PANEL DE PENDIENTES (solo admin) ═══
+  const [pendientes, setPendientes] = useState<RecepcionPendiente[]>([])
+
   const [mensaje, setMensaje] = useState('')
   const [exito, setExito] = useState<boolean | null>(null)
 
   // ⚠️ TODO: reemplazar por el código real del empleado logueado
   const codigoEmpleado = 1
 
-  // ═══ CARGA INICIAL: órdenes pendientes para el dropdown ═══
+  // Permiso del rol para resolver líneas (solo el admin lo tiene)
+  const puedeResolver = tienePermiso('/dashboard/recepcion', 'permiteEditar')
+
+  // ═══ CARGA INICIAL: órdenes pendientes + panel de autorizaciones ═══
   useEffect(() => {
     const cargar = async () => {
       try {
         const respuesta = await consultarOrdenesCompra()
         if (respuesta.exito && respuesta.datos) {
-          setOrdenesPendientes(respuesta.datos.filter((o) => o.estado === 'Pendiente'))
+          setOrdenesPendientes(
+            respuesta.datos.filter((o) => o.estado === 'Pendiente' || o.estado === 'EnProceso')
+          )
         }
       } catch {
         setMensaje('No fue posible comunicarse con la API.')
@@ -53,6 +63,21 @@ function RecepcionPage() {
     }
     cargar()
   }, [])
+
+  useEffect(() => {
+    if (!puedeResolver) return
+    const cargarPendientes = async () => {
+      try {
+        const respuesta = await buscarPendientesAutorizacion()
+        if (respuesta.exito && respuesta.datos) {
+          setPendientes(respuesta.datos)
+        }
+      } catch {
+        // sin permiso o error: simplemente no muestra el panel
+      }
+    }
+    cargarPendientes()
+  }, [puedeResolver])
 
   // ⚠️ Simplificación V1: bodegas fijas. Si tienes servicio de bodegas, úsalo.
   const bodegas = [
@@ -169,20 +194,27 @@ function RecepcionPage() {
     }
   }
 
-  // ═══ RESOLVER (admin): autorizar o rechazar una línea pendiente ═══
-  const resolver = async (d: RecepcionDetalleConsulta, autorizado: boolean) => {
+  // ═══ RESOLVER (admin): autorizar o rechazar ═══
+  // Recibe datos sueltos para servir a la tabla Y al panel de pendientes
+  const resolver = async (codigoRecepcionDetalle: number, precioFacturado: number, autorizado: boolean) => {
     try {
       const respuesta = await resolverRecepcionDetalle({
-        codigoRecepcionDetalle: d.codigoRecepcionDetalle,
+        codigoRecepcionDetalle,
         autorizado,
         // Autorizar = aceptar el precio de la factura → el detalle se corrige a ese precio
-        nuevoPrecioCosto: autorizado ? d.precioFacturado : undefined
+        nuevoPrecioCosto: autorizado ? precioFacturado : undefined
       })
 
       if (respuesta.exito) {
         setMensaje(autorizado ? 'Producto autorizado e ingresado.' : 'Producto rechazado.')
         setExito(true)
-        await cargarRecepcion(codigoRecepcion)
+        // Refresca el panel de pendientes (si es admin)
+        if (puedeResolver) {
+          const p = await buscarPendientesAutorizacion()
+          if (p.exito && p.datos) setPendientes(p.datos)
+        }
+        // Refresca la tabla si hay una recepción abierta
+        if (codigoRecepcion > 0) await cargarRecepcion(codigoRecepcion)
       } else {
         setMensaje(respuesta.mensaje || 'No se pudo resolver la línea.')
         setExito(false)
@@ -205,6 +237,32 @@ function RecepcionPage() {
         await cargarRecepcion(codigoRecepcion)
       } else {
         setMensaje(respuesta.mensaje || 'No se pudo cerrar la recepción.')
+        setExito(false)
+      }
+    } catch {
+      setMensaje('No fue posible comunicarse con la API.')
+      setExito(false)
+    }
+  }
+
+  // ═══ CANCELAR RECEPCIÓN (orden equivocada) ═══
+  const cancelar = async () => {
+    if (!window.confirm('¿Cancelar la recepción? Se perderán los registros y la orden volverá a Pendiente.')) return
+
+    try {
+      const respuesta = await cancelarRecepcion(codigoRecepcion)
+      if (respuesta.exito) {
+        setRecepcion(null)
+        setDetalles([])
+        setCodigoRecepcion(0)
+        setMensaje('Recepción cancelada. La orden volvió a Pendiente.')
+        setExito(true)
+        const r = await consultarOrdenesCompra()
+        if (r.exito && r.datos) {
+          setOrdenesPendientes(r.datos.filter((o) => o.estado === 'Pendiente' || o.estado === 'EnProceso'))
+        }
+      } else {
+        setMensaje(respuesta.mensaje || 'No se pudo cancelar la recepción.')
         setExito(false)
       }
     } catch {
@@ -241,6 +299,66 @@ function RecepcionPage() {
             </div>
           )}
 
+          {/* ═════ PANEL DE PENDIENTES (solo admin) ═════ */}
+          {puedeResolver && pendientes.length > 0 && (
+            <div className="alert alert-warning mx-3 mt-3 mb-0">
+              <h6 className="alert-heading">
+                ⚠️ Productos pendientes de autorización ({pendientes.length})
+              </h6>
+              <div className="table-responsive">
+                <table className="table table-sm table-bordered mb-0 bg-white">
+                  <thead>
+                    <tr>
+                      <th>Orden</th>
+                      <th>Producto</th>
+                      <th className="text-center">Recibidas</th>
+                      <th className="text-center">Acordado</th>
+                      <th className="text-center">Facturado</th>
+                      <th>Bodega</th>
+                      <th>Recibió</th>
+                      <th className="text-center">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendientes.map((p) => (
+                      <tr key={p.codigoRecepcionDetalle}>
+                        <td>#{p.codigoCompra}</td>
+                        <td>{p.producto}</td>
+                        <td className="text-center">{p.cantidadRecibidaUnidades}</td>
+                        <td className="text-center">Q{p.precioAcordado.toFixed(2)}</td>
+                        <td className="text-center text-danger fw-bold">Q{p.precioFacturado.toFixed(2)}</td>
+                        <td>{p.bodega}</td>
+                        <td>{p.recibidoPor}</td>
+                        <td className="text-center">
+                          <div className="d-flex gap-1 justify-content-center">
+                            <button
+                              className="btn btn-sm btn-outline-success"
+                              title="Autorizar precio e ingresar"
+                              onClick={() => resolver(p.codigoRecepcionDetalle, p.precioFacturado, true)}
+                            >
+                              ✓
+                            </button>
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              title="Rechazar producto"
+                              onClick={() => {
+                                if (window.confirm('¿Rechazar este producto? No ingresará a bodega.')) {
+                                  resolver(p.codigoRecepcionDetalle, p.precioFacturado, false)
+                                }
+                              }}
+                            >
+                              ✖
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* ═════ FASE 1: SELECCIÓN ═════ */}
           {!recepcion && (
             <div className="p-3">
@@ -256,6 +374,7 @@ function RecepcionPage() {
                     {ordenesPendientes.map((o) => (
                       <option key={o.codigoCompra} value={o.codigoCompra}>
                         #{o.codigoCompra} — {o.nombreProveedor}
+                        {o.estado === 'EnProceso' ? ' (continuar recepción)' : ''}
                       </option>
                     ))}
                   </select>
@@ -409,12 +528,13 @@ function RecepcionPage() {
                                   {d.estadoDetalle === 'Rechazado' && <span className="badge bg-danger">Rechazado</span>}
                                 </td>
                                 <td className="text-center">
-                                  {d.estadoDetalle === 'PendienteAutorizacion' && (
+                                  {/* SOLO el admin (permiteEditar) ve los botones de autorización */}
+                                  {d.estadoDetalle === 'PendienteAutorizacion' && puedeResolver && (
                                     <div className="d-flex gap-1 justify-content-center">
                                       <button
                                         className="btn btn-sm btn-outline-success"
                                         title="Autorizar precio e ingresar"
-                                        onClick={() => resolver(d, true)}
+                                        onClick={() => resolver(d.codigoRecepcionDetalle, d.precioFacturado, true)}
                                       >
                                         ✓
                                       </button>
@@ -423,7 +543,7 @@ function RecepcionPage() {
                                         title="Rechazar producto"
                                         onClick={() => {
                                           if (window.confirm('¿Rechazar este producto? No ingresará a bodega.')) {
-                                            resolver(d, false)
+                                            resolver(d.codigoRecepcionDetalle, d.precioFacturado, false)
                                           }
                                         }}
                                       >
@@ -462,9 +582,14 @@ function RecepcionPage() {
                 </div>
 
                 {recepcion.estado === 'EnProceso' ? (
-                  <button className="btn btn-primary" onClick={cerrar}>
-                    🔒 Cerrar Recepción
-                  </button>
+                  <div className="d-flex gap-2">
+                    <button className="btn btn-outline-danger" onClick={cancelar}>
+                      ✖ Cancelar Recepción
+                    </button>
+                    <button className="btn btn-primary" onClick={cerrar}>
+                      🔒 Cerrar Recepción
+                    </button>
+                  </div>
                 ) : (
                   <button className="btn btn-outline-secondary" onClick={() => navigate('/dashboard')}>
                     Volver

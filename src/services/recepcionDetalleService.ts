@@ -4,7 +4,8 @@ import type {
   RecepcionDetalleConsulta,
   RecepcionDetalleAgregar,
   RecepcionDetalleRespuesta,
-  RecepcionResolver
+  RecepcionResolver,
+  RecepcionPendiente
 } from '../interfaces/Recepcion'
 
 export const buscarRecepcionDetalle = async (codigoRecepcion: number) => {
@@ -26,6 +27,13 @@ export const resolverRecepcionDetalle = async (resolver: RecepcionResolver) => {
   const respuesta = await api.put<RespuestaApi<boolean>>(
     '/api/RecepcionDetalle/ResolverRecepcionDetalle',
     resolver
+  )
+  return respuesta.data
+}
+
+export const buscarPendientesAutorizacion = async () => {
+  const respuesta = await api.get<RespuestaApi<RecepcionPendiente[]>>(
+    '/api/RecepcionDetalle/PendientesAutorizacion'
   )
   return respuesta.data
 }

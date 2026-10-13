@@ -53,3 +53,16 @@ export interface RecepcionDetalleRespuesta {
   precioAcordado: number
   requiereAutorizacion: boolean
 }
+
+export interface RecepcionPendiente {
+  codigoRecepcionDetalle: number
+  codigoRecepcion: number
+  codigoCompra: number
+  producto: string
+  cantidadPedida: number
+  cantidadRecibidaUnidades: number
+  precioAcordado: number
+  precioFacturado: number
+  bodega: string
+  recibidoPor: string
+}
