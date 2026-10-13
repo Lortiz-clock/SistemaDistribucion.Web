@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   Users, Package, Truck, ShoppingCart, ClipboardList,
-  ShieldCheck, LayoutDashboard, Boxes, ClipboardCheck
+  ShieldCheck, LayoutDashboard
 } from 'lucide-react'
 import './Layout.css'
 import { obtenerNombreUsuario } from '../services/authService'
