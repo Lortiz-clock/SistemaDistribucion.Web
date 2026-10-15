@@ -59,8 +59,8 @@ export default function ProveedorPage() {
   }, [])
 
   return (
-    <div className="proveedor-page">
-      <div className="proveedor-container">
+    <div className="proveedor-page pagina-lista">
+      <div className="proveedor-container pagina-lista-interna">
         {/* ENCABEZADO */}
         <div className="proveedor-header">
           <h1 className="proveedor-title">Consulta de Proveedores</h1>
@@ -70,7 +70,7 @@ export default function ProveedorPage() {
         </div>
 
         {/* TARJETA */}
-        <div className="proveedor-card">
+        <div className="proveedor-card tarjeta-lista">
           <div className="proveedor-card-header">
             <h2 className="proveedor-card-title">Proveedores registrados</h2>
             <div className="d-flex align-items-center gap-3">
@@ -94,7 +94,7 @@ export default function ProveedorPage() {
           )}
 
           {/* BUSCADOR */}
-          <div className="mb-3">
+          <div className="mb-3 flex-shrink-0">
             <input
               type="text"
               className="form-control"
@@ -105,7 +105,7 @@ export default function ProveedorPage() {
           </div>
 
           {/* TABLA */}
-          <div className="proveedor-table-container">
+          <div className="proveedor-table-container tabla-scroll">
             <table className="table table-bordered proveedor-table">
               <thead>
                 <tr>

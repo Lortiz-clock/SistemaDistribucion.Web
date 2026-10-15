@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { buscarModulo, editarModulo } from '../services/moduloService'
 import type { ModuloEditar } from '../interfaces/ModuloEditar'
-import './AgregarModuloPage.css'   // 👈 reutiliza el CSS del formulario
+import './AgregarModuloPage.css'  
 
 function EditarModuloPage() {
 
   const navigate = useNavigate()
 
-  // 👇 DIFERENCIA 1: leemos el código de la URL (/dashboard/modulos/editar/7)
+
   const { codigoModulo } = useParams()
 
   const [modulo, setModulo] = useState<ModuloEditar>({
@@ -73,7 +73,7 @@ function EditarModuloPage() {
     evento.preventDefault()
 
     try {
-      const respuesta = await editarModulo(modulo)  // 👈 DIFERENCIA 3: PUT en vez de POST
+      const respuesta = await editarModulo(modulo)  
 
       setMensaje(respuesta.mensaje)
       setExito(respuesta.exito)

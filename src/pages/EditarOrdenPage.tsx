@@ -462,7 +462,7 @@ function EditarOrdenPage() {
               >
                 ✖ Cancelar
               </button>
-              <button type="submit" className="btn btn-primary btn-lg">💾 Guardar Cambios</button>
+              <button type="submit" className="btn btn-primary btn-lg"> Guardar Cambios</button>
             </div>
 
           </form>

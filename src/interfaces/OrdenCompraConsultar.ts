@@ -4,5 +4,6 @@ export interface OrdenCompraConsultar {
   nombreProveedor: string
   fechaEmision: string
   fechaResep: string
+  fechaRecepcionReal: string
   estado: string
 }

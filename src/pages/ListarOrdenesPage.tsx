@@ -82,7 +82,7 @@ function ListarOrdenesPage() {
   }
 
   return (
-    <div className="container mt-4">
+    <div className="d-flex flex-column h-100" style={{ minHeight: 0 }}>
       <h2>Órdenes de Compra</h2>
       {mensaje && <div className="alert alert-info">{mensaje}</div>}
 
@@ -96,9 +96,9 @@ function ListarOrdenesPage() {
         />
       </div>
 
-      <div className="card shadow-sm">
-        <div className="card-body">
-          <table className="table table-bordered table-hover mb-0">
+          <div className="card shadow-sm tarjeta-lista">
+            <div className="card-body tabla-scroll p-0">
+              <table className="table table-bordered table-hover mb-0">
             <thead className="table-dark">
               <tr>
                 <th>Código</th>
@@ -118,18 +118,33 @@ function ListarOrdenesPage() {
                     <tr key={orden.codigoCompra}>
                       <td>{orden.codigoCompra}</td>
                       <td>{orden.nombreProveedor}</td>
-                      <td>{orden.fechaEmision}</td>
+                      <td>{orden.fechaEmision?.split('T')[0]}</td>
                       <td>
-                        <small className="text-muted d-block">{orden.fechaResep}</small>
-                        <span className={`badge ${estadoFecha.clase}`}>
-                          {estadoFecha.texto}
-                        </span>
+                        {orden.estado === 'Pendiente' && (
+                            <span className="badge bg-warning text-dark">Pendiente</span>
+                          )}
+                          {orden.estado === 'EnProceso' && (
+                            <span className="badge bg-info text-dark">En proceso</span>
+                          )}
+                          {orden.estado === 'Recepcionada' && (
+                            <span className="badge bg-success">Recibida</span>
+                          )}
+                          {orden.estado === 'Anulada' && (
+                            <span className="badge bg-secondary">Anulada</span>
+                          )}
                       </td>
                       <td>
-                        <span className={`badge ${orden.estado === 'Pendiente' ? 'bg-warning text-dark' : 'bg-success'}`}>
-                          {orden.estado}
-                        </span>
-                      </td>
+                        {orden.estado === 'Recepcionada' ? (
+                           <span className="badge bg-success">
+                             Recibida el {orden.fechaRecepcionReal?.split(' ')[0] ?? '—'}
+                             </span>
+                             ) : (
+                              <>
+                              <small className="text-muted d-block">{orden.fechaResep?.split('T')[0]}</small>
+                              <span className={`badge ${estadoFecha.clase}`}>{estadoFecha.texto}</span>
+                           </>
+                        )}                        
+                      </td> 
                       <td className="text-center">
                         <div className="d-flex gap-2 justify-content-center">
                           <button 
@@ -142,7 +157,7 @@ function ListarOrdenesPage() {
                             className="btn btn-sm btn-outline-secondary"
                             onClick={() => navigate(`/dashboard/ordenes/editar/${orden.codigoCompra}`)}
                           >
-                            ✏️ Editar
+                           Editar
                           </button>
                         </div>
                       </td>
@@ -160,18 +175,19 @@ function ListarOrdenesPage() {
       </div>
 
       {mostrarModal && ordenSeleccionada && (
-        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex={-1}>
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', overflowY: 'auto' }} tabIndex={-1}>
           <div className="modal-dialog modal-lg">
             <div className="modal-content p-4">
               <h5>Orden de Compra #{ordenSeleccionada.codigoCompra}</h5>
-              <p className="mb-1"><strong>Proveedor:</strong> {ordenSeleccionada.nombreProveedor}</p>
-              <p className="mb-1"><strong>Fecha Emisión:</strong> {ordenSeleccionada.fechaEmision}</p>
+              <p className="mb-1"><strong>Fecha Emisión:</strong> {ordenSeleccionada.fechaEmision?.split('T')[0]}</p>
+              <p className="mb-3"><strong>Fecha Recepción:</strong> {ordenSeleccionada.fechaResep?.split('T')[0]}</p>
               <p className="mb-3"><strong>Fecha Recepción:</strong> {ordenSeleccionada.fechaResep}</p>
               <hr />
 
               {cargandoDetalle ? (
                 <p className="text-muted">Cargando productos...</p>
               ) : detalles.length > 0 ? (
+                <div className="table-responsive">
                 <table className="table table-sm table-bordered">
                   <thead>
                     <tr>
@@ -194,6 +210,7 @@ function ListarOrdenesPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               ) : (
                 <p className="text-muted">Esta orden no tiene productos.</p>
               )}

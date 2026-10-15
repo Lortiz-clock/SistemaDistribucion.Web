@@ -37,8 +37,8 @@ function ModulosPage() {
   }, [])
 
   return (
-    <div className="modulos-page">
-      <div className="modulos-container">
+    <div className="modulos-page d-flex flex-column h-100" style={{ minHeight: 0 }}>
+     <div className="modulos-container d-flex flex-column flex-grow-1" style={{ minHeight: 0 }}>
 
         {/* ENCABEZADO */}
         <div className="modulos-header">
@@ -51,7 +51,7 @@ function ModulosPage() {
         </div>
 
         {/* TARJETA */}
-        <div className="modulos-card">
+        <div className="modulos-card tarjeta-lista">
 
           <div className="modulos-card-header">
 
@@ -89,7 +89,7 @@ function ModulosPage() {
           )}
 
           {/* TABLA */}
-          <div className="modulos-table-container">
+          <div className="modulos-table-container tabla-scroll">
 
             <table className="table table-bordered modulos-table">
 

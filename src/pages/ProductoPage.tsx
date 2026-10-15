@@ -52,8 +52,8 @@ export default function ProductoPage() {
   }, [])
 
   return (
-    <div className="producto-page">
-      <div className="producto-container">
+   <div className="producto-page pagina-lista">
+    <div className="producto-container pagina-lista-interna">
         {/* ENCABEZADO */}
         <div className="producto-header">
           <h1 className="producto-title">Consulta de Productos</h1>
@@ -63,7 +63,7 @@ export default function ProductoPage() {
         </div>
 
         {/* TARJETA */}
-        <div className="producto-card">
+        <div className="producto-card tarjeta-lista">
           <div className="producto-card-header">
             <h2 className="producto-card-title">Productos registrados</h2>
             <div className="d-flex align-items-center gap-3">
@@ -87,7 +87,7 @@ export default function ProductoPage() {
           )}
 
           {/* BUSCADOR */}
-          <div className="mb-3">
+          <div className="mb-3 flex-shrink-0">
             <input
               type="text"
               className="form-control"
@@ -98,7 +98,7 @@ export default function ProductoPage() {
           </div>
 
           {/* TABLA */}
-          <div className="producto-table-container">
+          <div className="producto-table-container tabla-scroll">
             <table className="table table-bordered producto-table">
               <thead>
                 <tr>

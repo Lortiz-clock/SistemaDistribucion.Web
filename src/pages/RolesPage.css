@@ -1,8 +1,8 @@
 /* ============ CONTENEDOR GENERAL ============ */
 .roles-page {
-  min-height: 100vh;
   background-color: #f5f7fb;
   padding: 35px 20px;
+  box-sizing: border-box;
 }
 
 .roles-container {
@@ -74,7 +74,7 @@
 /* ============ TABLA ============ */
 .roles-table-container {
   padding: 20px 24px 24px 24px;
-  overflow-x: auto;
+  overflow: auto;
 }
 
 .roles-table {

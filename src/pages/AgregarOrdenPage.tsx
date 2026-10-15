@@ -298,7 +298,7 @@ function AgregarOrdenPage() {
               <button type="button" className="btn btn-outline-secondary btn-lg" onClick={cancelarOrden}>
                 ✖ Cancelar Orden
               </button>
-              <button type="submit" className="btn btn-primary btn-lg">💾 Guardar Orden Completa</button>
+              <button type="submit" className="btn btn-primary btn-lg"> Guardar Orden Completa</button>
             </div>
 
           </form>

@@ -37,8 +37,8 @@ function RolesPage() {
   }, [])
 
   return (
-    <div className="roles-page">
-      <div className="roles-container">
+    <div className="roles-page pagina-lista">
+      <div className="roles-container pagina-lista-interna">
 
         {/* ENCABEZADO */}
         <div className="roles-header">
@@ -51,7 +51,7 @@ function RolesPage() {
         </div>
 
         {/* TARJETA */}
-        <div className="roles-card">
+        <div className="roles-card tarjeta-lista">
 
           <div className="roles-card-header">
 
@@ -89,7 +89,7 @@ function RolesPage() {
           )}
 
           {/* TABLA */}
-          <div className="roles-table-container">
+          <div className="roles-table-container tabla-scroll">
 
             <table className="table table-bordered roles-table">
 

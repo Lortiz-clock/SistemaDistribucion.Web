@@ -1,8 +1,12 @@
 /* ============ CONTENEDOR GENERAL ============ */
 .modulos-page {
-  min-height: 100vh;
+  height: 100vh;             /* Se reemplaza min-height por height para fijar la altura al alto de pantalla */
+  box-sizing: border-box;    /* Evita que el padding aumente la altura total del contenedor */
+  overflow: hidden;          /* Elimina el scroll de la pantalla principal */
   background-color: #f5f7fb;
   padding: 35px 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 .modulos-container {

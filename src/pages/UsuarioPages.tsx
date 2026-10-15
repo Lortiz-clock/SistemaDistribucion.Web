@@ -49,9 +49,9 @@ function UsuarioPage() {
   }, [])
 
   return (
-    <div className="usuario-page">
+    <div className="usuario-page pagina-lista">
 
-      <div className="usuario-container">
+      <div className="usuario-container pagina-lista-interna">
 
         {/* ENCABEZADO */}
 
@@ -69,7 +69,7 @@ function UsuarioPage() {
 
         {/* TARJETA */}
 
-        <div className="usuario-card">
+        <div className="usuario-card tarjeta-lista">
 
           <div className="usuario-card-header">
   <h2 className="usuario-card-title">
@@ -110,7 +110,7 @@ function UsuarioPage() {
   />
 </div>
 
-<div className="usuario-table-container"></div>
+<div className="usuario-table-container tabla-scroll"></div>
 
           <div className="usuario-table-container">
 

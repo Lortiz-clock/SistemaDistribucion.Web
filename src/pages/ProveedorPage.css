@@ -1,7 +1,7 @@
 .proveedor-page {
-  min-height: 100vh;
   background-color: #f5f7fb;
   padding: 35px 20px;
+  box-sizing: border-box;;
 }
 
 .proveedor-container {
@@ -62,10 +62,6 @@
 .proveedor-mensaje {
   margin-bottom: 20px;
   border-radius: 8px;
-}
-
-.proveedor-table-container {
-  overflow-x: auto;
 }
 
 .proveedor-table {

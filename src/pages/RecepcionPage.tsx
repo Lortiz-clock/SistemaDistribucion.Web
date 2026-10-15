@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   abrirRecepcion, buscarRecepcion, cerrarRecepcion, cancelarRecepcion
 } from '../services/recepcionService'
@@ -12,16 +11,28 @@ import type { RecepcionDetalleConsulta, RecepcionPendiente } from '../interfaces
 import './RecepcionPage.css'
 import { tienePermiso } from '../utils/permisos'
 
+// Badge de días para la fecha de recepción (mismo criterio del listado de órdenes)
+const calcularEstadoFecha = (fechaResep: string) => {
+  if (!fechaResep) return { texto: 'Sin fecha', clase: 'bg-secondary' }
+
+  const fecha = new Date(fechaResep)
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+
+  const dias = Math.floor((fecha.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (dias > 0) return { texto: `Faltan ${dias} días`, clase: 'bg-info text-dark' }
+  if (dias === 0) return { texto: 'Llega hoy', clase: 'bg-warning text-dark' }
+  return { texto: `${Math.abs(dias)} días de atraso`, clase: 'bg-danger' }
+}
+
 function RecepcionPage() {
-  const navigate = useNavigate()
 
-  // ═══ FASE 1: ABRIR ═══
-  const [ordenesPendientes, setOrdenesPendientes] = useState<any[]>([])
-  const [codigoCompra, setCodigoCompra] = useState(0)
+  // ═══ LISTADO (órdenes por recibir) ═══
+  const [ordenesPorRecibir, setOrdenesPorRecibir] = useState<any[]>([])
   const [codigoBodega, setCodigoBodega] = useState(0)
-  const [abriendo, setAbriendo] = useState(false)
-
-  // ═══ FASE 2: REGISTRAR ═══
+  const [pendientes, setPendientes] = useState<RecepcionPendiente[]>([])
+  const [vista, setVista] = useState<'listado' | 'registro'>('listado')
   const [codigoRecepcion, setCodigoRecepcion] = useState(0)
   const [recepcion, setRecepcion] = useState<any>(null)
   const [detalles, setDetalles] = useState<RecepcionDetalleConsulta[]>([])
@@ -34,11 +45,9 @@ function RecepcionPage() {
     comentario: string
   } | null>(null)
 
-  // ═══ PANEL DE PENDIENTES (solo admin) ═══
-  const [pendientes, setPendientes] = useState<RecepcionPendiente[]>([])
-
   const [mensaje, setMensaje] = useState('')
   const [exito, setExito] = useState<boolean | null>(null)
+  const [abriendo, setAbriendo] = useState(false)
 
   // ⚠️ TODO: reemplazar por el código real del empleado logueado
   const codigoEmpleado = 1
@@ -46,38 +55,39 @@ function RecepcionPage() {
   // Permiso del rol para resolver líneas (solo el admin lo tiene)
   const puedeResolver = tienePermiso('/dashboard/recepcion', 'permiteEditar')
 
-  // ═══ CARGA INICIAL: órdenes pendientes + panel de autorizaciones ═══
+  // ═══ CARGA INICIAL ═══
   useEffect(() => {
-    const cargar = async () => {
-      try {
-        const respuesta = await consultarOrdenesCompra()
-        if (respuesta.exito && respuesta.datos) {
-          setOrdenesPendientes(
-            respuesta.datos.filter((o) => o.estado === 'Pendiente' || o.estado === 'EnProceso')
-          )
-        }
-      } catch {
-        setMensaje('No fue posible comunicarse con la API.')
-        setExito(false)
-      }
-    }
-    cargar()
+    cargarOrdenes()
+    if (puedeResolver) cargarPendientes()
   }, [])
 
-  useEffect(() => {
-    if (!puedeResolver) return
-    const cargarPendientes = async () => {
-      try {
-        const respuesta = await buscarPendientesAutorizacion()
-        if (respuesta.exito && respuesta.datos) {
-          setPendientes(respuesta.datos)
-        }
-      } catch {
-        // sin permiso o error: simplemente no muestra el panel
+  const cargarOrdenes = async () => {
+    try {
+      const respuesta = await consultarOrdenesCompra()
+      if (respuesta.exito && respuesta.datos) {
+        // Pendientes = por recibir; EnProceso = continuar donde quedó
+        setOrdenesPorRecibir(
+          respuesta.datos.filter((o) => o.estado === 'Pendiente' || o.estado === 'EnProceso')
+        )
       }
+    } catch {
+      setMensaje('No fue posible comunicarse con la API.')
+      setExito(false)
     }
-    cargarPendientes()
-  }, [puedeResolver])
+  }
+
+  const cargarPendientes = async () => {
+    try {
+      const respuesta = await buscarPendientesAutorizacion()
+      if (respuesta.exito && respuesta.datos) {
+        setPendientes(respuesta.datos)
+      }
+    } catch {
+      // sin permiso o error: no muestra el panel
+    }
+  }
+
+
 
   // ⚠️ Simplificación V1: bodegas fijas. Si tienes servicio de bodegas, úsalo.
   const bodegas = [
@@ -86,10 +96,10 @@ function RecepcionPage() {
     { codigoBodega: 3, nombre: 'Bodega No Contable' }
   ]
 
-  // ═══ ABRIR RECEPCIÓN (fase 1 → fase 2) ═══
-  const abrir = async () => {
-    if (codigoCompra === 0 || codigoBodega === 0) {
-      setMensaje('Selecciona la orden y la bodega destino.')
+  // ═══ RECIBIR una orden (desde el listado) ═══
+  const recibir = async (orden: any) => {
+    if (codigoBodega === 0) {
+      setMensaje('Selecciona la bodega destino antes de recibir.')
       setExito(false)
       return
     }
@@ -97,13 +107,14 @@ function RecepcionPage() {
     setAbriendo(true)
     try {
       const respuesta = await abrirRecepcion({
-        codigoCompra,
+        codigoCompra: orden.codigoCompra,
         codigoEmpleado,
         codigoBodega
       })
 
       if (respuesta.exito && respuesta.datos) {
         await cargarRecepcion(respuesta.datos)
+        setVista('registro')
       } else {
         setMensaje(respuesta.mensaje || 'No se pudo abrir la recepción.')
         setExito(false)
@@ -195,25 +206,18 @@ function RecepcionPage() {
   }
 
   // ═══ RESOLVER (admin): autorizar o rechazar ═══
-  // Recibe datos sueltos para servir a la tabla Y al panel de pendientes
   const resolver = async (codigoRecepcionDetalle: number, precioFacturado: number, autorizado: boolean) => {
     try {
       const respuesta = await resolverRecepcionDetalle({
         codigoRecepcionDetalle,
         autorizado,
-        // Autorizar = aceptar el precio de la factura → el detalle se corrige a ese precio
         nuevoPrecioCosto: autorizado ? precioFacturado : undefined
       })
 
       if (respuesta.exito) {
         setMensaje(autorizado ? 'Producto autorizado e ingresado.' : 'Producto rechazado.')
         setExito(true)
-        // Refresca el panel de pendientes (si es admin)
-        if (puedeResolver) {
-          const p = await buscarPendientesAutorizacion()
-          if (p.exito && p.datos) setPendientes(p.datos)
-        }
-        // Refresca la tabla si hay una recepción abierta
+        if (puedeResolver) await cargarPendientes()
         if (codigoRecepcion > 0) await cargarRecepcion(codigoRecepcion)
       } else {
         setMensaje(respuesta.mensaje || 'No se pudo resolver la línea.')
@@ -234,7 +238,9 @@ function RecepcionPage() {
       if (respuesta.exito) {
         setMensaje('✅ Recepción cerrada. Inventario actualizado.')
         setExito(true)
-        await cargarRecepcion(codigoRecepcion)
+        setVista('listado')
+        setRecepcion(null)
+        await cargarOrdenes()
       } else {
         setMensaje(respuesta.mensaje || 'No se pudo cerrar la recepción.')
         setExito(false)
@@ -245,7 +251,7 @@ function RecepcionPage() {
     }
   }
 
-  // ═══ CANCELAR RECEPCIÓN (orden equivocada) ═══
+  // ═══ CANCELAR RECEPCIÓN ═══
   const cancelar = async () => {
     if (!window.confirm('¿Cancelar la recepción? Se perderán los registros y la orden volverá a Pendiente.')) return
 
@@ -257,10 +263,8 @@ function RecepcionPage() {
         setCodigoRecepcion(0)
         setMensaje('Recepción cancelada. La orden volvió a Pendiente.')
         setExito(true)
-        const r = await consultarOrdenesCompra()
-        if (r.exito && r.datos) {
-          setOrdenesPendientes(r.datos.filter((o) => o.estado === 'Pendiente' || o.estado === 'EnProceso'))
-        }
+        setVista('listado')
+        await cargarOrdenes()
       } else {
         setMensaje(respuesta.mensaje || 'No se pudo cancelar la recepción.')
         setExito(false)
@@ -288,7 +292,7 @@ function RecepcionPage() {
 
         <div className="recepcion-header">
           <h1 className="recepcion-title">Recepción de Mercadería</h1>
-          <p className="recepcion-subtitle">Registra la mercadería que llega de los proveedores.</p>
+          <p className="recepcion-subtitle">Órdenes de compra pendientes de recibir.</p>
         </div>
 
         <div className="recepcion-card">
@@ -359,29 +363,13 @@ function RecepcionPage() {
             </div>
           )}
 
-          {/* ═════ FASE 1: SELECCIÓN ═════ */}
-          {!recepcion && (
+          {/* ═════ VISTA LISTADO: órdenes por recibir ═════ */}
+          {vista === 'listado' && (
             <div className="p-3">
-              <div className="row mb-3">
-                <div className="col-md-5 mb-3">
-                  <label className="form-label">Orden de Compra pendiente:</label>
-                  <select
-                    className="form-select"
-                    value={codigoCompra}
-                    onChange={(e) => setCodigoCompra(Number(e.target.value))}
-                  >
-                    <option value={0}>Seleccione la orden que llega...</option>
-                    {ordenesPendientes.map((o) => (
-                      <option key={o.codigoCompra} value={o.codigoCompra}>
-                        #{o.codigoCompra} — {o.nombreProveedor}
-                        {o.estado === 'EnProceso' ? ' (continuar recepción)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Bodega destino:</label>
+              <div className="row mb-3">
+                <div className="col-md-4">
+                  <label className="form-label">Bodega destino para las recepciones:</label>
                   <select
                     className="form-select"
                     value={codigoBodega}
@@ -395,22 +383,66 @@ function RecepcionPage() {
                     ))}
                   </select>
                 </div>
+              </div>
 
-                <div className="col-md-3 mb-3 d-flex align-items-end">
-                  <button
-                    className="btn btn-primary w-100"
-                    onClick={abrir}
-                    disabled={abriendo}
-                  >
-                    {abriendo ? 'Abriendo...' : '📦 Abrir Recepción'}
-                  </button>
-                </div>
+              <div className="table-responsive">
+                <table className="table table-bordered table-hover">
+                  <thead className="table-dark">
+                    <tr>
+                      <th className="text-center">Código</th>
+                      <th>Proveedor</th>
+                      <th>Fecha Emisión</th>
+                      <th>Fecha Recepción</th>
+                      <th className="text-center">Estado</th>
+                      <th className="text-center">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ordenesPorRecibir.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center text-muted py-4">
+                          No hay órdenes pendientes de recibir. 🎉
+                        </td>
+                      </tr>
+                    ) : (
+                      ordenesPorRecibir.map((orden) => {
+                        const estadoFecha = calcularEstadoFecha(orden.fechaResep)
+                        return (
+                          <tr key={orden.codigoCompra}>
+                            <td className="text-center">{orden.codigoCompra}</td>
+                            <td>{orden.nombreProveedor}</td>
+                            <td>{orden.fechaEmision?.split('T')[0]}</td>
+                            <td>
+                              <small className="text-muted d-block">{orden.fechaResep?.split('T')[0]}</small>
+                              <span className={`badge ${estadoFecha.clase}`}>{estadoFecha.texto}</span>
+                            </td>
+                            <td className="text-center">
+                              <span className={`badge ${orden.estado === 'EnProceso' ? 'bg-info text-dark' : 'bg-warning text-dark'}`}>
+                                {orden.estado === 'EnProceso' ? 'En Proceso' : 'Pendiente'}
+                              </span>
+                            </td>
+                            <td className="text-center">
+                              <button
+                                className={`btn btn-sm ${orden.estado === 'EnProceso' ? 'btn-outline-info' : 'btn-primary'}`}
+                                disabled={codigoBodega === 0 || abriendo}
+                                title={codigoBodega === 0 ? 'Selecciona la bodega destino primero' : ''}
+                                onClick={() => recibir(orden)}
+                              >
+                                {orden.estado === 'EnProceso' ? '▶ Continuar' : '📥 Recibir'}
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
 
-          {/* ═════ FASE 2: REGISTRAR ═════ */}
-          {recepcion && (
+          {/* ═════ VISTA REGISTRO ═════ */}
+          {vista === 'registro' && recepcion && (
             <div className="p-3">
 
               <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
@@ -528,7 +560,6 @@ function RecepcionPage() {
                                   {d.estadoDetalle === 'Rechazado' && <span className="badge bg-danger">Rechazado</span>}
                                 </td>
                                 <td className="text-center">
-                                  {/* SOLO el admin (permiteEditar) ve los botones de autorización */}
                                   {d.estadoDetalle === 'PendienteAutorizacion' && puedeResolver && (
                                     <div className="d-flex gap-1 justify-content-center">
                                       <button
@@ -581,20 +612,14 @@ function RecepcionPage() {
                   <strong>Q{totalRecibido.toFixed(2)}</strong>
                 </div>
 
-                {recepcion.estado === 'EnProceso' ? (
-                  <div className="d-flex gap-2">
-                    <button className="btn btn-outline-danger" onClick={cancelar}>
-                      ✖ Cancelar Recepción
-                    </button>
-                    <button className="btn btn-primary" onClick={cerrar}>
-                      🔒 Cerrar Recepción
-                    </button>
-                  </div>
-                ) : (
-                  <button className="btn btn-outline-secondary" onClick={() => navigate('/dashboard')}>
-                    Volver
+                <div className="d-flex gap-2">
+                  <button className="btn btn-outline-danger" onClick={cancelar}>
+                    ✖ Cancelar Recepción
                   </button>
-                )}
+                  <button className="btn btn-primary" onClick={cerrar}>
+                     Cerrar Recepción
+                  </button>
+                </div>
               </div>
 
             </div>
