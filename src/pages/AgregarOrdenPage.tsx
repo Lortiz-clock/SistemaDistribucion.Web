@@ -4,7 +4,7 @@ import type { DetalleCompraItem, OrdenCompraCompletaAgregar } from '../interface
 import './AgregarOrdenPage.css'
 import { consultarProducto } from '../services/productoServices'
 import { consultarProveedor } from '../services/proveedorServices'
-import ProductoBuscador from '../components/ProductoBuscador'
+import ProductoBuscador from './ProductoBuscador'
 
 interface ItemCarrito extends DetalleCompraItem {
   nombreProducto: string

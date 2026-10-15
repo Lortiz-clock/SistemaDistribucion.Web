@@ -1,236 +1,236 @@
-/* ═══ ESTRUCTURA GENERAL (fija: solo el contenido scrollea) ═══ */
-html, body {
-  height: 100%;
-  margin: 0;
-  overflow: hidden;
-}
-
-.layout-wrapper {
-  display: flex;
-  height: 100vh;
-  height: 100dvh;              /* antes min-height — ahora altura fija real */
-  overflow: hidden;
-  background-color: #0f172a;
-}
-
-/* ═══ SIDEBAR ═══ */
-.layout-sidebar {
-  width: 250px;
-  flex-shrink: 0;                             /* nunca se comprime */
-  background: rgba(30, 41, 59, 0.9);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  padding: 20px 0;
-  overflow-y: auto;                           /* el menú scrollea solo si crece */
-}
-
-.layout-sidebar-title {
-  color: #ffffff;
-  padding: 0 16px;
-  margin-bottom: 30px;
-  font-weight: 700;
-  position: sticky;
-  top: 0;
-  background: rgba(30, 41, 59, 0.95);         /* se mantiene al scrollear el menú */
-  z-index: 1;
-}
-
-.layout-nav-link {
-  color: #94a3b8 !important;
-  padding: 10px 16px;
-  border-radius: 8px;
-  margin: 2px 12px;
-  font-size: 0.95rem;
-  transition: background 0.2s, color 0.2s;
-  display: block;
-  width: calc(100% - 24px);
-  text-align: left;
-  border: none;                               /* para los botones del acordeón */
-}
-
-.layout-nav-link:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: #ffffff !important;
-}
-
-.layout-nav-link.active {
-  background: rgba(59, 130, 246, 0.2);
-  color: #ffffff !important;
-}
-
-/* ═══ ACORDEÓN (grupos del menú) ═══ */
-.layout-grupo-btn {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: #94a3b8 !important;
-  text-align: left;
-}
-
-.layout-grupo-btn:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: #ffffff !important;
-}
-
-.layout-submenu {
-  padding-left: 15px;
-  margin: 2px 12px;
-}
-
-.layout-submenu-link {
-  color: #94a3b8 !important;
-  padding: 8px 12px 8px 30px;
-  border-radius: 8px;
-  font-size: 0.88rem;
-  transition: background 0.2s, color 0.2s;
-  display: block;
-}
-
-.layout-submenu-link:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: #ffffff !important;
-}
-
-.layout-submenu-link.active {
-  background: rgba(59, 130, 246, 0.2);
-  color: #ffffff !important;
-}
-
-.layout-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;               
-  min-width: 0;                   
-}
-
-.layout-header {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 15px 30px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;                
-}
-
-.layout-header h5 {
-  color: #ffffff !important;
-}
-
-/* 👇 LA CLAVE: solo el contenido scrollea */
-.layout-content {
-  flex: 1;
-  padding: 30px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  color: #ffffff;
-  min-height: 0;
-}
-
-/* ═══ LISTAS: encabezados fijos + tabla con scroll interno ═══ */
-
-/* La tarjeta del listado: columna de altura máxima controlada.
-   El header de la tarjeta, el mensaje y los totales quedan fijos;
-   solo el contenedor de la tabla scrollea. */
-.tarjeta-lista {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-/* El contenedor de la tabla: el ÚNICO que scrollea */
-.tabla-scroll {
-  flex: 1;
-  overflow: auto;
-  min-height: 0;
-}
-
-/* Botón hamburguesa: oculto en escritorio */
-.layout-menu-toggle {
-  display: none;
-  background: transparent;
-  border: none;
-  color: #ffffff;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  margin-right: 12px;
-}
-
-/* Fondo oscuro detrás del menú abierto */
-.layout-overlay {
-  display: none;
-}
-
-/* ═══ TABLET Y MÓVIL ═══ */
-@media (max-width: 991px) {
-  .layout-menu-toggle {
-    display: block;
-  }
-
-  .layout-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
+  /* ═══ ESTRUCTURA GENERAL (fija: solo el contenido scrollea) ═══ */
+  html, body {
     height: 100%;
-    z-index: 1000;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    background: rgba(30, 41, 59, 0.98);
+    margin: 0;
+    overflow: hidden;
   }
 
-  .layout-sidebar.abierto {
-    transform: translateX(0);
+  .layout-wrapper {
+    display: flex;
+    height: 100vh;
+    height: 100dvh;              /* antes min-height — ahora altura fija real */
+    overflow: hidden;
+    background-color: #0f172a;
   }
 
-  .layout-overlay.visible {
+  /* ═══ SIDEBAR ═══ */
+  .layout-sidebar {
+    width: 250px;
+    flex-shrink: 0;                             /* nunca se comprime */
+    background: rgba(30, 41, 59, 0.9);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 20px 0;
+    overflow-y: auto;                           /* el menú scrollea solo si crece */
+  }
+
+  .layout-sidebar-title {
+    color: #ffffff;
+    padding: 0 16px;
+    margin-bottom: 30px;
+    font-weight: 700;
+    position: sticky;
+    top: 0;
+    background: rgba(30, 41, 59, 0.95);         /* se mantiene al scrollear el menú */
+    z-index: 1;
+  }
+
+  .layout-nav-link {
+    color: #94a3b8 !important;
+    padding: 10px 16px;
+    border-radius: 8px;
+    margin: 2px 12px;
+    font-size: 0.95rem;
+    transition: background 0.2s, color 0.2s;
     display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
+    width: calc(100% - 24px);
+    text-align: left;
+    border: none;                               /* para los botones del acordeón */
+  }
+
+  .layout-nav-link:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #ffffff !important;
+  }
+
+  .layout-nav-link.active {
+    background: rgba(59, 130, 246, 0.2);
+    color: #ffffff !important;
+  }
+
+  /* ═══ ACORDEÓN (grupos del menú) ═══ */
+  .layout-grupo-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #94a3b8 !important;
+    text-align: left;
+  }
+
+  .layout-grupo-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #ffffff !important;
+  }
+
+  .layout-submenu {
+    padding-left: 15px;
+    margin: 2px 12px;
+  }
+
+  .layout-submenu-link {
+    color: #94a3b8 !important;
+    padding: 8px 12px 8px 30px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    transition: background 0.2s, color 0.2s;
+    display: block;
+  }
+
+  .layout-submenu-link:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #ffffff !important;
+  }
+
+  .layout-submenu-link.active {
+    background: rgba(59, 130, 246, 0.2);
+    color: #ffffff !important;
+  }
+
+  .layout-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;               
+    min-width: 0;                   
   }
 
   .layout-header {
-    padding: 12px 16px;
-  }
-
-  .layout-content {
-    padding: 16px;
-  }
-}
-
-/* ═══ MÓVIL PEQUEÑO ═══ */
-@media (max-width: 575px) {
-  .layout-sidebar {
-    width: 80%;
-    max-width: 280px;
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 15px 30px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;                
   }
 
   .layout-header h5 {
-    font-size: 1rem;
+    color: #ffffff !important;
   }
 
+  /* 👇 LA CLAVE: solo el contenido scrollea */
   .layout-content {
-    padding: 12px;
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    color: #ffffff;
+    min-height: 0;
   }
-}
 
-.pagina-lista {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
+  /* ═══ LISTAS: encabezados fijos + tabla con scroll interno ═══ */
 
-.pagina-lista-interna {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
+  /* La tarjeta del listado: columna de altura máxima controlada.
+    El header de la tarjeta, el mensaje y los totales quedan fijos;
+    solo el contenedor de la tabla scrollea. */
+  .tarjeta-lista {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* El contenedor de la tabla: el ÚNICO que scrollea */
+  .tabla-scroll {
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+  }
+
+  /* Botón hamburguesa: oculto en escritorio */
+  .layout-menu-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    margin-right: 12px;
+  }
+
+  /* Fondo oscuro detrás del menú abierto */
+  .layout-overlay {
+    display: none;
+  }
+
+  /* ═══ TABLET Y MÓVIL ═══ */
+  @media (max-width: 991px) {
+    .layout-menu-toggle {
+      display: block;
+    }
+
+    .layout-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      z-index: 1000;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      background: rgba(30, 41, 59, 0.98);
+    }
+
+    .layout-sidebar.abierto {
+      transform: translateX(0);
+    }
+
+    .layout-overlay.visible {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
+
+    .layout-header {
+      padding: 12px 16px;
+    }
+
+    .layout-content {
+      padding: 16px;
+    }
+  }
+
+  /* ═══ MÓVIL PEQUEÑO ═══ */
+  @media (max-width: 575px) {
+    .layout-sidebar {
+      width: 80%;
+      max-width: 280px;
+    }
+
+    .layout-header h5 {
+      font-size: 1rem;
+    }
+
+    .layout-content {
+      padding: 12px;
+    }
+  }
+
+  .pagina-lista {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .pagina-lista-interna {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }

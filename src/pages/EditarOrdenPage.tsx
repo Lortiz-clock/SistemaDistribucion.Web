@@ -10,7 +10,7 @@ import {
 import './AgregarOrdenPage.css'
 import { consultarProducto } from '../services/productoServices'
 import { consultarProveedor } from '../services/proveedorServices'
-import ProductoBuscador from '../components/ProductoBuscador'
+import ProductoBuscador from './ProductoBuscador'
 
 // Item del carrito, con la marca de origen:
 // codigoDetalle > 0 = línea que ya existe en la BD

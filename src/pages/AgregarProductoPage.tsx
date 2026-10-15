@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { agregarProducto } from '../services/productoServices'
 import type { ProductoAgregar } from '../interfaces/ProductoAgregar'
 import './AgregarProductoPage.css'
 import { useNavigate } from 'react-router-dom'
+import { consultaCategoria } from '../services/categoriaServices'
+import type { CategoriaConsulta } from '../interfaces/CategoriaConsulta'
 
 export default function AgregarProductoPage() {
   const [producto, setProducto] = useState<ProductoAgregar>({
@@ -16,6 +18,27 @@ export default function AgregarProductoPage() {
   const navigate = useNavigate()
   const [mensaje, setMensaje] = useState('')
   const [exito, setExito] = useState<boolean | null>(null)
+
+  const [categorias, setCategorias] = useState<CategoriaConsulta[]>([])
+  const [busquedaCategoria, setBusquedaCategoria] = useState('')
+  const [mostrarCategorias, setMostrarCategorias] = useState(false)
+
+  useEffect(() => {
+    const cargarCategorias = async () => {
+      try {
+        const respuesta = await consultaCategoria()
+
+        if (respuesta.exito && respuesta.datos) {
+          setCategorias(respuesta.datos)
+        }
+      } catch {
+        setMensaje('No fue posible cargar las categorias')
+        setExito(false)
+      }
+    }
+
+    cargarCategorias()
+  }, [])
 
   const manejarCambio = (
     evento: React.ChangeEvent<
@@ -35,8 +58,28 @@ export default function AgregarProductoPage() {
     })
   }
 
+  const manejarBusquedaCategoria = (
+    evento: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setBusquedaCategoria(evento.target.value)
+    setProducto({ ...producto, codigoCategoria: 0 })
+    setMostrarCategorias(true)
+  }
+
+  const seleccionarCategoria = (categoria: CategoriaConsulta) => {
+    setProducto({ ...producto, codigoCategoria: categoria.codigoCategoria })
+    setBusquedaCategoria(categoria.nombre)
+    setMostrarCategorias(false)
+  }
+
   const guardarProducto = async (evento: React.FormEvent) => {
     evento.preventDefault()
+
+    if (producto.codigoCategoria === 0) {
+      setMensaje('Se debe seleccionar una categoría de la lista')
+      setExito(false)
+      return
+    }
 
     try {
       const respuesta = await agregarProducto(producto)
@@ -52,12 +95,17 @@ export default function AgregarProductoPage() {
           unidadesCaja: 0,
           estado: true,
         })
+        setBusquedaCategoria('')
       }
     } catch {
       setMensaje('No fue posible comunicarse con la API.')
       setExito(false)
     }
   }
+
+  const categoriasFiltradas = categorias.filter((categoria) =>
+    categoria.nombre.toLowerCase().includes(busquedaCategoria.toLowerCase())
+  )
 
   return (
     <div className="agregar-producto-page">
@@ -87,16 +135,49 @@ export default function AgregarProductoPage() {
           <form onSubmit={guardarProducto}>
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Código Categoría</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  name="codigoCategoria"
-                  value={producto.codigoCategoria}
-                  onChange={manejarCambio}
-                  min="1"
-                  required
-                />
+                <label className="form-label">Categoría</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Escribe para buscar una categoría"
+                    value={busquedaCategoria}
+                    onChange={manejarBusquedaCategoria}
+                    onFocus={() => setMostrarCategorias(true)}
+                    onBlur={() => setMostrarCategorias(false)}
+                    autoComplete="off"
+                  />
+
+                  {mostrarCategorias && (
+                    <ul
+                      className="list-group"
+                      style={{
+                        position: 'absolute',
+                        width: '100%',
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                        zIndex: 10,
+                      }}
+                    >
+                      {categoriasFiltradas.length === 0 ? (
+                        <li className="list-group-item text-muted">
+                          Sin resultados
+                        </li>
+                      ) : (
+                        categoriasFiltradas.map((categoria) => (
+                          <li
+                            key={categoria.codigoCategoria}
+                            className="list-group-item list-group-item-action"
+                            style={{ cursor: 'pointer' }}
+                            onMouseDown={() => seleccionarCategoria(categoria)}
+                          >
+                            {categoria.nombre}
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  )}
+                </div>
               </div>
 
               <div className="col-md-6 mb-3">
