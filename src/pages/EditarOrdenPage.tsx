@@ -8,7 +8,7 @@ import {
   eliminarDetalleCompra
 } from '../services/ordenCompraService'
 import './AgregarOrdenPage.css'
-import { consultarProducto } from '../services/productoServices'
+import { consultarProducto } from '../services/productoService'
 import { consultarProveedor } from '../services/proveedorServices'
 import ProductoBuscador from './ProductoBuscador'
 

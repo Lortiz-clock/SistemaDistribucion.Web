@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { consultarProducto } from '../services/productoServices'
+import { consultarProducto } from '../services/productoService'
 import type { ProductoConsulta } from '../interfaces/ProductoConsulta'
 import './ProductoPage.css'
 

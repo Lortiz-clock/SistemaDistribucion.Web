@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { agregarOrdenCompleta } from '../services/ordenCompraService'
 import type { DetalleCompraItem, OrdenCompraCompletaAgregar } from '../interfaces/OrdenCompraCompletaAgregar'
 import './AgregarOrdenPage.css'
-import { consultarProducto } from '../services/productoServices'
+import { consultarProducto } from '../services/productoService'
 import { consultarProveedor } from '../services/proveedorServices'
 import ProductoBuscador from './ProductoBuscador'
 

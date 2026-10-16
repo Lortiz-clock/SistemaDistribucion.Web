@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
-import { agregarProducto } from '../services/productoServices'
+import { agregarProducto } from '../services/productoService'
 import type { ProductoAgregar } from '../interfaces/ProductoAgregar'
 import './AgregarProductoPage.css'
 import { useNavigate } from 'react-router-dom'
 import { consultaCategoria } from '../services/categoriaServices'
 import type { CategoriaConsulta } from '../interfaces/CategoriaConsulta'
+import { consultarMarcas } from '../services/marcaService'
+import type { MarcaConsulta } from '../interfaces/MarcaConsulta'
 
 export default function AgregarProductoPage() {
   const [producto, setProducto] = useState<ProductoAgregar>({
@@ -23,6 +25,11 @@ export default function AgregarProductoPage() {
   const [busquedaCategoria, setBusquedaCategoria] = useState('')
   const [mostrarCategorias, setMostrarCategorias] = useState(false)
 
+  const [marcas, setMarcas] = useState<MarcaConsulta[]>([])
+  const [busquedaMarca, setBusquedaMarca] = useState('')
+  const [mostrarMarcas, setMostrarMarcas] = useState(false)
+
+
   useEffect(() => {
     const cargarCategorias = async () => {
       try {
@@ -38,6 +45,23 @@ export default function AgregarProductoPage() {
     }
 
     cargarCategorias()
+  }, [])
+
+  useEffect(() => {
+    const cargarMarcasas = async () => {
+      try {
+        const respuesta = await consultarMarcas()
+
+        if (respuesta.exito && respuesta.datos) {
+          setMarcas(respuesta.datos)
+        }
+      } catch {
+        setMensaje('No fue posible cargar las marcas')
+        setExito(false)
+      }
+    }
+
+    cargarMarcasas()
   }, [])
 
   const manejarCambio = (
@@ -72,6 +96,19 @@ export default function AgregarProductoPage() {
     setMostrarCategorias(false)
   }
 
+  const manejarBusquedaMarca = (evento: React.ChangeEvent<HTMLInputElement>) => {
+  setBusquedaMarca(evento.target.value)
+  setProducto({ ...producto, codigoMarca: 0 })
+  setMostrarMarcas(true)
+}
+
+const seleccionarMarca = (marca: MarcaConsulta) => {
+  setProducto({ ...producto, codigoMarca: marca.codigoMarca })
+  setBusquedaMarca(marca.nombre)
+  setMostrarMarcas(false)
+}
+
+
   const guardarProducto = async (evento: React.FormEvent) => {
     evento.preventDefault()
 
@@ -80,6 +117,13 @@ export default function AgregarProductoPage() {
       setExito(false)
       return
     }
+
+    if (producto.codigoMarca === 0) {
+      setMensaje('Se debe seleccionar una marca de la lista')
+      setExito(false)
+      return
+}
+
 
     try {
       const respuesta = await agregarProducto(producto)
@@ -96,6 +140,7 @@ export default function AgregarProductoPage() {
           estado: true,
         })
         setBusquedaCategoria('')
+        setBusquedaMarca('')
       }
     } catch {
       setMensaje('No fue posible comunicarse con la API.')
@@ -106,6 +151,11 @@ export default function AgregarProductoPage() {
   const categoriasFiltradas = categorias.filter((categoria) =>
     categoria.nombre.toLowerCase().includes(busquedaCategoria.toLowerCase())
   )
+
+  const marcasFiltradas = marcas.filter((marca) =>
+  marca.nombre.toLowerCase().includes(busquedaMarca.toLowerCase())
+)
+
 
   return (
     <div className="agregar-producto-page">
@@ -181,18 +231,47 @@ export default function AgregarProductoPage() {
               </div>
 
               <div className="col-md-6 mb-3">
-                <label className="form-label">Código Marca</label>
+                <label className="form-label">Marca</label>
                 <input
-                  type="number"
+                  type="text"
                   className="form-control"
-                  name="codigoMarca"
-                  value={producto.codigoMarca}
-                  onChange={manejarCambio}
-                  min="1"
-                  required
-                />
+                  placeholder="Escribe para buscar una marca"
+                  value={busquedaMarca}
+                  onChange={manejarBusquedaMarca}
+                  onFocus={() => setMostrarMarcas(true)}
+                  onBlur={() => setMostrarMarcas(false)}
+                  autoComplete='off'
+                /> 
+                {mostrarMarcas &&(
+                  <ul 
+                  className= "list-group"
+                  style={{
+                    position:'absolute',
+                    width: '100%',
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    zIndex: 10,
+                  }}
+                       >
+                    {marcasFiltradas.length === 0 ? (
+                      <li className="list-group-item text-muted">Sin resultados</li>
+                    ) : (
+                      marcasFiltradas.map((marca) => (
+                        <li
+                          key={marca.codigoMarca}
+                          className="list-group-item list-group-item-action"
+                          style={{ cursor: 'pointer' }}
+                          onMouseDown={() => seleccionarMarca(marca)}
+                        >
+                          {marca.nombre}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
               </div>
             </div>
+
 
             <div className="row">
               <div className="col-md-6 mb-3">
