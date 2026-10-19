@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   Users, Package, Truck, ShoppingCart, ClipboardList,
   ShieldCheck, LayoutDashboard, Boxes, ClipboardCheck,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, PackageOpen
 } from 'lucide-react'
 import './Layout.css'
 import { obtenerNombreUsuario } from '../services/authService'
@@ -11,7 +11,7 @@ import type { Modulo } from '../interfaces/UsuarioLogin'
 
 const iconosDisponibles: Record<string, any> = {
   Users, Package, Truck, ShoppingCart, ClipboardList,
-  ShieldCheck, Boxes, ClipboardCheck
+  ShieldCheck, Boxes, ClipboardCheck, PackageOpen
 }
 
 // ═══ Definición de grupos: módulos que se muestran juntos ═══

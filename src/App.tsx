@@ -26,6 +26,7 @@ import RolFormularioPage from './pages/RolFormularioPage'
 // Importaciones del módulo de Recepción
 import RecepcionPage from './pages/RecepcionPage'
 
+import InventarioPage from './pages/InventarioPage'
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
   return estaLogueado ? children : <Navigate to="/" replace />
@@ -106,6 +107,8 @@ function App() {
 
           {/* RUTAS DEL MÓDULO RECEPCIÓN */}
           <Route path="recepcion" element={<RutaModulo><RecepcionPage /></RutaModulo>} />
+          <Route path="inventario" element={<InventarioPage/>} />
+
         </Route>
       </Routes>
     </BrowserRouter>

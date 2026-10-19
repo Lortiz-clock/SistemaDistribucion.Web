@@ -1,0 +1,137 @@
+/* InventarioPage.css */
+
+.inventario-page {
+  min-height: 100vh;
+  background-color: #f5f7fb;
+  padding: 35px 20px;
+}
+
+.inventario-container {
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.inventario-header {
+  margin-bottom: 25px;
+}
+
+.inventario-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.inventario-subtitle {
+  margin-top: 6px;
+  margin-bottom: 0;
+  font-size: 15px;
+  color: #6b7280;
+}
+
+.inventario-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+  padding: 25px;
+}
+
+.inventario-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.inventario-card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.inventario-total {
+  font-size: 14px;
+  color: #6b7280;
+  background-color: #f3f4f6;
+  padding: 5px 12px;
+  border-radius: 20px;
+}
+
+.inventario-mensaje {
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.inventario-table-container {
+  overflow-x: auto;
+}
+
+.inventario-table {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.inventario-table thead {
+  background-color: #1f2937;
+  color: #ffffff;
+}
+
+.inventario-table th,
+.inventario-table td {
+  vertical-align: middle;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+/* Anchos y alineación opcionales para las columnas de inventario */
+.col-producto {
+  min-width: 180px;
+}
+
+.col-bodega {
+  min-width: 140px;
+}
+
+.col-stock {
+  min-width: 100px;
+  text-align: center;
+}
+
+.col-vencimiento {
+  min-width: 140px;
+}
+
+.col-acciones {
+  min-width: 140px;
+  text-align: center;
+}
+
+.sin-registros {
+  text-align: center;
+  padding: 25px !important;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .inventario-page {
+    padding: 20px 10px;
+  }
+
+  .inventario-title {
+    font-size: 24px;
+  }
+
+  .inventario-card {
+    padding: 18px;
+  }
+
+  .inventario-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
