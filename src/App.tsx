@@ -25,6 +25,14 @@ import RolesPage from './pages/RolesPage'
 import RolFormularioPage from './pages/RolFormularioPage'
 // Importaciones del módulo de Recepción
 import RecepcionPage from './pages/RecepcionPage'
+// Importaciones del módulo de Empleados
+import EmpleadoPage from './pages/EmpleadoPage'
+import AgregarEmpleadoPage from './pages/AgregarEmpleadoPage'
+import EditarEmpleadoPage from './pages/EditarEmpleadoPage'
+// Importaciones del módulo de Categorías
+import CategoriaPage from './pages/CategoriaPage'
+import AgregarCategoriaPage from './pages/AgregarCategoriaPage'
+import EditarCategoriaPage from './pages/EditarCategoriaPage'
 
 import InventarioPage from './pages/InventarioPage'
 import ClientesPage from './pages/ClientesPage'
@@ -113,6 +121,16 @@ function App() {
           <Route path="inventario" element={<InventarioPage/>} />
           <Route path="clientes" element={<RutaModulo><ClientesPage /></RutaModulo>} />
           <Route path="clientes/agregar" element={<RutaModulo><AgregarClientePage /></RutaModulo>} />
+
+          {/* RUTAS DEL MÓDULO EMPLEADOS */}
+          <Route path="empleados" element={<RutaModulo><EmpleadoPage /></RutaModulo>} />
+          <Route path="empleados/agregar" element={<RutaModulo><AgregarEmpleadoPage /></RutaModulo>} />
+          <Route path="empleados/editar/:codigoEmpleado" element={<RutaModulo><EditarEmpleadoPage /></RutaModulo>} />
+
+          {/* RUTAS DEL MÓDULO CATEGORÍAS */}
+          <Route path="categorias" element={<RutaModulo><CategoriaPage /></RutaModulo>} />
+          <Route path="categorias/agregar" element={<RutaModulo><AgregarCategoriaPage /></RutaModulo>} />
+          <Route path="categorias/editar/:codigoCategoria" element={<RutaModulo><EditarCategoriaPage /></RutaModulo>} />
 
         </Route>
       </Routes>
