@@ -2,8 +2,8 @@ export interface AgregarCliente {
      nombre: string
     nit: string
     direccion: string
-    refererncia: string
-    latitud: number
-    longitud: number
-    estado: number
+    referencia: string
+    latitud: number | null
+    longitud: number | null
+    estado: boolean
 }

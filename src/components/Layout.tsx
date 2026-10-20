@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   Users, Package, Truck, ShoppingCart, ClipboardList,
   ShieldCheck, LayoutDashboard, Boxes, ClipboardCheck,
-  ChevronDown, ChevronRight, PackageOpen
+  ChevronDown, ChevronRight, PackageOpen, MapPin
 } from 'lucide-react'
 import './Layout.css'
 import { obtenerNombreUsuario } from '../services/authService'
@@ -11,7 +11,7 @@ import type { Modulo } from '../interfaces/UsuarioLogin'
 
 const iconosDisponibles: Record<string, any> = {
   Users, Package, Truck, ShoppingCart, ClipboardList,
-  ShieldCheck, Boxes, ClipboardCheck, PackageOpen
+  ShieldCheck, Boxes, ClipboardCheck, PackageOpen, MapPin
 }
 
 // ═══ Definición de grupos: módulos que se muestran juntos ═══
@@ -96,8 +96,7 @@ function Layout() {
     }
   }, [navigate])
 
-  // Auto-abre el grupo si estás navegando dentro de él
-  // ✅ Bien: los dos al mismo nivel, uno debajo del otro
+ 
 useEffect(() => {
   const ruta = location.pathname
   if (ruta.startsWith('/dashboard/ordenes') || ruta.startsWith('/dashboard/recepcion')) {

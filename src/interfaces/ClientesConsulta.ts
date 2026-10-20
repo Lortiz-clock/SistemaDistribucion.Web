@@ -3,7 +3,7 @@ export interface ClientesConsulta {
     nombre: string
     nit: string
     direccion: string
-    refererncia: string
+    referencia: string
     latitud: number
     longitud: number
     estado: number

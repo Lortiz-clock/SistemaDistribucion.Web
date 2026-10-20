@@ -27,6 +27,9 @@ import RolFormularioPage from './pages/RolFormularioPage'
 import RecepcionPage from './pages/RecepcionPage'
 
 import InventarioPage from './pages/InventarioPage'
+import ClientesPage from './pages/ClientesPage'
+import AgregarClientePage from './pages/AgregarClientePage'
+
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
   return estaLogueado ? children : <Navigate to="/" replace />
@@ -108,6 +111,8 @@ function App() {
           {/* RUTAS DEL MÓDULO RECEPCIÓN */}
           <Route path="recepcion" element={<RutaModulo><RecepcionPage /></RutaModulo>} />
           <Route path="inventario" element={<InventarioPage/>} />
+          <Route path="clientes" element={<RutaModulo><ClientesPage /></RutaModulo>} />
+          <Route path="clientes/agregar" element={<RutaModulo><AgregarClientePage /></RutaModulo>} />
 
         </Route>
       </Routes>
