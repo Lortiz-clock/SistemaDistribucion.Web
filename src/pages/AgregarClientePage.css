@@ -33,12 +33,9 @@
   border: 1px solid #e5e7eb;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
   padding: 25px;
-  color: #1f2937
+  color: #1f2937;
 }
 
-.agregar-cliente-card .leaflet-container {
-  z-index: 0;
-}
 .agregar-cliente-card h5 {
   color: #1f2937;
   font-weight: 700;
@@ -58,4 +55,8 @@
 
 .agregar-cliente-card .text-muted {
   color: #6b7280 !important;
+}
+
+.agregar-cliente-card .leaflet-container {
+  z-index: 0;
 }
