@@ -53,14 +53,13 @@ export default function EmpleadoPage() {
   }
 
   const borrarEmpleado = async (codigoEmpleado: number) => {
-    if (!window.confirm('¿Eliminar este empleado?')) return
-
+    if (!window.confirm('¿Borrar este empleado?')) return
     try {
       const respuesta = await eliminarEmpleado(codigoEmpleado)
       setMensaje(respuesta.mensaje)
       if (respuesta.exito) await cargarEmpleados()
     } catch {
-      setMensaje('No se pudo eliminar. Puede que el empleado esté relacionado con un usuario.')
+      setMensaje('No se pudo borrar el empleado.')
     }
   }
 
@@ -139,7 +138,7 @@ export default function EmpleadoPage() {
                           >
                             Detalle
                           </button>
-                          <button
+                                                    <button
                             className="btn btn-sm btn-outline-warning"
                             onClick={() =>
                               navigate(`/dashboard/empleados/editar/${item.codigoEmpleado}`)
@@ -150,8 +149,10 @@ export default function EmpleadoPage() {
                           <button
                             className="btn btn-sm btn-outline-danger"
                             onClick={() => borrarEmpleado(item.codigoEmpleado)}
+                            disabled={!item.estado}
+                            title={item.estado ? 'Borrar empleado' : 'El empleado ya está inactivo'}
                           >
-                            Eliminar
+                            Borrar
                           </button>
                         </div>
                       </td>

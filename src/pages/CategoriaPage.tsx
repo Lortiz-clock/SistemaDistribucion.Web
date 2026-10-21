@@ -48,14 +48,14 @@ export default function CategoriaPage() {
   }
 
   const borrarCategoria = async (codigoCategoria: number) => {
-    if (!window.confirm('¿Eliminar esta categoría?')) return
+    if (!window.confirm('¿Borrar esta categoría?')) return
 
     try {
       const respuesta = await eliminarCategoria(codigoCategoria)
       setMensaje(respuesta.mensaje)
       if (respuesta.exito) await cargarCategorias()
     } catch {
-      setMensaje('No se pudo eliminar. Puede que la categoría esté siendo usada por productos.')
+      setMensaje('No se pudo borrar la categoría.')
     }
   }
 
@@ -133,13 +133,13 @@ export default function CategoriaPage() {
                             }
                           >
                             Editar
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
+                            </button>
+                            <button
+                             className="btn btn-sm btn-outline-danger"
                             onClick={() => borrarCategoria(item.codigoCategoria)}
                           >
-                            Eliminar
-                          </button>
+                             Borrar
+                              </button>
                         </div>
                       </td>
                     </tr>
