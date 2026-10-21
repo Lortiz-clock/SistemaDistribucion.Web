@@ -2,7 +2,7 @@ import api from './api'
 
 import type { RespuestaApi } from '../interfaces/RespuestaApi'
 
-import type { InventarioConsultar } from '../interfaces/InventarioCondulta'
+import type { InventarioConsultar } from '../interfaces/InventarioConsulta'
 
 export const consultarInventario = async () => {
     const Respuesta =

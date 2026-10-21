@@ -1,6 +1,7 @@
+import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { consultarInventario } from '../services/inventarioService'
-import type { InventarioConsultar } from '../interfaces/InventarioCondulta'
+import type { InventarioConsultar } from '../interfaces/InventarioConsulta'
 import './InventarioPage.css'
 
 const formatearFecha = (fecha: string | null) => {
@@ -62,6 +63,9 @@ export default function InventarioPage() {
             <h2 className="inventario-card-title">Inventarios registrados</h2>
             <div className="d-flex align-items-center gap-3">
               <span className="inventario-total">
+                <Link to="/dashboard/inventario/ajustes" className="btn btn-primary btn-sm">
+                Ajustar inventario
+                </Link>
                 Total: {inventario.length}
               </span>
               
