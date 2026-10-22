@@ -39,6 +39,15 @@ import ClientesPage from './pages/ClientesPage'
 import AgregarClientePage from './pages/AgregarClientePage'
 import AjusteInventarioPage from './pages/AjusteInventarioPage'
 
+// Importaciones del módulo de Vendedores
+import VendedorPage from './pages/VendedorPage'
+import AgregarVendedorPage from './pages/AgregarVendedorPage'
+import EditarVendedorPage from './pages/EditarVendedorPage'
+// Importaciones del módulo de Repartidores
+import RepartidorPage from './pages/RepartidorPage'
+import AgregarRepartidorPage from './pages/AgregarRepartidorPage'
+import EditarRepartidorPage from './pages/EditarRepartidorPage'
+
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
   return estaLogueado ? children : <Navigate to="/" replace />
@@ -133,6 +142,16 @@ function App() {
           <Route path="categorias" element={<RutaModulo><CategoriaPage /></RutaModulo>} />
           <Route path="categorias/agregar" element={<RutaModulo><AgregarCategoriaPage /></RutaModulo>} />
           <Route path="categorias/editar/:codigoCategoria" element={<RutaModulo><EditarCategoriaPage /></RutaModulo>} />
+          
+          {/* RUTAS DEL MÓDULO VENDEDORES */}
+          <Route path="vendedores" element={<RutaModulo><VendedorPage /></RutaModulo>} />
+          <Route path="vendedores/agregar" element={<RutaModulo><AgregarVendedorPage /></RutaModulo>} />
+          <Route path="vendedores/editar/:codigoVendedor" element={<RutaModulo><EditarVendedorPage /></RutaModulo>} />
+
+          {/* RUTAS DEL MÓDULO REPARTIDORES */}
+          <Route path="repartidores" element={<RutaModulo><RepartidorPage /></RutaModulo>} />
+          <Route path="repartidores/agregar" element={<RutaModulo><AgregarRepartidorPage /></RutaModulo>} />
+          <Route path="repartidores/editar/:codigoRepartidor" element={<RutaModulo><EditarRepartidorPage /></RutaModulo>} />
 
         </Route>
       </Routes>
