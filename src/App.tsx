@@ -47,6 +47,10 @@ import EditarVendedorPage from './pages/EditarVendedorPage'
 import RepartidorPage from './pages/RepartidorPage'
 import AgregarRepartidorPage from './pages/AgregarRepartidorPage'
 import EditarRepartidorPage from './pages/EditarRepartidorPage'
+import MarcasPage from './pages/MarcasPage'
+import AgregarMarcaPage from './pages/AgregarMarcaPage'
+import EditarMarcaPage from './pages/EditarMarcaPage'
+
 
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
@@ -152,6 +156,10 @@ function App() {
           <Route path="repartidores" element={<RutaModulo><RepartidorPage /></RutaModulo>} />
           <Route path="repartidores/agregar" element={<RutaModulo><AgregarRepartidorPage /></RutaModulo>} />
           <Route path="repartidores/editar/:codigoRepartidor" element={<RutaModulo><EditarRepartidorPage /></RutaModulo>} />
+
+          <Route path="marcas" element={<RutaModulo><MarcasPage /></RutaModulo>} />
+          <Route path="marcas/agregar" element={<RutaModulo><AgregarMarcaPage /></RutaModulo>} />
+          <Route path="marcas/editar/:codigoMarca" element={<RutaModulo><EditarMarcaPage /></RutaModulo>} />
 
         </Route>
       </Routes>
