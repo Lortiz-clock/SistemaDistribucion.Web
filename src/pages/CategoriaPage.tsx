@@ -47,15 +47,15 @@ export default function CategoriaPage() {
     }
   }
 
-  const borrarCategoria = async (codigoCategoria: number) => {
-    if (!window.confirm('¿Borrar esta categoría?')) return
+  const desactivarCategoria = async (codigoCategoria: number) => {
+    if (!window.confirm('¿Desactivar esta categoría? Quedará inactiva, pero se conserva su historial.')) return
 
     try {
       const respuesta = await eliminarCategoria(codigoCategoria)
       setMensaje(respuesta.mensaje)
       if (respuesta.exito) await cargarCategorias()
     } catch {
-      setMensaje('No se pudo borrar la categoría.')
+      setMensaje('No se pudo desactivar la categoría.')
     }
   }
 
@@ -136,9 +136,9 @@ export default function CategoriaPage() {
                             </button>
                             <button
                              className="btn btn-sm btn-outline-danger"
-                            onClick={() => borrarCategoria(item.codigoCategoria)}
+                            onClick={() => desactivarCategoria(item.codigoCategoria)}
                           >
-                             Borrar
+                             Desactivar
                               </button>
                         </div>
                       </td>

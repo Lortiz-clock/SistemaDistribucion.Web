@@ -53,7 +53,7 @@ export default function EmpleadoPage() {
   }
 
   const borrarEmpleado = async (codigoEmpleado: number) => {
-    if (!window.confirm('¿Borrar este empleado?')) return
+    if (!window.confirm('¿Desactivar este empleado? Quedará inactivo, pero se conserva su historial.')) return
     try {
       const respuesta = await eliminarEmpleado(codigoEmpleado)
       setMensaje(respuesta.mensaje)
@@ -148,11 +148,11 @@ export default function EmpleadoPage() {
                           </button>
                           <button
                             className="btn btn-sm btn-outline-danger"
-                            onClick={() => borrarEmpleado(item.codigoEmpleado)}
-                            disabled={!item.estado}
-                            title={item.estado ? 'Borrar empleado' : 'El empleado ya está inactivo'}
+                           onClick={() => borrarEmpleado(item.codigoEmpleado)}
+                          disabled={!item.estado}
+                          title={item.estado ? 'Desactivar empleado' : 'El empleado ya está inactivo'}
                           >
-                            Borrar
+                          Desactivar
                           </button>
                         </div>
                       </td>
