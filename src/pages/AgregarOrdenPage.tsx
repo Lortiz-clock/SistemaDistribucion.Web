@@ -12,6 +12,10 @@ interface ItemCarrito extends DetalleCompraItem {
   precioSugerido: string
 }
 
+// Unidades que trae una caja, tomadas del catalogo de productos.
+// El factor viene de tbl_Productos.UnidadesCaja (unidades por caja).
+const obtenerFactorCaja = (producto: any): number => Number(producto?.unidadesCaja) || 0
+
 function AgregarOrdenPage() {
   const [orden, setOrden] = useState<Omit<OrdenCompraCompletaAgregar, 'detalles'>>({
     codigoProveedor: 0,
@@ -31,6 +35,19 @@ function AgregarOrdenPage() {
 
   const [mensaje, setMensaje] = useState('')
   const [exito, setExito] = useState<boolean | null>(null)
+
+  // -- Conversion a cajas --
+  const [cajasPedidas, setCajasPedidas] = useState(0)
+  const productoActual = productos.find((p) => p.codigoProducto === codigoProducto)
+  const factorCaja = obtenerFactorCaja(productoActual)
+  // Lo que se guarda siempre son UNIDADES: cajas x factor + sueltas
+  const unidadesTotales = (cajasPedidas * factorCaja) + cantidadPedida
+
+  const desglosarCajas = (codigoProd: number, unidades: number) => {
+    const factor = obtenerFactorCaja(productos.find((p) => p.codigoProducto === codigoProd))
+    if (factor <= 1) return `${unidades} un.`
+    return `${Math.floor(unidades / factor)} cajas + ${unidades % factor} sueltas`
+  }
 
   useEffect(() => {
   const cargarDatos = async () => {
@@ -52,7 +69,7 @@ function AgregarOrdenPage() {
 }, [])
 
   const agregarAlCarrito = () => {
-    if (codigoProducto === 0 || cantidadPedida <= 0 || precioCosto <= 0) {
+    if (codigoProducto === 0 || unidadesTotales <= 0 || precioCosto <= 0) {
       setMensaje('Completa los datos del producto.')
       setExito(false)
       return
@@ -66,7 +83,7 @@ function AgregarOrdenPage() {
     const nuevoProducto: ItemCarrito = {
       codigoProducto,
       nombreProducto: productoElegido?.nombre ?? '',
-      cantidadPedida,
+      cantidadPedida: unidadesTotales,
       precioCosto,
       margenMinimoPct,
       metaUtilidadPct,
@@ -79,6 +96,7 @@ function AgregarOrdenPage() {
 
     setCodigoProducto(0)
     setCantidadPedida(0)
+    setCajasPedidas(0)
     setPrecioCosto(0)
     setMargenMinimoPct(0)
     setMetaUtilidadPct(0)
@@ -98,6 +116,7 @@ function AgregarOrdenPage() {
     setOrden({ codigoProveedor: 0, fechaResep: '' })
     setCodigoProducto(0)
     setCantidadPedida(0)
+    setCajasPedidas(0)
     setPrecioCosto(0)
     setMargenMinimoPct(0)
     setMetaUtilidadPct(0)
@@ -211,8 +230,11 @@ function AgregarOrdenPage() {
                 />
               </div>
               <div className="col-md-2">
-                <label className="form-label">Cantidad:</label>
-                <input type="number" className="form-control" placeholder="Cantidad" value={cantidadPedida || ''} onChange={(e) => setCantidadPedida(Number(e.target.value))} />
+                <label className="form-label">Cajas / Sueltas:</label>
+                <div className="d-flex gap-1">
+                  <input type="number" min={0} className="form-control" placeholder="Cajas" title="Cajas" disabled={factorCaja <= 1} value={cajasPedidas || ''} onChange={(e) => setCajasPedidas(Number(e.target.value))} />
+                  <input type="number" min={0} className="form-control" placeholder="Suel." title="Unidades sueltas" value={cantidadPedida || ''} onChange={(e) => setCantidadPedida(Number(e.target.value))} />
+                </div>
               </div>
               <div className="col-md-2">
                 <label className="form-label">Costo (Q):</label>
@@ -229,6 +251,15 @@ function AgregarOrdenPage() {
               <div className="col-md-1">
                 <button type="button" className="btn btn-success w-100" onClick={agregarAlCarrito}>+</button>
               </div>
+              {codigoProducto !== 0 && (
+                <div className="col-12 mt-2">
+                  <small className="text-muted">
+                    {factorCaja > 1 ? `1 caja = ${factorCaja} un.` : 'Este producto no tiene factor de caja (solo unidades)'}
+                    {' · '}Total a pedir: <strong>{unidadesTotales}</strong> un.
+                    {factorCaja > 1 && ` (${cajasPedidas} cajas + ${cantidadPedida} sueltas)`}
+                  </small>
+                </div>
+              )}
             </div>
 
             <div className="table-responsive mb-4">
@@ -236,7 +267,7 @@ function AgregarOrdenPage() {
                 <thead className="table-dark">
                   <tr>
                     <th>Producto</th>
-                    <th>Cantidad</th>
+                    <th>Cantidad (un.)</th>
                     <th>Costo</th>
                     <th>Mín %</th>
                     <th>Meta %</th>
@@ -253,7 +284,7 @@ function AgregarOrdenPage() {
                     carrito.map((item, index) => (
                       <tr key={index}>
                         <td>{item.nombreProducto}</td>
-                        <td>{item.cantidadPedida}</td>
+                        <td>{item.cantidadPedida}<small className="text-muted d-block">{desglosarCajas(item.codigoProducto, item.cantidadPedida)}</small></td>
                         <td>Q{item.precioCosto}</td>
                         <td>{item.margenMinimoPct}%</td>
                         <td>{item.metaUtilidadPct}%</td>

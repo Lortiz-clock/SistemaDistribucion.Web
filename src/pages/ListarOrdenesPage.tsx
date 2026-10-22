@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { consultarOrdenesCompra, buscarDetalleCompra } from '../services/ordenCompraService'
 import type { OrdenCompraConsultar } from '../interfaces/OrdenCompraConsultar'
 import type { DetalleCompraConsultar } from '../interfaces/DetalleCompraConsultar'
+import { consultarProducto } from '../services/productoService'
+
+// 2026-10-16T00:00:00  ->  16/10/2026
+const formatearFecha = (fecha: string | null | undefined) => {
+  if (!fecha) return '—'
+  const [anio, mes, dia] = fecha.substring(0, 10).split('-')
+  return `${dia}/${mes}/${anio}`
+}
 
 const calcularEstadoFecha = (fechaResep: string) => {
   if (!fechaResep) return { texto: 'Sin fecha', clase: 'bg-secondary' }
@@ -33,6 +41,29 @@ function ListarOrdenesPage() {
   const [detalles, setDetalles] = useState<DetalleCompraConsultar[]>([])
   const [mostrarModal, setMostrarModal] = useState(false)
   const [cargandoDetalle, setCargandoDetalle] = useState(false)
+  const [productos, setProductos] = useState<any[]>([])
+
+  // Equivalente en cajas + sueltas, usando tbl_Productos.UnidadesCaja
+  const textoCajas = (nombreProducto: string, unidades: number) => {
+    const producto = productos.find((p) => p.nombre === nombreProducto)
+    const factor = Number(producto?.unidadesCaja) || 0
+    if (factor <= 1) return '—'
+    return `${Math.floor(unidades / factor)} cajas + ${unidades % factor} sueltas`
+  }
+
+  useEffect(() => {
+    const cargarProductos = async () => {
+      try {
+        const respuesta = await consultarProducto()
+        if (respuesta.exito && Array.isArray(respuesta.datos)) {
+          setProductos(respuesta.datos)
+        }
+      } catch (error) {
+        console.error('Error al cargar productos', error)
+      }
+    }
+    cargarProductos()
+  }, [])
 
   useEffect(() => {
     const cargarOrdenes = async () => {
@@ -179,9 +210,9 @@ function ListarOrdenesPage() {
           <div className="modal-dialog modal-lg">
             <div className="modal-content p-4">
               <h5>Orden de Compra #{ordenSeleccionada.codigoCompra}</h5>
-              <p className="mb-1"><strong>Fecha Emisión:</strong> {ordenSeleccionada.fechaEmision?.split('T')[0]}</p>
-              <p className="mb-3"><strong>Fecha Recepción:</strong> {ordenSeleccionada.fechaResep?.split('T')[0]}</p>
-              <p className="mb-3"><strong>Fecha Recepción:</strong> {ordenSeleccionada.fechaResep}</p>
+              <p className="mb-1"><strong>Proveedor:</strong> {ordenSeleccionada.nombreProveedor}</p>
+              <p className="mb-1"><strong>Fecha Emisión:</strong> {formatearFecha(ordenSeleccionada.fechaEmision)}</p>
+              <p className="mb-3"><strong>Fecha Recepción:</strong> {formatearFecha(ordenSeleccionada.fechaResep)}</p>
               <hr />
 
               {cargandoDetalle ? (
@@ -192,7 +223,8 @@ function ListarOrdenesPage() {
                   <thead>
                     <tr>
                       <th>Producto</th>
-                      <th>Cantidad</th>
+                      <th>Cantidad (un.)</th>
+                      <th>Cajas + sueltas</th>
                       <th>Costo</th>
                       <th>Precio Mínimo</th>
                       <th>Precio Sugerido</th>
@@ -203,6 +235,7 @@ function ListarOrdenesPage() {
                       <tr key={item.codigoDetalle}>
                         <td>{item.nombreProducto}</td>
                         <td>{item.cantidadPedida}</td>
+                        <td>{textoCajas(item.nombreProducto, item.cantidadPedida)}</td>
                         <td>Q{item.precioCosto}</td>
                         <td><strong>Q{item.precioMinimo}</strong></td>
                         <td><strong>Q{item.precioSugerido}</strong></td>

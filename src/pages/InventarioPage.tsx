@@ -63,9 +63,6 @@ export default function InventarioPage() {
             <h2 className="inventario-card-title">Inventarios registrados</h2>
             <div className="d-flex align-items-center gap-3">
               <span className="inventario-total">
-                <Link to="/dashboard/inventario/ajustes" className="btn btn-primary btn-sm">
-                Ajustar inventario
-                </Link>
                 Total: {inventario.length}
               </span>
               
@@ -98,6 +95,12 @@ export default function InventarioPage() {
       <option key={b} value={b}>{b}</option>
     ))}
   </select>
+  <Link
+    to="/dashboard/inventario/ajustes"
+    className="btn btn-primary text-nowrap"
+  >
+    Ajustar inventario
+  </Link>
 </div>
 
           {/* TABLA */}

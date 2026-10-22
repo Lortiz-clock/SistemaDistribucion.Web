@@ -36,6 +36,10 @@ interface LineaOriginal {
   metaUtilidadPct: number
 }
 
+// Unidades que trae una caja, tomadas del catalogo de productos.
+// El factor viene de tbl_Productos.UnidadesCaja (unidades por caja).
+const obtenerFactorCaja = (producto: any): number => Number(producto?.unidadesCaja) || 0
+
 function EditarOrdenPage() {
   const navigate = useNavigate()
   const { codigoCompra } = useParams()
@@ -62,6 +66,16 @@ function EditarOrdenPage() {
 
   // IDs locales negativos para las líneas nuevas (evita duplicar keys)
   const [siguienteIdLocal, setSiguienteIdLocal] = useState(-1)
+
+  // -- Conversion a cajas --
+  const [cajasPedidas, setCajasPedidas] = useState(0)
+  const productoActual = productos.find((p) => p.codigoProducto === codigoProducto)
+  const factorCaja = obtenerFactorCaja(productoActual)
+  // Lo que se guarda siempre son UNIDADES: cajas x factor + sueltas
+  const unidadesTotales = (cajasPedidas * factorCaja) + cantidadPedida
+  // Factor de caja de cualquier producto de la tabla
+  const factorDe = (codigoProd: number) =>
+    obtenerFactorCaja(productos.find((p) => p.codigoProducto === codigoProd))
 
   // ══════════ CARGA INICIAL: encabezado + detalle + catálogos en paralelo ══════════
   useEffect(() => {
@@ -121,7 +135,7 @@ function EditarOrdenPage() {
 
   // ══════════ AGREGAR PRODUCTO NUEVO (mismo estilo que tu Agregar) ══════════
   const agregarAlCarrito = () => {
-    if (codigoProducto === 0 || cantidadPedida <= 0 || precioCosto <= 0) {
+    if (codigoProducto === 0 || unidadesTotales <= 0 || precioCosto <= 0) {
       setMensaje('Completa los datos del producto.')
       setExito(false)
       return
@@ -136,7 +150,7 @@ function EditarOrdenPage() {
       codigoDetalle: siguienteIdLocal,   // 👈 negativo = línea nueva
       codigoProducto,
       nombreProducto: productoElegido?.nombre ?? '',
-      cantidadPedida,
+      cantidadPedida: unidadesTotales,
       precioCosto,
       margenMinimoPct,
       metaUtilidadPct,
@@ -150,6 +164,7 @@ function EditarOrdenPage() {
 
     setCodigoProducto(0)
     setCantidadPedida(0)
+    setCajasPedidas(0)
     setPrecioCosto(0)
     setMargenMinimoPct(0)
     setMetaUtilidadPct(0)
@@ -338,8 +353,11 @@ function EditarOrdenPage() {
                 />
               </div>
               <div className="col-md-2">
-                <label className="form-label">Cantidad:</label>
-                <input type="number" className="form-control" placeholder="Cantidad" value={cantidadPedida || ''} onChange={(e) => setCantidadPedida(Number(e.target.value))} />
+                <label className="form-label">Cajas / Sueltas:</label>
+                <div className="d-flex gap-1">
+                  <input type="number" min={0} className="form-control" placeholder="Cajas" title="Cajas" disabled={factorCaja <= 1} value={cajasPedidas || ''} onChange={(e) => setCajasPedidas(Number(e.target.value))} />
+                  <input type="number" min={0} className="form-control" placeholder="Suel." title="Unidades sueltas" value={cantidadPedida || ''} onChange={(e) => setCantidadPedida(Number(e.target.value))} />
+                </div>
               </div>
               <div className="col-md-2">
                 <label className="form-label">Costo (Q):</label>
@@ -356,6 +374,15 @@ function EditarOrdenPage() {
               <div className="col-md-1">
                 <button type="button" className="btn btn-success w-100" onClick={agregarAlCarrito}>+</button>
               </div>
+              {codigoProducto !== 0 && (
+                <div className="col-12 mt-2">
+                  <small className="text-muted">
+                    {factorCaja > 1 ? `1 caja = ${factorCaja} un.` : 'Este producto no tiene factor de caja (solo unidades)'}
+                    {' · '}Total a pedir: <strong>{unidadesTotales}</strong> un.
+                    {factorCaja > 1 && ` (${cajasPedidas} cajas + ${cantidadPedida} sueltas)`}
+                  </small>
+                </div>
+              )}
             </div>
 
             <div className="table-responsive mb-4">
@@ -363,7 +390,7 @@ function EditarOrdenPage() {
                 <thead className="table-dark">
                   <tr>
                     <th>Producto</th>
-                    <th>Cantidad</th>
+                    <th>Cantidad (cajas + sueltas)</th>
                     <th>Costo</th>
                     <th>Mín %</th>
                     <th>Meta %</th>
@@ -381,13 +408,50 @@ function EditarOrdenPage() {
                       <tr key={item.codigoDetalle}>
                         <td>{item.nombreProducto}</td>
                         <td>
-                          <input
-                            type="number"
-                            className="form-control form-control-sm"
-                            value={item.cantidadPedida || ''}
-                            onChange={(e) => actualizarFila(item.codigoDetalle, 'cantidadPedida', Number(e.target.value))}
-                            style={{ width: '90px' }}
-                          />
+                          {factorDe(item.codigoProducto) > 1 ? (
+                            <div className="d-flex gap-1 align-items-center">
+                              <input
+                                type="number"
+                                min={0}
+                                className="form-control form-control-sm"
+                                title="Cajas"
+                                placeholder="Cajas"
+                                style={{ width: '70px' }}
+                                value={Math.floor(item.cantidadPedida / factorDe(item.codigoProducto)) || ''}
+                                onChange={(e) => actualizarFila(
+                                  item.codigoDetalle,
+                                  'cantidadPedida',
+                                  (Number(e.target.value) * factorDe(item.codigoProducto)) +
+                                    (item.cantidadPedida % factorDe(item.codigoProducto))
+                                )}
+                              />
+                              <span>+</span>
+                              <input
+                                type="number"
+                                min={0}
+                                className="form-control form-control-sm"
+                                title="Unidades sueltas"
+                                placeholder="Suel."
+                                style={{ width: '70px' }}
+                                value={(item.cantidadPedida % factorDe(item.codigoProducto)) || ''}
+                                onChange={(e) => actualizarFila(
+                                  item.codigoDetalle,
+                                  'cantidadPedida',
+                                  (Math.floor(item.cantidadPedida / factorDe(item.codigoProducto)) * factorDe(item.codigoProducto)) +
+                                    Number(e.target.value)
+                                )}
+                              />
+                            </div>
+                          ) : (
+                            <input
+                              type="number"
+                              className="form-control form-control-sm"
+                              value={item.cantidadPedida || ''}
+                              onChange={(e) => actualizarFila(item.codigoDetalle, 'cantidadPedida', Number(e.target.value))}
+                              style={{ width: '90px' }}
+                            />
+                          )}
+                          <small className="text-muted d-block">{item.cantidadPedida} un.</small>
                         </td>
                         <td>
                           <input
