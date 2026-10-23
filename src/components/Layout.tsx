@@ -3,9 +3,11 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   ShieldUser, Package, Truck, ShoppingCart, ClipboardList,
   ShieldCheck, LayoutDashboard, Layers, ClipboardCheck, PlayingCardsFan,
-  ChevronDown, ChevronRight, PackageOpen, BriefcaseBusiness, UserCog, Timeline
+  ChevronDown, PackageOpen, BriefcaseBusiness, UserCog, Timeline
 } from 'lucide-react'
 import './Layout.css'
+import './tema-oscuro.css'
+import './menu-acordeon.css'
 import { obtenerNombreUsuario } from '../services/authService'
 import type { Modulo } from '../interfaces/UsuarioLogin'
 
@@ -15,6 +17,7 @@ const iconosDisponibles: Record<string, any> = {
 }
 
 // ═══ Definición de grupos: módulos que se muestran juntos ═══
+// IMPORTANTE: cada "contiene" debe ser IGUAL a la rutaFront que viene de la base de datos.
 const definicionGrupos = [
   {
     nombre: 'Ordenes de Compra',
@@ -41,8 +44,29 @@ const definicionGrupos = [
       { contiene: '/dashboard/marca', nombre: 'Marca' },
       { contiene: '/dashboard/categorias', nombre: 'Categorías' }
     ]
+  },
+  {
+    nombre: 'Administración',
+    icono: ShieldUser,
+    prefijos: [
+      '/dashboard/usuarios',
+      '/dashboard/roles',
+      '/dashboard/modulos',
+      '/dashboard/empleados',
+      '/dashboard/puestos',
+      '/dashboard/repartidores'
+    ],
+    items: [
+      { contiene: '/dashboard/usuarios', nombre: 'Usuarios' },
+      { contiene: '/dashboard/roles', nombre: 'Roles' },
+      { contiene: '/dashboard/modulos', nombre: 'Módulos' },
+      { contiene: '/dashboard/empleados', nombre: 'Empleados' },
+      { contiene: '/dashboard/puestos', nombre: 'Puestos' },
+      { contiene: '/dashboard/repartidores', nombre: 'Repartidores' }
+    ]
   }
 ]
+
 interface GrupoMenu {
   nombre: string
   icono: any
@@ -112,18 +136,19 @@ function Layout() {
     }
   }, [navigate])
 
- 
-useEffect(() => {
-  const ruta = location.pathname
-  const grupo = definicionGrupos.find((g) =>
-    g.prefijos.some((p) => ruta.startsWith(p))
-  )
-  if (grupo) setGrupoAbierto(grupo.nombre)
-}, [location.pathname])
+  // Abre automáticamente el grupo de la ruta actual
+  useEffect(() => {
+    const ruta = location.pathname
+    const grupo = definicionGrupos.find((g) =>
+      g.prefijos.some((p) => ruta.startsWith(p))
+    )
+    if (grupo) setGrupoAbierto(grupo.nombre)
+  }, [location.pathname])
 
-useEffect(() => {
-  setMenuAbierto(false)
-}, [location.pathname])
+  // Cierra el menú móvil al navegar
+  useEffect(() => {
+    setMenuAbierto(false)
+  }, [location.pathname])
 
   const cerrarSesion = () => {
     localStorage.removeItem('token')
@@ -140,34 +165,49 @@ useEffect(() => {
         <h4 className="layout-sidebar-title">Distribución</h4>
         <nav className="nav flex-column">
 
-          {grupos.map((grupo) =>
-            grupo.esLinkDirecto ? (
-              // ─── Módulo simple: link directo ───
-              <NavLink
-                to={grupo.ruta!}
-                key={grupo.nombre}
-                className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
-              >
-                <grupo.icono size={18} style={{ marginRight: '10px' }} />
-                {grupo.nombre}
-              </NavLink>
-            ) : (
-              // ─── Grupo acordeón ───
-              <div key={grupo.nombre} className="nav-item">
-                <button
-                  className="nav-link layout-nav-link layout-grupo-btn d-flex justify-content-between align-items-center w-100 text-start"
-                  onClick={() => setGrupoAbierto(grupoAbierto === grupo.nombre ? null : grupo.nombre)}
+          {grupos.map((grupo, i) => {
+            if (grupo.esLinkDirecto) {
+              return (
+                <NavLink
+                  to={grupo.ruta!}
+                  key={grupo.nombre}
+                  style={{ '--li': i } as React.CSSProperties}
+                  className={({ isActive }) => `nav-link layout-nav-link ${isActive ? 'active' : ''}`}
                 >
-                  <span>
-                    <grupo.icono size={18} style={{ marginRight: '10px' }} />
-                    {grupo.nombre}
+                  <grupo.icono size={18} style={{ marginRight: '10px' }} />
+                  {grupo.nombre}
+                </NavLink>
+              )
+            }
+
+            // ─── Grupo acordeón ───
+            const abierto = grupoAbierto === grupo.nombre
+            const activo = grupo.items.some((it) => location.pathname.startsWith(it.rutaFront))
+
+            return (
+              <div
+                key={grupo.nombre}
+                className={`nav-item layout-grupo ${abierto ? 'abierto' : ''} ${activo ? 'grupo-activo' : ''}`}
+                style={{ '--li': i } as React.CSSProperties}
+              >
+                <button
+                  type="button"
+                  className="nav-link layout-nav-link layout-grupo-btn d-flex justify-content-between align-items-center w-100 text-start"
+                  aria-expanded={abierto}
+                  onClick={() => setGrupoAbierto(abierto ? null : grupo.nombre)}
+                >
+                  <span className="layout-grupo-titulo">
+                    <grupo.icono size={18} />
+                    <span>{grupo.nombre}</span>
                   </span>
-                  {grupoAbierto === grupo.nombre
-                    ? <ChevronDown size={16} />
-                    : <ChevronRight size={16} />}
+                  <span className="layout-grupo-extra">
+                    <span className="layout-grupo-contador">{grupo.items.length}</span>
+                    <ChevronDown size={16} className="layout-chevron" />
+                  </span>
                 </button>
 
-                {grupoAbierto === grupo.nombre && (
+                {/* Siempre renderizado para poder animar la apertura */}
+                <div className="layout-submenu-wrap">
                   <div className="layout-submenu">
                     {grupo.items.map((item) => (
                       <NavLink
@@ -180,17 +220,17 @@ useEffect(() => {
                       </NavLink>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
             )
-          )}
+          })}
         </nav>
       </aside>
 
       <div
-          className={`layout-overlay ${menuAbierto ? 'visible' : ''}`}
-          onClick={() => setMenuAbierto(false)}
-        />
+        className={`layout-overlay ${menuAbierto ? 'visible' : ''}`}
+        onClick={() => setMenuAbierto(false)}
+      />
 
       <div className="layout-main">
         <header className="layout-header">

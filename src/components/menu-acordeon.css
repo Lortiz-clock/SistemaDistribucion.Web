@@ -1,0 +1,175 @@
+/* ============================================================
+   MENÚ ACORDEÓN DEL SIDEBAR
+   Importar DESPUÉS de Layout.css y tema-oscuro.css para que prevalezca.
+   ============================================================ */
+
+/* ---------- Botón del grupo ---------- */
+.layout-sidebar .layout-grupo-btn {
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--t-suave, #94a3b8);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.layout-sidebar .layout-grupo-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.layout-sidebar .layout-grupo-titulo svg {
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.layout-sidebar .layout-grupo-btn:hover {
+  background: var(--t-hover, rgba(96, 165, 250, 0.14));
+  color: #ffffff;
+}
+
+.layout-sidebar .layout-grupo-btn:focus-visible {
+  outline: 2px solid var(--acento, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* Grupo abierto: fondo suave */
+.layout-sidebar .layout-grupo.abierto > .layout-grupo-btn {
+  background: rgba(59, 130, 246, 0.1);
+  color: #ffffff;
+}
+
+/* Grupo que contiene la página actual: barra de acento a la izquierda */
+.layout-sidebar .layout-grupo.grupo-activo > .layout-grupo-btn {
+  color: #ffffff;
+  box-shadow: inset 3px 0 0 var(--acento, #3b82f6);
+}
+
+.layout-sidebar .layout-grupo.grupo-activo > .layout-grupo-btn .layout-grupo-titulo svg {
+  color: var(--acento, #3b82f6);
+}
+
+/* ---------- Contador y flecha ---------- */
+.layout-sidebar .layout-grupo-extra {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.layout-sidebar .layout-grupo-contador {
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--t-suave, #94a3b8);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.5;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.layout-sidebar .layout-grupo.abierto .layout-grupo-contador {
+  background: rgba(59, 130, 246, 0.25);
+  color: #bfdbfe;
+}
+
+.layout-sidebar .layout-chevron {
+  opacity: 0.75;
+  transition: transform 0.28s ease;
+}
+
+.layout-sidebar .layout-grupo.abierto .layout-chevron {
+  transform: rotate(180deg);
+}
+
+/* ---------- Submenú con apertura animada ---------- */
+.layout-sidebar .layout-submenu-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s ease;
+}
+
+.layout-sidebar .layout-grupo.abierto .layout-submenu-wrap {
+  grid-template-rows: 1fr;
+}
+
+.layout-sidebar .layout-submenu {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 4px 0 6px 21px;
+  padding: 2px 0 2px 12px;
+  border-left: 1px solid var(--t-borde, rgba(96, 165, 250, 0.22));
+  background: transparent;
+  /* Cerrado: no se puede enfocar con teclado */
+  visibility: hidden;
+  transition: visibility 0s linear 0.28s;
+}
+
+.layout-sidebar .layout-grupo.abierto .layout-submenu {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+/* ---------- Enlaces del submenú ---------- */
+.layout-sidebar .layout-submenu-link {
+  position: relative;
+  padding: 8px 12px 8px 22px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--t-suave, #94a3b8);
+  font-size: 0.88rem;
+  transition: background-color 0.2s, color 0.2s, transform 0.2s;
+}
+
+/* Punto indicador */
+.layout-sidebar .layout-submenu-link::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.45);
+  transform: translateY(-50%);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.layout-sidebar .layout-submenu-link:hover {
+  background: var(--t-hover, rgba(96, 165, 250, 0.14));
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.layout-sidebar .layout-submenu-link:hover::before {
+  background: #93c5fd;
+}
+
+.layout-sidebar .layout-submenu-link.active {
+  background: rgba(59, 130, 246, 0.18);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.layout-sidebar .layout-submenu-link.active::before {
+  background: var(--acento, #3b82f6);
+  box-shadow: 0 0 8px var(--acento, #3b82f6);
+}
+
+/* ---------- Respeta a quien reduce animaciones ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .layout-sidebar .layout-submenu-wrap,
+  .layout-sidebar .layout-chevron,
+  .layout-sidebar .layout-submenu-link {
+    transition: none;
+  }
+}

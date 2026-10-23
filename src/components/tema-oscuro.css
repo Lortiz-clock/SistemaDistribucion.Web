@@ -1,0 +1,459 @@
+/* ============================================================
+   TEMA COMPARTIDO v2 (estilo del login, más claro)
+   Fondo aclarado y tarjetas más oscuras que el fondo, igual que en el login.
+   Para ajustar el tono edita solo estas variables.
+   ============================================================ */
+.layout-wrapper {
+  /* Valores del login */
+  --acento: #3b82f6;
+  --acento-2: #1d4ed8;
+  --texto: #e5e7eb;
+  --texto-suave: #94a3b8;
+
+  /* Fondo aclarado (antes #1e293b -> #0f172a) */
+  --t-bg-1: #2a3b5c;
+  --t-bg-2: #182238;
+
+  --t-sidebar: #152038;
+  --t-card: #172339;
+  --t-input: #111b2e;
+  --t-fila: #1d2c47;
+  --t-fila-hover: #243656;
+  --t-borde: rgba(96, 165, 250, 0.22);
+  --t-texto: var(--texto);
+  --t-suave: var(--texto-suave);
+  --t-hover: rgba(96, 165, 250, 0.14);
+
+  background:
+    radial-gradient(circle at 20% 20%, rgba(96, 165, 250, 0.14), transparent 50%),
+    linear-gradient(135deg, var(--t-bg-1) 0%, var(--t-bg-2) 100%);
+  background-attachment: fixed;
+  color: var(--t-texto);
+}
+
+/* ---------- Barras de scroll oscuras (adiós a la barra blanca) ---------- */
+.layout-content * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+.layout-content *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.layout-content *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.layout-content *::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+}
+
+.layout-content *::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.55);
+}
+
+/* ---------- Sidebar y header ---------- */
+.layout-sidebar {
+  background: var(--t-sidebar);
+  border-right: 1px solid var(--t-borde);
+  box-shadow: 4px 0 24px rgba(59, 130, 246, 0.1);
+}
+
+.layout-sidebar-title {
+  background: var(--t-sidebar);
+  border-bottom-color: var(--t-borde);
+}
+
+.layout-header {
+  background: rgba(21, 32, 56, 0.88);
+  border-bottom: 1px solid var(--t-borde);
+}
+
+/* ---------- Iconos Lucide ---------- */
+.layout-content svg.lucide,
+.layout-sidebar svg.lucide {
+  stroke-width: 1.75;
+}
+
+/* ---------- Página: sin padding doble y a todo el ancho ---------- */
+.layout-content [class*="-page"] {
+  padding: 0;
+  min-height: 0;
+  background: transparent;
+  color: var(--t-texto);
+}
+
+.layout-content [class*="-container"]:not([class*="table"]):not([class*="agregar"]):not([class*="editar"]) {
+  max-width: none;
+}
+
+/* ---------- Títulos ---------- */
+.layout-content [class*="-title"] {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.layout-content [class*="-subtitle"] {
+  font-size: 0.9rem;
+  color: var(--t-suave);
+}
+
+.layout-content .text-muted {
+  color: var(--t-suave) !important;
+}
+
+/* ---------- Tarjetas (propias y de Bootstrap) ---------- */
+.layout-content [class$="-card"],
+.layout-content [class*="-card "],
+.layout-content .card,
+.layout-content .card-body,
+.layout-content .list-group-item,
+.layout-content .bg-white,
+.layout-content .bg-light {
+  background-color: var(--t-card) !important;
+  color: var(--t-texto);
+  border-color: var(--t-borde);
+}
+
+/* Borde brillante, como .login-card */
+.layout-content [class$="-card"],
+.layout-content [class*="-card "],
+.layout-content .card {
+  border: 1px solid color-mix(in srgb, var(--acento) 55%, transparent);
+  border-radius: 12px;
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--acento) 26%, transparent),
+    inset 0 0 18px color-mix(in srgb, var(--acento) 8%, transparent);
+}
+
+.layout-content .card-header,
+.layout-content .card-footer,
+.layout-content [class*="-card-header"] {
+  background: transparent !important;
+  border-color: var(--t-borde);
+}
+
+.layout-content [class*="-card-title"],
+.layout-content .card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.layout-content .modal-title {
+  font-size: 1.15rem;
+}
+
+.layout-content [class*="-total"] {
+  background: rgba(96, 165, 250, 0.18);
+  color: #bfdbfe;
+}
+
+/* ============================================================
+   TABLAS COMO LISTA (filas tipo tarjeta, sin cuadrícula de Excel)
+   ============================================================ */
+.layout-content .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--t-texto);
+  --bs-table-border-color: transparent;
+  --bs-table-hover-bg: transparent;
+  --bs-table-hover-color: #ffffff;
+  color: var(--t-texto);
+  font-size: 0.9rem;
+  border-collapse: separate;
+  border-spacing: 0 8px;   /* espacio entre filas */
+  margin-bottom: 0;
+}
+
+/* Encabezado: sin relleno ni bordes, solo texto pequeño */
+.layout-content .table > thead > tr > th {
+  background: transparent;
+  color: var(--t-suave);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 10px 16px;
+  border: none;
+  border-bottom: 1px solid var(--t-borde);
+  vertical-align: middle;
+  box-shadow: none;
+}
+
+/* Cada fila es una "pastilla" redondeada */
+.layout-content .table > tbody > tr {
+  background-color: transparent;
+}
+
+.layout-content .table > tbody > tr > td {
+  background-color: var(--t-fila);
+  color: var(--t-texto);
+  padding: 14px 16px;
+  border: none;
+  border-top: 1px solid rgba(148, 163, 184, 0.10);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.10);
+  vertical-align: middle;
+  box-shadow: none;
+  transition: background-color 0.18s, border-color 0.18s;
+}
+
+.layout-content .table > tbody > tr > td:first-child {
+  border-left: 1px solid rgba(148, 163, 184, 0.10);
+  border-radius: 10px 0 0 10px;
+}
+
+.layout-content .table > tbody > tr > td:last-child {
+  border-right: 1px solid rgba(148, 163, 184, 0.10);
+  border-radius: 0 10px 10px 0;
+}
+
+/* Sin filas alternadas (eso es lo que daba el aspecto de Excel) */
+.layout-content .table > tbody > tr:nth-child(even) > td {
+  background-color: var(--t-fila);
+}
+
+/* Hover: la fila se ilumina y toma borde azul */
+.layout-content .table > tbody > tr:hover {
+  background-color: transparent;
+}
+
+.layout-content .table > tbody > tr:hover > td {
+  background-color: var(--t-fila-hover);
+  color: #ffffff;
+  border-top-color: color-mix(in srgb, var(--acento) 55%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--acento) 55%, transparent);
+}
+
+.layout-content .table > tbody > tr:hover > td:first-child {
+  border-left-color: color-mix(in srgb, var(--acento) 55%, transparent);
+}
+
+.layout-content .table > tbody > tr:hover > td:last-child {
+  border-right-color: color-mix(in srgb, var(--acento) 55%, transparent);
+}
+
+/* Primera columna (nombre) un poco más destacada */
+.layout-content .table > tbody > tr > td:first-child {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.layout-content .sin-registros {
+  color: var(--t-suave);
+}
+
+.layout-content .fila-no-asignada > td {
+  background-color: transparent;
+  color: var(--t-suave);
+}
+
+/* Avatar con inicial para la columna de nombre (opcional) */
+.avatar-inicial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-right: 10px;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #bfdbfe;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  flex-shrink: 0;
+}
+
+/* ---------- Formularios ---------- */
+.layout-content label,
+.layout-content .form-label {
+  color: #cbd5e1;
+}
+
+.layout-content .form-control,
+.layout-content .form-select {
+  background-color: var(--t-input);
+  color: var(--t-texto);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.layout-content .form-control::placeholder {
+  color: #7184a0;
+}
+
+.layout-content .form-control:focus,
+.layout-content .form-select:focus {
+  background-color: var(--t-input);
+  color: #ffffff;
+  border-color: var(--acento);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+.layout-content .form-control:disabled,
+.layout-content .form-select:disabled {
+  background-color: #1a263c;
+  color: var(--t-suave);
+}
+
+.layout-content .form-select {
+  --bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+.layout-content input[type="date"] {
+  color-scheme: dark;
+}
+
+.layout-content hr {
+  color: rgba(148, 163, 184, 0.4);
+  opacity: 1;
+}
+
+/* ---------- Botones ---------- */
+.layout-content .btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.layout-content .btn-outline-primary {
+  color: #93c5fd;
+  border-color: rgba(147, 197, 253, 0.6);
+}
+
+.layout-content .btn-outline-primary:hover {
+  background: var(--acento);
+  border-color: var(--acento);
+  color: #ffffff;
+}
+
+.layout-content .btn-outline-info {
+  color: #67e8f9;
+  border-color: rgba(103, 232, 249, 0.6);
+}
+
+.layout-content .btn-outline-info:hover {
+  background: #0891b2;
+  border-color: #0891b2;
+  color: #ffffff;
+}
+
+.layout-content .btn-outline-secondary {
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.5);
+}
+
+.layout-content .btn-outline-secondary:hover {
+  background: rgba(148, 163, 184, 0.25);
+  color: #ffffff;
+}
+
+.layout-content .btn-outline-warning {
+  color: #fcd34d;
+  border-color: rgba(252, 211, 77, 0.6);
+}
+
+.layout-content .btn-outline-warning:hover {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: #1f2937;
+}
+
+.layout-content .btn-outline-danger {
+  color: #fca5a5;
+  border-color: rgba(252, 165, 165, 0.6);
+}
+
+.layout-content .btn-outline-danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.layout-content .btn:disabled {
+  opacity: 0.45;
+}
+
+/* Botón opcional con el efecto del login: class="btn btn-login-style" */
+.layout-content .btn-login-style {
+  color: #fff;
+  border: 2px solid var(--acento);
+  border-radius: 40px;
+  background: transparent;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.layout-content .btn-login-style::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  height: 300%;
+  top: -100%;
+  background: linear-gradient(var(--t-card), var(--acento), var(--t-card), var(--acento));
+  z-index: -1;
+  transition: top 0.5s;
+}
+
+.layout-content .btn-login-style:hover::before {
+  top: 0;
+}
+
+/* ---------- Modales ---------- */
+.layout-content .modal-content {
+  background: var(--t-card);
+  color: var(--t-texto);
+  border: 2px solid var(--acento);
+  box-shadow:
+    0 0 24px color-mix(in srgb, var(--acento) 45%, transparent),
+    inset 0 0 24px color-mix(in srgb, var(--acento) 14%, transparent);
+}
+
+.layout-content .modal-content hr {
+  color: var(--t-borde);
+}
+
+/* ---------- Alertas ---------- */
+.layout-content .alert-info {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #bfdbfe;
+}
+
+.layout-content .alert-danger {
+  background: rgba(220, 38, 38, 0.18);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fecaca;
+}
+
+.layout-content .alert-success {
+  background: rgba(22, 163, 74, 0.18);
+  border-color: rgba(74, 222, 128, 0.45);
+  color: #bbf7d0;
+}
+
+.layout-content .alert-warning {
+  background: rgba(234, 179, 8, 0.16);
+  border-color: rgba(250, 204, 21, 0.45);
+  color: #fef08a;
+}
+
+/* ---------- Píldoras de estado ---------- */
+.layout-content .estado-activo {
+  background: rgba(22, 163, 74, 0.22);
+  color: #86efac;
+}
+
+.layout-content .estado-inactivo {
+  background: rgba(220, 38, 38, 0.22);
+  color: #fca5a5;
+}
+
+/* ---------- Mapa ---------- */
+.layout-content .leaflet-container {
+  border-radius: 10px;
+  border: 1px solid var(--t-borde);
+}
