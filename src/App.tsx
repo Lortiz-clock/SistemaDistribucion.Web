@@ -47,6 +47,11 @@ import EditarVendedorPage from './pages/EditarVendedorPage'
 import RepartidorPage from './pages/RepartidorPage'
 import AgregarRepartidorPage from './pages/AgregarRepartidorPage'
 import EditarRepartidorPage from './pages/EditarRepartidorPage'
+// Importaciones del módulo de Puestos
+import PuestoPage from './pages/PuestoPage'
+import AgregarPuestoPage from './pages/AgregarPuestoPage'
+import EditarPuestoPage from './pages/EditarPuestoPage'
+
 
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
@@ -152,6 +157,11 @@ function App() {
           <Route path="repartidores" element={<RutaModulo><RepartidorPage /></RutaModulo>} />
           <Route path="repartidores/agregar" element={<RutaModulo><AgregarRepartidorPage /></RutaModulo>} />
           <Route path="repartidores/editar/:codigoRepartidor" element={<RutaModulo><EditarRepartidorPage /></RutaModulo>} />
+
+          {/* RUTAS DEL MÓDULO PUESTOS */}
+          <Route path="puestos" element={<RutaModulo><PuestoPage /></RutaModulo>} />
+          <Route path="puestos/agregar" element={<RutaModulo><AgregarPuestoPage /></RutaModulo>} />
+          <Route path="puestos/editar/:codigoPuesto" element={<RutaModulo><EditarPuestoPage /></RutaModulo>} />
 
         </Route>
       </Routes>

@@ -7,5 +7,11 @@ export interface EmpleadoEditar {
     segundoNombre: string
     primerApellido: string
     segundoApellido: string
+    codigoPuesto: number | null
+    dpi: string
+    fechaNacimiento: string | null
+    codigoEstadoCivil: number | null
+    profesion: string
+    extendidoEn: string
+    direccion: string
 }
- 

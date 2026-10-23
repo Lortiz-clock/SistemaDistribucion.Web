@@ -1,71 +1,352 @@
+/* ============================================================
+   LOGIN ANIMADO
+   Para cambiar los colores del sistema solo edita estas variables.
+   (Naranja de la referencia:  --acento: #e8643a;  --acento-2: #b8431f;)
+   ============================================================ */
 .login-page {
+  --acento: #3b82f6;
+  --acento-2: #1d4ed8;
+  --fondo: #0b1220;
+  --tarjeta: #111a2e;
+  --texto: #e5e7eb;
+  --texto-suave: #94a3b8;
+
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  padding: 16px;
+  /* Mismo degradado oscuro que tenía tu login anterior */
+  background:
+    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.12), transparent 45%),
+    linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--texto);
 }
 
+/* ---------- Tarjeta con borde brillante ---------- */
 .login-card {
-  width: 100%;
-  max-width: 400px;
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  padding: 40px;
+  position: relative;
+  width: min(900px, 100%);
+  height: 520px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--tarjeta);
+  border: 2px solid var(--acento);
+  box-shadow:
+    0 0 24px color-mix(in srgb, var(--acento) 55%, transparent),
+    inset 0 0 24px color-mix(in srgb, var(--acento) 18%, transparent);
+}
+
+/* ---------- Lado del formulario ---------- */
+.login-form-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  padding: 0 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  z-index: 2;
 }
 
 .login-title {
-  color: #ffffff;
   text-align: center;
-  margin-bottom: 30px;
+  font-size: 1.9rem;
   font-weight: 700;
-  font-size: 1.8rem;
+  margin-bottom: 28px;
 }
 
-.login-card .form-label {
-  color: #94a3b8;
-  font-size: 0.9rem;
-  margin-bottom: 8px;
+.login-error {
+  margin-bottom: 18px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  color: #fecaca;
+  background: rgba(220, 38, 38, 0.18);
+  border: 1px solid rgba(248, 113, 113, 0.5);
 }
 
-.login-card .form-control {
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  padding: 12px;
-  border-radius: 8px;
+/* ---------- Campos con etiqueta flotante ---------- */
+.login-campo {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  margin-bottom: 26px;
 }
 
-.login-card .form-control:focus {
-  background: rgba(15, 23, 42, 0.8);
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  color: #ffffff;
-}
-
-.login-card .btn-primary {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+.login-campo input {
+  width: 100%;
+  height: 100%;
+  padding-right: 62px;
+  font-size: 1rem;
+  color: var(--texto);
+  background: transparent;
   border: none;
-  padding: 12px;
+  border-bottom: 2px solid var(--texto-suave);
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.login-campo label {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  color: var(--texto-suave);
+  pointer-events: none;
+  transition: 0.3s;
+}
+
+/* La etiqueta sube cuando el campo tiene foco o texto */
+.login-campo input:focus,
+.login-campo input:not(:placeholder-shown) {
+  border-bottom-color: var(--acento);
+}
+
+.login-campo input:focus ~ label,
+.login-campo input:not(:placeholder-shown) ~ label {
+  top: -6px;
+  font-size: 0.78rem;
+  color: var(--acento);
+}
+
+/* Evita el fondo blanco/amarillo que pone Chrome al autocompletar */
+.login-campo input:-webkit-autofill {
+  -webkit-text-fill-color: var(--texto);
+  transition: background-color 9999s ease-out 0s;
+  box-shadow: 0 0 0 1000px var(--tarjeta) inset;
+}
+
+.login-icono {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  color: var(--texto-suave);
+  transition: color 0.3s;
+}
+
+.login-icono-candado {
+  display: none; /* el ojo ocupa ese lugar en el campo de contraseña */
+}
+
+.login-ojo {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  padding: 4px;
+  color: var(--texto-suave);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.login-ojo:hover,
+.login-campo input:focus ~ .login-icono {
+  color: var(--acento);
+}
+
+.login-campo:has(.login-ojo) .login-icono {
+  right: 34px;
+}
+
+.login-campo:has(.login-ojo) .login-icono-candado {
+  display: block;
+}
+
+/* ---------- Botón ---------- */
+.login-boton {
+  width: 100%;
+  height: 46px;
   font-weight: 600;
-  border-radius: 8px;
-  transition: transform 0.2s;
+  letter-spacing: 0.04em;
+  color: #fff;
+  border: 2px solid var(--acento);
+  border-radius: 40px;
+  background: transparent;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  z-index: 1;
 }
 
-.login-card .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+/* Relleno que sube al pasar el mouse */
+.login-boton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  height: 300%;
+  background: linear-gradient(var(--tarjeta), var(--acento), var(--tarjeta), var(--acento));
+  top: -100%;
+  z-index: -1;
+  transition: top 0.5s;
 }
 
-.login-card .alert-danger {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #fca5a5;
-  border-radius: 8px;
-  font-size: 0.9rem;
+.login-boton:hover:not(:disabled)::before {
+  top: 0;
+}
+
+.login-boton:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* ---------- Panel diagonal de bienvenida ---------- */
+.login-info-fondo {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--acento-2), var(--acento));
+  clip-path: polygon(46% 0, 100% 0, 100% 100%, 94% 100%);
+  animation: entraFondo 0.9s ease both;
+  z-index: 1;
+}
+
+.login-info-box {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 42%;
+  height: 100%;
+  padding: 0 40px 0 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  text-align: right;
+  z-index: 2;
+}
+
+.login-info-box h1 {
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 14px;
+  color: #fff;
+}
+
+.login-info-box p {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* ---------- Animaciones de entrada (escalonadas con --li) ---------- */
+.animacion {
+  animation: entraIzquierda 0.7s ease both;
+  animation-delay: calc(0.15s + var(--li, 0) * 0.12s);
+}
+
+.animacion-derecha {
+  animation: entraDerecha 0.7s ease both;
+  animation-delay: calc(0.3s + var(--li, 0) * 0.12s);
+}
+
+@keyframes entraIzquierda {
+  from { transform: translateX(-50px); opacity: 0; filter: blur(8px); }
+  to   { transform: translateX(0);     opacity: 1; filter: blur(0); }
+}
+
+@keyframes entraDerecha {
+  from { transform: translateX(60px); opacity: 0; filter: blur(8px); }
+  to   { transform: translateX(0);    opacity: 1; filter: blur(0); }
+}
+
+@keyframes entraFondo {
+  from { transform: translateX(40%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+
+/* ---------- Celular y pantallas pequeñas ----------
+   El panel de bienvenida pasa ARRIBA como una cabecera con borde diagonal,
+   y el formulario queda debajo ocupando todo el ancho. */
+@media (max-width: 760px) {
+  .login-page {
+    padding: 12px;
+    align-items: flex-start;
+  }
+
+  .login-card {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Cabecera diagonal */
+  .login-info-box {
+    order: -1;
+    position: static;
+    width: 100%;
+    height: auto;
+    padding: 30px 24px 56px;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, var(--acento-2), var(--acento));
+    clip-path: polygon(0 0, 100% 0, 100% 78%, 0 100%);
+  }
+
+  .login-info-fondo {
+    display: none;
+  }
+
+  .login-info-box h1 {
+    font-size: 1.45rem;
+    margin-bottom: 8px;
+  }
+
+  .login-info-box p {
+    font-size: 0.88rem;
+  }
+
+  /* Formulario debajo, a todo el ancho */
+  .login-form-box {
+    position: static;
+    width: 100%;
+    height: auto;
+    padding: 8px 26px 32px;
+    margin-top: -18px;
+  }
+
+  .login-title {
+    font-size: 1.6rem;
+    margin-bottom: 22px;
+  }
+
+  /* En celular se escribe con el pulgar: campos y botón más grandes y letra de 16px
+     (evita que el iPhone haga zoom al tocar el campo) */
+  .login-campo {
+    height: 54px;
+  }
+
+  .login-campo input {
+    font-size: 16px;
+  }
+
+  .login-boton {
+    height: 50px;
+  }
+}
+
+/* Celulares muy pequeños */
+@media (max-width: 380px) {
+  .login-form-box {
+    padding: 8px 18px 26px;
+  }
+
+  .login-info-box {
+    padding: 24px 16px 52px;
+  }
+}
+
+/* Respeta a quien desactiva las animaciones en su sistema */
+@media (prefers-reduced-motion: reduce) {
+  .animacion,
+  .animacion-derecha,
+  .login-info-fondo {
+    animation: none;
+  }
 }

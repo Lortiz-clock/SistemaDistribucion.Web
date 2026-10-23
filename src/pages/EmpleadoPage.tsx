@@ -110,6 +110,7 @@ export default function EmpleadoPage() {
                 <tr>
                   <th>Código</th>
                   <th>Nombre completo</th>
+                  <th>Puesto</th>
                   <th>Teléfono</th>
                   <th>Fecha ingreso</th>
                   <th>Estado</th>
@@ -123,6 +124,7 @@ export default function EmpleadoPage() {
                     <tr key={item.codigoEmpleado}>
                       <td>{item.codigoEmpleado}</td>
                       <td>{nombreCompleto(item)}</td>
+                      <td>{item.nombrePuesto || '—'}</td>
                       <td>{item.telefono}</td>
                       <td>{item.fechaIngreso?.split('T')[0] ?? '—'}</td>
                       <td>
@@ -160,7 +162,7 @@ export default function EmpleadoPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="sin-registros text-center">
+                    <td colSpan={7} className="sin-registros text-center">
                       No existen empleados registrados.
                     </td>
                   </tr>
@@ -182,6 +184,14 @@ export default function EmpleadoPage() {
               <p><strong>Teléfono:</strong> {seleccionado.telefono}</p>
               <p><strong>Fecha de ingreso:</strong> {seleccionado.fechaIngreso?.split('T')[0] ?? '—'}</p>
               <p><strong>Estado:</strong> {seleccionado.estado ? 'Activo' : 'Inactivo'}</p>
+              <p><strong>Puesto:</strong> {seleccionado.nombrePuesto || '—'}</p>
+              <p><strong>DPI:</strong> {seleccionado.dpi || '—'}</p>
+              <p><strong>Fecha de nacimiento:</strong> {seleccionado.fechaNacimiento?.split('T')[0] ?? '—'}</p>
+              <p><strong>Estado civil:</strong> {seleccionado.nombreEstadoCivil || '—'}</p>
+              <p><strong>Profesión:</strong> {seleccionado.profesion || '—'}</p>
+              <p><strong>Extendido en:</strong> {seleccionado.extendidoEn || '—'}</p>
+              <p><strong>Dirección:</strong> {seleccionado.direccion || '—'}</p>
+
               <div className="text-end mt-3">
                 <button className="btn btn-secondary" onClick={cerrarModal}>
                   Cerrar
