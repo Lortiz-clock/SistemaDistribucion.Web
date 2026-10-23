@@ -306,7 +306,7 @@ function RolFormularioPage() {
                 Cancelar
               </button>
               <button type="submit" className="btn btn-primary">
-                💾 Guardar Rol
+                Guardar Rol
               </button>
             </div>
 
