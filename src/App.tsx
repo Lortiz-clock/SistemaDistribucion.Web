@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Login from './pages/Login'
 import Layout from './components/Layout'
@@ -8,57 +9,67 @@ import EditarUsuarioPage from './pages/EditarUsuarioPage'
 import ProductoPage from './pages/ProductoPage'
 import AgregarProductoPage from './pages/AgregarProductoPage'
 import EditarProductoPage from './pages/EditarProductoPage'
+
 // Importaciones del módulo de Proveedores
 import ProveedorPage from './pages/ProveedorPage'
 import AgregarProveedorPage from './pages/AgregarProveedorPage'
 import EditarProveedorPage from './pages/EditarProveedorPage'
+
 // Importaciones del módulo de Orden de Compra
 import AgregarOrdenPage from './pages/AgregarOrdenPage'
 import ListarOrdenesPage from './pages/ListarOrdenesPage'
 import EditarOrdenPage from './pages/EditarOrdenPage'
+
 // Importaciones del módulo de Módulos
 import ModulosPage from './pages/ModulosPage'
 import AgregarModuloPage from './pages/AgregarModuloPage'
 import EditarModuloPage from './pages/EditarModuloPage'
+
 // Importaciones del módulo de Roles
 import RolesPage from './pages/RolesPage'
 import RolFormularioPage from './pages/RolFormularioPage'
+
 // Importaciones del módulo de Recepción
 import RecepcionPage from './pages/RecepcionPage'
+
 // Importaciones del módulo de Empleados
 import EmpleadoPage from './pages/EmpleadoPage'
 import AgregarEmpleadoPage from './pages/AgregarEmpleadoPage'
 import EditarEmpleadoPage from './pages/EditarEmpleadoPage'
+
 // Importaciones del módulo de Categorías
 import CategoriaPage from './pages/CategoriaPage'
 import AgregarCategoriaPage from './pages/AgregarCategoriaPage'
 import EditarCategoriaPage from './pages/EditarCategoriaPage'
 
+// Importaciones del módulo de Inventario
 import InventarioPage from './pages/InventarioPage'
+import AjusteInventarioPage from './pages/AjusteInventarioPage'
+
+// Importaciones del módulo de Clientes
 import ClientesPage from './pages/ClientesPage'
 import AgregarClientePage from './pages/AgregarClientePage'
-import AjusteInventarioPage from './pages/AjusteInventarioPage'
+import EditarClientePage from './pages/EditarClientePage'
 
 // Importaciones del módulo de Vendedores
 import VendedorPage from './pages/VendedorPage'
 import AgregarVendedorPage from './pages/AgregarVendedorPage'
 import EditarVendedorPage from './pages/EditarVendedorPage'
+
 // Importaciones del módulo de Repartidores
 import RepartidorPage from './pages/RepartidorPage'
 import AgregarRepartidorPage from './pages/AgregarRepartidorPage'
 import EditarRepartidorPage from './pages/EditarRepartidorPage'
-<<<<<<< HEAD
+
 // Importaciones del módulo de Puestos
 import PuestoPage from './pages/PuestoPage'
 import AgregarPuestoPage from './pages/AgregarPuestoPage'
 import EditarPuestoPage from './pages/EditarPuestoPage'
 
-=======
+// Importaciones del módulo de Marcas
 import MarcaPage from './pages/MarcaPage'
 import AgregarMarcaPage from './pages/AgregarMarcaPage'
 import EditarMarcaPage from './pages/EditarMarcaPage'
-import EditarClientePage from './pages/EditarClientePage'
->>>>>>> d52523021e9b8dddc5d958b3b82f7d14fa9027eb
 
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
@@ -78,13 +89,14 @@ const obtenerModulos = () => {
 function RutaModulo({ children }: { children: ReactNode }) {
   const location = useLocation()
   const segmentos = location.pathname.split('/')
-  const prefijo = '/' + segmentos[1] + '/' + segmentos[2]   // '/dashboard/ordenes'
+  const prefijo = '/' + segmentos[1] + '/' + segmentos[2]
 
   const permitida = obtenerModulos().some((m: any) =>
     prefijo === m.rutaFront ||
-    m.rutaFront.startsWith(prefijo) ||      // módulo "Nueva Orden" (/dashboard/ordenes/nueva) da acceso a /dashboard/ordenes/*
+    m.rutaFront.startsWith(prefijo) ||
     prefijo.startsWith(m.rutaFront)
   )
+
   return permitida ? <>{children}</> : <Navigate to="/dashboard" replace />
 }
 
@@ -110,10 +122,12 @@ function App() {
         >
           <Route index element={<InicioDashboard />} />
 
+          {/* RUTAS DEL MÓDULO USUARIOS */}
           <Route path="usuarios" element={<RutaModulo><UsuarioPage /></RutaModulo>} />
           <Route path="usuarios/agregar" element={<RutaModulo><AgregarUsuarioPage /></RutaModulo>} />
           <Route path="usuarios/editar/:codigoUsuario" element={<RutaModulo><EditarUsuarioPage /></RutaModulo>} />
 
+          {/* RUTAS DEL MÓDULO PRODUCTOS */}
           <Route path="productos" element={<RutaModulo><ProductoPage /></RutaModulo>} />
           <Route path="productos/agregar" element={<RutaModulo><AgregarProductoPage /></RutaModulo>} />
           <Route path="productos/editar/:codigoProducto" element={<RutaModulo><EditarProductoPage /></RutaModulo>} />
@@ -128,7 +142,7 @@ function App() {
           <Route path="ordenes/listar" element={<RutaModulo><ListarOrdenesPage /></RutaModulo>} />
           <Route path="ordenes/editar/:codigoCompra" element={<RutaModulo><EditarOrdenPage /></RutaModulo>} />
 
-          {/* RUTAS DEL MÓDULO MODULOS */}
+          {/* RUTAS DEL MÓDULO MÓDULOS */}
           <Route path="modulos" element={<RutaModulo><ModulosPage /></RutaModulo>} />
           <Route path="modulos/nuevo" element={<RutaModulo><AgregarModuloPage /></RutaModulo>} />
           <Route path="modulos/editar/:codigoModulo" element={<RutaModulo><EditarModuloPage /></RutaModulo>} />
@@ -140,8 +154,12 @@ function App() {
 
           {/* RUTAS DEL MÓDULO RECEPCIÓN */}
           <Route path="recepcion" element={<RutaModulo><RecepcionPage /></RutaModulo>} />
-          <Route path="inventario" element={<InventarioPage/>} />
+
+          {/* RUTAS DEL MÓDULO INVENTARIO */}
+          <Route path="inventario" element={<InventarioPage />} />
           <Route path="inventario/ajustes" element={<RutaModulo><AjusteInventarioPage /></RutaModulo>} />
+
+          {/* RUTAS DEL MÓDULO CLIENTES */}
           <Route path="clientes" element={<RutaModulo><ClientesPage /></RutaModulo>} />
           <Route path="clientes/agregar" element={<RutaModulo><AgregarClientePage /></RutaModulo>} />
           <Route path="clientes/editar/:codigoCliente" element={<RutaModulo><EditarClientePage /></RutaModulo>} />
@@ -155,7 +173,7 @@ function App() {
           <Route path="categorias" element={<RutaModulo><CategoriaPage /></RutaModulo>} />
           <Route path="categorias/agregar" element={<RutaModulo><AgregarCategoriaPage /></RutaModulo>} />
           <Route path="categorias/editar/:codigoCategoria" element={<RutaModulo><EditarCategoriaPage /></RutaModulo>} />
-          
+
           {/* RUTAS DEL MÓDULO VENDEDORES */}
           <Route path="vendedores" element={<RutaModulo><VendedorPage /></RutaModulo>} />
           <Route path="vendedores/agregar" element={<RutaModulo><AgregarVendedorPage /></RutaModulo>} />
@@ -166,17 +184,15 @@ function App() {
           <Route path="repartidores/agregar" element={<RutaModulo><AgregarRepartidorPage /></RutaModulo>} />
           <Route path="repartidores/editar/:codigoRepartidor" element={<RutaModulo><EditarRepartidorPage /></RutaModulo>} />
 
-<<<<<<< HEAD
           {/* RUTAS DEL MÓDULO PUESTOS */}
           <Route path="puestos" element={<RutaModulo><PuestoPage /></RutaModulo>} />
           <Route path="puestos/agregar" element={<RutaModulo><AgregarPuestoPage /></RutaModulo>} />
           <Route path="puestos/editar/:codigoPuesto" element={<RutaModulo><EditarPuestoPage /></RutaModulo>} />
-=======
+
+          {/* RUTAS DEL MÓDULO MARCAS */}
           <Route path="marca" element={<RutaModulo><MarcaPage /></RutaModulo>} />
           <Route path="marca/agregar" element={<RutaModulo><AgregarMarcaPage /></RutaModulo>} />
           <Route path="marca/editar/:codigoMarca" element={<RutaModulo><EditarMarcaPage /></RutaModulo>} />
->>>>>>> d52523021e9b8dddc5d958b3b82f7d14fa9027eb
-
         </Route>
       </Routes>
     </BrowserRouter>
