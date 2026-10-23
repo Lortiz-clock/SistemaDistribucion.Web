@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { buscarMarca, editarMarca } from '../services/marcaService'
 import type { MarcaEditar } from '../interfaces/MarcaEditar'
-import './AgregarMarcaPage.css'  
+ 
 
 function EditarMarcaPage() {
 
@@ -71,7 +71,7 @@ function EditarMarcaPage() {
       setExito(respuesta.exito)
 
       if (respuesta.exito) {
-        setTimeout(() => navigate('/dashboard/marcas'), 1200)
+        setTimeout(() => navigate('/dashboard/marca'), 1200)
       }
     } catch {
       setMensaje('No fue posible comunicarse con la API.')

@@ -96,7 +96,7 @@ function AgregarMarcaPage() {
                   name="nombre"
                   value={marca.nombre}
                   onChange={manejarCambio}
-                  placeholder="Ej: Toyota"
+                  placeholder="Ej: Diana"
                   required
                 />
               </div>

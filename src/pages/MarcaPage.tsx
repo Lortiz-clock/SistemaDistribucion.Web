@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { consultarMarcas } from '../services/marcaService'
 import type { MarcaConsulta } from '../interfaces/MarcaConsulta'
-import './MarcasPage.css'
+import './MarcaPage.css'
 
-function MarcasPage() {
+function MarcaPage() {
 
   const navigate = useNavigate()
 
@@ -37,36 +37,36 @@ function MarcasPage() {
   }, [])
 
   return (
-    <div className="marcas-page d-flex flex-column h-100" style={{ minHeight: 0 }}>
-     <div className="marcas-container d-flex flex-column flex-grow-1" style={{ minHeight: 0 }}>
+    <div className="marca-page">
+  <div className="marca-container">
 
         {/* ENCABEZADO */}
-        <div className="marcas-header">
-          <h1 className="marcas-title">
-            Catálogo de Marcas
+        <div className="marca-header">
+          <h1 className="marca-title">
+            Catálogo de Marca
           </h1>
-          <p className="marcas-subtitle">
+          <p className="marca-subtitle">
             Administra las marcas registradas en el sistema.
           </p>
         </div>
 
         {/* TARJETA */}
-        <div className="marcas-card tarjeta-lista">
+        <div className="marca-card tarjeta-lista">
 
-          <div className="marcas-card-header">
+          <div className="marca-card-header">
 
-            <h2 className="marcas-card-title">
+            <h2 className="marca-card-title">
               Marcas registradas
             </h2>
 
             <div className="d-flex gap-2">
-              <span className="marcas-total">
+              <span className="marca-total">
                 Total: {marcas.length}
               </span>
 
               <button
                 className="btn btn-primary btn-sm"
-                onClick={() => navigate('/dashboard/marcas/agregar')}
+                onClick={() => navigate('/dashboard/marca/agregar')}
               >
                 + Nueva Marca
               </button>
@@ -79,8 +79,8 @@ function MarcasPage() {
             <div
               className={
                 exito
-                  ? 'alert alert-info marcas-mensaje'
-                  : 'alert alert-danger marcas-mensaje'
+                  ? 'alert alert-info marca-mensaje'
+                  : 'alert alert-danger marca-mensaje'
               }
               role="alert"
             >
@@ -89,9 +89,9 @@ function MarcasPage() {
           )}
 
           {/* TABLA */}
-          <div className="marcas-table-container tabla-scroll">
+          <div className="marca-table-container tabla-scroll">
 
-            <table className="table table-bordered marcas-table">
+            <table className="table table-bordered marca-table">
 
               <thead>
                 <tr>
@@ -145,7 +145,7 @@ function MarcasPage() {
                           className="btn btn-outline-primary btn-sm"
                           onClick={() =>
                             navigate(
-                              `/dashboard/marcas/editar/${marca.codigoMarca}`
+                              `/dashboard/marca/editar/${marca.codigoMarca}`
                             )
                           }
                         >
@@ -178,4 +178,4 @@ function MarcasPage() {
   )
 }
 
-export default MarcasPage
+export default MarcaPage

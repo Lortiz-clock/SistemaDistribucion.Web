@@ -19,14 +19,30 @@ const definicionGrupos = [
   {
     nombre: 'Ordenes de Compra',
     icono: ShoppingCart,
+    prefijos: ['/dashboard/ordenes', '/dashboard/recepcion'],
     items: [
       { contiene: '/dashboard/ordenes/nueva', nombre: 'Nueva Orden' },
       { contiene: '/dashboard/ordenes/listar', nombre: 'Órdenes de Compra' },
       { contiene: '/dashboard/recepcion', nombre: 'Recepción' }
     ]
+  },
+  {
+    nombre: 'Catálogo e Inventario',
+    icono: Package,
+    prefijos: [
+      '/dashboard/productos',
+      '/dashboard/inventario',
+      '/dashboard/marca',
+      '/dashboard/categorias'
+    ],
+    items: [
+      { contiene: '/dashboard/productos', nombre: 'Productos' },
+      { contiene: '/dashboard/inventario', nombre: 'Inventario' },
+      { contiene: '/dashboard/marca', nombre: 'Marca' },
+      { contiene: '/dashboard/categorias', nombre: 'Categorías' }
+    ]
   }
 ]
-
 interface GrupoMenu {
   nombre: string
   icono: any
@@ -99,9 +115,10 @@ function Layout() {
  
 useEffect(() => {
   const ruta = location.pathname
-  if (ruta.startsWith('/dashboard/ordenes') || ruta.startsWith('/dashboard/recepcion')) {
-    setGrupoAbierto('Ordenes de Compra')
-  }
+  const grupo = definicionGrupos.find((g) =>
+    g.prefijos.some((p) => ruta.startsWith(p))
+  )
+  if (grupo) setGrupoAbierto(grupo.nombre)
 }, [location.pathname])
 
 useEffect(() => {

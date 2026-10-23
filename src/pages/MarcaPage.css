@@ -1,6 +1,8 @@
 /* ============ CONTENEDOR GENERAL ============ */
-.marcas-page {
-  height: 100vh;
+.marca-page {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   box-sizing: border-box;
   overflow: hidden;
   background-color: #f5f7fb;
@@ -9,24 +11,30 @@
   flex-direction: column;
 }
 
-.marcas-container {
+.marca-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   max-width: 1400px;
   margin: 0 auto;
 }
 
 /* ============ ENCABEZADO ============ */
-.marcas-header {
+.marca-header {
   margin-bottom: 25px;
+  flex-shrink: 0;
 }
 
-.marcas-title {
+.marca-title {
   margin: 0;
   font-size: 30px;
   font-weight: 700;
   color: #1f2937;
 }
 
-.marcas-subtitle {
+.marca-subtitle {
   margin-top: 6px;
   margin-bottom: 0;
   font-size: 15px;
@@ -34,7 +42,11 @@
 }
 
 /* ============ TARJETA PRINCIPAL ============ */
-.marcas-card {
+.marca-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   background-color: #ffffff;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
@@ -42,22 +54,25 @@
   overflow: hidden;
 }
 
-.marcas-card-header {
+.marca-card-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   padding: 20px 24px;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.marcas-card-title {
+.marca-card-title {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
   color: #1f2937;
 }
 
-.marcas-total {
+.marca-total {
   padding: 6px 12px;
   border-radius: 20px;
   background-color: #eef4ff;
@@ -67,23 +82,26 @@
 }
 
 /* ============ MENSAJE ============ */
-.marcas-mensaje {
+.marca-mensaje {
+  flex-shrink: 0;
   margin: 20px 24px 0 24px;
   border-radius: 8px;
 }
 
-/* ============ TABLA ============ */
-.marcas-table-container {
-  padding: 20px 24px 24px 24px;
-  overflow-x: auto;
+.marca-table-container {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin-top: 20px;
+  padding: 0 24px 24px 24px;
 }
 
-.marcas-table {
+.marca-table {
   margin-bottom: 0;
   vertical-align: middle;
 }
 
-.marcas-table thead th {
+.marca-table thead th {
   background-color: #1f2937;
   color: #ffffff;
   font-size: 13px;
@@ -92,18 +110,24 @@
   white-space: nowrap;
 }
 
-.marcas-table tbody td {
+.marca-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.marca-table tbody td {
   padding: 14px 12px;
   font-size: 14px;
   color: #374151;
   border-color: #e5e7eb;
 }
 
-.marcas-table tbody tr {
+.marca-table tbody tr {
   transition: background-color 0.2s ease;
 }
 
-.marcas-table tbody tr:hover {
+.marca-table tbody tr:hover {
   background-color: #f3f6fb;
 }
 
@@ -153,23 +177,24 @@
 
 /* ============ RESPONSIVE ============ */
 @media (max-width: 768px) {
-  .marcas-page {
+  .marca-page {
     padding: 20px 10px;
   }
 
-  .marcas-title {
+  .marca-title {
     font-size: 24px;
   }
 
-  .marcas-card-header {
+  .marca-card-header {
     padding: 16px;
   }
 
-  .marcas-table-container {
-    padding: 15px;
-  }
+  .marca-table-container {
+  margin-top: 15px;
+  padding: 0 15px 15px 15px;
+}
 
-  .marcas-mensaje {
+  .marca-mensaje {
     margin-left: 15px;
     margin-right: 15px;
   }

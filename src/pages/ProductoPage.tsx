@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { consultarProducto } from '../services/productoService'
+import { consultarCategorias } from '../services/categoriaServices'
+import { consultarMarcas } from '../services/marcaService'
 import type { ProductoConsulta } from '../interfaces/ProductoConsulta'
 import './ProductoPage.css'
 
@@ -9,16 +11,31 @@ export default function ProductoPage() {
   const [mensaje, setMensaje] = useState('')
   const [busqueda, setBusqueda] = useState('')
 
+  // código -> nombre
+  const [categorias, setCategorias] = useState<Map<number, string>>(new Map())
+  const [marcas, setMarcas] = useState<Map<number, string>>(new Map())
+
   const [productoSeleccionado, setProductoSeleccionado] =
     useState<ProductoConsulta | null>(null)
   const [mostrarModal, setMostrarModal] = useState(false)
 
-  const productosFiltrados = producto.filter(
-    (item) =>
-      item.codigoProducto.toString().includes(busqueda) ||
-      item.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      item.codigoMarca.toString().includes(busqueda)
-  )
+  const nombreCategoria = (codigo: number) =>
+    categorias.get(codigo) ?? String(codigo)
+
+  const nombreMarca = (codigo: number) =>
+    marcas.get(codigo) ?? String(codigo)
+
+  const productosFiltrados = useMemo(() => {
+    const texto = busqueda.toLowerCase()
+    return producto.filter(
+      (item) =>
+        item.codigoProducto.toString().includes(busqueda) ||
+        item.nombre.toLowerCase().includes(texto) ||
+        nombreCategoria(item.codigoCategoria).toLowerCase().includes(texto) ||
+        nombreMarca(item.codigoMarca).toLowerCase().includes(texto)
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [producto, busqueda, categorias, marcas])
 
   const verDetalle = (item: ProductoConsulta) => {
     setProductoSeleccionado(item)
@@ -47,13 +64,34 @@ export default function ProductoPage() {
     }
   }
 
+  const cargarCatalogos = async () => {
+    try {
+      const [resCategorias, resMarcas] = await Promise.all([
+        consultarCategorias(),
+        consultarMarcas()
+      ])
+
+      if (resCategorias.exito && Array.isArray(resCategorias.datos)) {
+        setCategorias(
+          new Map(resCategorias.datos.map((c) => [c.codigoCategoria, c.nombre]))
+        )
+      }
+      if (resMarcas.exito && Array.isArray(resMarcas.datos)) {
+        setMarcas(new Map(resMarcas.datos.map((m) => [m.codigoMarca, m.nombre])))
+      }
+    } catch {
+      // si falla, se muestran los códigos como respaldo
+    }
+  }
+
   useEffect(() => {
     cargarProducto()
+    cargarCatalogos()
   }, [])
 
   return (
-   <div className="producto-page pagina-lista">
-    <div className="producto-container pagina-lista-interna">
+    <div className="producto-page pagina-lista">
+      <div className="producto-container pagina-lista-interna">
         {/* ENCABEZADO */}
         <div className="producto-header">
           <h1 className="producto-title">Consulta de Productos</h1>
@@ -67,9 +105,7 @@ export default function ProductoPage() {
           <div className="producto-card-header">
             <h2 className="producto-card-title">Productos registrados</h2>
             <div className="d-flex align-items-center gap-3">
-              <span className="producto-total">
-                Total: {producto.length}
-              </span>
+              <span className="producto-total">Total: {producto.length}</span>
               <Link
                 to="/dashboard/productos/agregar"
                 className="btn btn-primary btn-sm"
@@ -91,7 +127,7 @@ export default function ProductoPage() {
             <input
               type="text"
               className="form-control"
-              placeholder="Buscar por código, nombre o código de marca..."
+              placeholder="Buscar por código, nombre, categoría o marca..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
@@ -104,7 +140,7 @@ export default function ProductoPage() {
                 <tr>
                   <th className="col-codigo">Código</th>
                   <th className="col-categoria">Categoría</th>
-                  <th className="col-marca">Cód. Marca</th>
+                  <th className="col-marca">Marca</th>
                   <th className="col-nombre">Nombre</th>
                   <th className="col-unidades">Unid. Caja</th>
                   <th className="col-estado">Estado</th>
@@ -117,8 +153,10 @@ export default function ProductoPage() {
                   productosFiltrados.map((item) => (
                     <tr key={item.codigoProducto}>
                       <td className="col-codigo">{item.codigoProducto}</td>
-                      <td className="col-categoria">{item.codigoCategoria}</td>
-                      <td className="col-marca">{item.codigoMarca}</td>
+                      <td className="col-categoria">
+                        {nombreCategoria(item.codigoCategoria)}
+                      </td>
+                      <td className="col-marca">{nombreMarca(item.codigoMarca)}</td>
                       <td className="col-nombre">{item.nombre}</td>
                       <td className="col-unidades">{item.unidadesCaja}</td>
                       <td className="col-estado">
@@ -176,11 +214,12 @@ export default function ProductoPage() {
                 {productoSeleccionado.codigoProducto}
               </p>
               <p>
-                <strong>Código Categoría:</strong>{' '}
-                {productoSeleccionado.codigoCategoria}
+                <strong>Categoría:</strong>{' '}
+                {nombreCategoria(productoSeleccionado.codigoCategoria)}
               </p>
               <p>
-                <strong>Código Marca:</strong> {productoSeleccionado.codigoMarca}
+                <strong>Marca:</strong>{' '}
+                {nombreMarca(productoSeleccionado.codigoMarca)}
               </p>
               <p>
                 <strong>Nombre:</strong> {productoSeleccionado.nombre}

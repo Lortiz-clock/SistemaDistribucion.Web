@@ -47,10 +47,10 @@ import EditarVendedorPage from './pages/EditarVendedorPage'
 import RepartidorPage from './pages/RepartidorPage'
 import AgregarRepartidorPage from './pages/AgregarRepartidorPage'
 import EditarRepartidorPage from './pages/EditarRepartidorPage'
-import MarcasPage from './pages/MarcasPage'
+import MarcaPage from './pages/MarcaPage'
 import AgregarMarcaPage from './pages/AgregarMarcaPage'
 import EditarMarcaPage from './pages/EditarMarcaPage'
-
+import EditarClientePage from './pages/EditarClientePage'
 
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
@@ -136,6 +136,7 @@ function App() {
           <Route path="inventario/ajustes" element={<RutaModulo><AjusteInventarioPage /></RutaModulo>} />
           <Route path="clientes" element={<RutaModulo><ClientesPage /></RutaModulo>} />
           <Route path="clientes/agregar" element={<RutaModulo><AgregarClientePage /></RutaModulo>} />
+          <Route path="clientes/editar/:codigoCliente" element={<RutaModulo><EditarClientePage /></RutaModulo>} />
 
           {/* RUTAS DEL MÓDULO EMPLEADOS */}
           <Route path="empleados" element={<RutaModulo><EmpleadoPage /></RutaModulo>} />
@@ -157,9 +158,9 @@ function App() {
           <Route path="repartidores/agregar" element={<RutaModulo><AgregarRepartidorPage /></RutaModulo>} />
           <Route path="repartidores/editar/:codigoRepartidor" element={<RutaModulo><EditarRepartidorPage /></RutaModulo>} />
 
-          <Route path="marcas" element={<RutaModulo><MarcasPage /></RutaModulo>} />
-          <Route path="marcas/agregar" element={<RutaModulo><AgregarMarcaPage /></RutaModulo>} />
-          <Route path="marcas/editar/:codigoMarca" element={<RutaModulo><EditarMarcaPage /></RutaModulo>} />
+          <Route path="marca" element={<RutaModulo><MarcaPage /></RutaModulo>} />
+          <Route path="marca/agregar" element={<RutaModulo><AgregarMarcaPage /></RutaModulo>} />
+          <Route path="marca/editar/:codigoMarca" element={<RutaModulo><EditarMarcaPage /></RutaModulo>} />
 
         </Route>
       </Routes>
