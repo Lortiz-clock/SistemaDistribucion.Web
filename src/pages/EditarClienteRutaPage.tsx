@@ -22,11 +22,6 @@ const extraerError = (error: any) => {
 const DIAS = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 const nombreDia = (dia: number) => DIAS[dia] ?? '—'
 const soloFecha = (fecha: string | null) => (fecha ? fecha.substring(0, 10) : null)
-const verFecha = (fecha: string | null) => {
-  if (!fecha) return '—'
-  const [anio, mes, dia] = fecha.substring(0, 10).split('-')
-  return `${dia}/${mes}/${anio}`
-}
 
 export default function EditarClienteRutaPage() {
   const navigate = useNavigate()
