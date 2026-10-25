@@ -3,7 +3,8 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   ShieldUser, Package, Truck, ShoppingCart, ClipboardList,
   ShieldCheck, LayoutDashboard, Layers, ClipboardCheck, PlayingCardsFan,
-  ChevronDown, PackageOpen, BriefcaseBusiness, UserCog, Timeline
+  ChevronDown, PackageOpen, BriefcaseBusiness, UserCog, Timeline,
+  FileText, BarChart3
 } from 'lucide-react'
 import './Layout.css'
 import './tema-oscuro.css'
@@ -13,7 +14,8 @@ import type { Modulo } from '../interfaces/UsuarioLogin'
 
 const iconosDisponibles: Record<string, any> = {
   ShieldUser, Package, Truck, ShoppingCart, ClipboardList, PlayingCardsFan,
-  ShieldCheck, Layers, ClipboardCheck, PackageOpen, BriefcaseBusiness, UserCog, Timeline
+  ShieldCheck, Layers, ClipboardCheck, PackageOpen, BriefcaseBusiness, UserCog, Timeline, 
+  FileText, BarChart3
 }
 
 // ═══ Definición de grupos: módulos que se muestran juntos ═══

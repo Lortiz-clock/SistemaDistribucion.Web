@@ -85,6 +85,9 @@ import ClienteRutaPage from './pages/ClienteRutaPage'
 import AgregarClienteRutaPage from './pages/AgregarClienteRutaPage'
 import EditarClienteRutaPage from './pages/EditarClienteRutaPage'
 
+import ReporteComprasPage from './pages/ReporteComprasPage'
+import ReporteInventarioPage from './pages/ReporteInventarioPage'
+
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
   return estaLogueado ? children : <Navigate to="/" replace />
@@ -170,7 +173,7 @@ function App() {
           <Route path="recepcion" element={<RutaModulo><RecepcionPage /></RutaModulo>} />
 
           {/* RUTAS DEL MÓDULO INVENTARIO */}
-          <Route path="inventario" element={<InventarioPage />} />
+          <Route path="inventario" element={<RutaModulo><InventarioPage /></RutaModulo>} />
           <Route path="inventario/ajustes" element={<RutaModulo><AjusteInventarioPage /></RutaModulo>} />
 
           {/* RUTAS DEL MÓDULO CLIENTES */}
@@ -222,7 +225,9 @@ function App() {
           <Route path="asignacion-rutas" element={<RutaModulo><ClienteRutaPage /></RutaModulo>} />
           <Route path="asignacion-rutas/agregar" element={<RutaModulo><AgregarClienteRutaPage /></RutaModulo>} />
           <Route path="asignacion-rutas/editar/:codigoClienteRuta" element={<RutaModulo><EditarClienteRutaPage /></RutaModulo>} />
-        
+          <Route path="reportes/compras" element={<RutaModulo><ReporteComprasPage /></RutaModulo>} />
+          <Route path="reportes/inventario" element={<RutaModulo><ReporteInventarioPage /></RutaModulo>} />
+
         </Route>
       </Routes>
     </BrowserRouter>
