@@ -80,6 +80,11 @@ import RutaPage from './pages/RutaPage'
 import AgregarRutaPage from './pages/AgregarRutaPage'
 import EditarRutaPage from './pages/EditarRutaPage'
 
+// Importaciones del módulo de Clientes por Ruta
+import ClienteRutaPage from './pages/ClienteRutaPage'
+import AgregarClienteRutaPage from './pages/AgregarClienteRutaPage'
+import EditarClienteRutaPage from './pages/EditarClienteRutaPage'
+
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
   return estaLogueado ? children : <Navigate to="/" replace />
@@ -213,6 +218,11 @@ function App() {
           <Route path="rutas/agregar" element={<RutaModulo><AgregarRutaPage /></RutaModulo>} />
           < Route path="rutas/editar/:codigoRuta" element={<RutaModulo><EditarRutaPage /></RutaModulo>} />
 
+          {/* RUTAS DEL MÓDULO CLIENTES POR RUTA */}
+          <Route path="asignacion-rutas" element={<RutaModulo><ClienteRutaPage /></RutaModulo>} />
+          <Route path="asignacion-rutas/agregar" element={<RutaModulo><AgregarClienteRutaPage /></RutaModulo>} />
+          <Route path="asignacion-rutas/editar/:codigoClienteRuta" element={<RutaModulo><EditarClienteRutaPage /></RutaModulo>} />
+        
         </Route>
       </Routes>
     </BrowserRouter>
