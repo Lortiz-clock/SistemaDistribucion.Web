@@ -71,6 +71,15 @@ import MarcaPage from './pages/MarcaPage'
 import AgregarMarcaPage from './pages/AgregarMarcaPage'
 import EditarMarcaPage from './pages/EditarMarcaPage'
 
+// Importaciones del módulo de Motivos de No Visita
+import MotivoNoVisitaPage from './pages/MotivoNoVisitaPage'
+import AgregarMotivoNoVisitaPage from './pages/AgregarMotivoNoVisitaPage'
+import EditarMotivoNoVisitaPage from './pages/EditarMotivoNoVisitaPage'
+// Importaciones del módulo de Rutas
+import RutaPage from './pages/RutaPage'
+import AgregarRutaPage from './pages/AgregarRutaPage'
+import EditarRutaPage from './pages/EditarRutaPage'
+
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
   return estaLogueado ? children : <Navigate to="/" replace />
@@ -193,6 +202,17 @@ function App() {
           <Route path="marca" element={<RutaModulo><MarcaPage /></RutaModulo>} />
           <Route path="marca/agregar" element={<RutaModulo><AgregarMarcaPage /></RutaModulo>} />
           <Route path="marca/editar/:codigoMarca" element={<RutaModulo><EditarMarcaPage /></RutaModulo>} />
+
+          {/* RUTAS DEL MÓDULO MOTIVOS DE NO VISITA */}
+          <Route path="motivos-no-visita" element={<RutaModulo><MotivoNoVisitaPage /></RutaModulo>} />
+          <Route path="motivos-no-visita/agregar" element={<RutaModulo><AgregarMotivoNoVisitaPage /></RutaModulo>} />
+          <Route path="motivos-no-visita/editar/:codigoMotivo" element={<RutaModulo><EditarMotivoNoVisitaPage /></RutaModulo>} />
+
+          {/* RUTAS DEL MÓDULO RUTAS */}
+          <Route path="rutas" element={<RutaModulo><RutaPage /></RutaModulo>} />
+          <Route path="rutas/agregar" element={<RutaModulo><AgregarRutaPage /></RutaModulo>} />
+          < Route path="rutas/editar/:codigoRuta" element={<RutaModulo><EditarRutaPage /></RutaModulo>} />
+
         </Route>
       </Routes>
     </BrowserRouter>
