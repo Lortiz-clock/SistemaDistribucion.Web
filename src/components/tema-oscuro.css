@@ -507,17 +507,160 @@
     font-size: 0.8rem;
   }
 
-  /* ── 2. Botones de Acciones apilados (la tabla se vuelve más
-        angosta y se desliza menos) ── */
-  .layout-content .col-acciones .d-flex {
-    flex-direction: column;
-    gap: 4px !important;
-  }
-
-  /* ── 3. PRODUCTOS: ocultar columnas secundarias
+  /* ── 2. PRODUCTOS: ocultar columnas secundarias
         (la información vive en el modal Detalle) ── */
   .layout-content .producto-table .col-unidades,
   .layout-content .producto-table .col-marca {
     display: none;
   }
-} 
+}
+
+/* ============================================================
+   LISTAS COMO TARJETAS EN TELÉFONO (≤768px)
+   Va AL FINAL a propósito: debe ganarle al bloque de scroll
+   de 991px cuando ambos coinciden (teléfonos).
+   Requiere data-label en cada <td> y class="col-acciones"
+   en la celda de botones.
+   ============================================================ */
+/* ============================================================
+   LISTAS COMO TARJETAS EN TELÉFONO (≤768px) — v2
+   Reemplaza COMPLETAMENTE el bloque anterior.
+   Requiere: data-label en cada <td> y class="col-acciones"
+   en la celda de botones.
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* ── Header de la tarjeta: título arriba, controles abajo ──
+     Selector genérico: cubre proveedor-card-header,
+     orden-card-header, producto-card-header, etc. */
+  .layout-content [class*="-card-header"] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .layout-content [class*="-card-header"] .d-flex {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem !important;
+  }
+
+  /* ── La tabla deja de comportarse como tabla ── */
+  .layout-content .table {
+    display: block;
+    overflow-x: visible;      /* anula el scroll del bloque 991px */
+    white-space: normal;      /* anula el nowrap del bloque 991px */
+    border-spacing: 0;
+  }
+
+  .layout-content .table > thead { display: none; }
+  .layout-content .table > tbody { display: block; }
+
+  /* ── Cada fila = tarjeta ── */
+  .layout-content .table > tbody > tr {
+    display: block;
+    background-color: var(--t-fila);
+    border: 1px solid rgba(148, 163, 184, 0.10);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    padding: 12px 16px 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  }
+
+  /* En táctil no hay hover real: limpiamos el efecto del desktop */
+  .layout-content .table > tbody > tr:hover > td {
+    background-color: transparent;
+    color: var(--t-texto);
+  }
+
+  /* ── Celdas: fila "etiqueta izquierda ↔ valor derecha" ── */
+  .layout-content .table > tbody > tr > td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    background-color: transparent;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 8px 0;
+    white-space: normal;
+    text-align: right;
+    line-height: 1.35;
+    font-size: 0.92rem;
+  }
+
+  /* La etiqueta sale del data-label del JSX */
+  .layout-content .table > tbody > tr > td::before {
+    content: attr(data-label);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--t-suave);
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  /* ── Primera celda = encabezado de la tarjeta ──
+     Antetítulo pequeño arriba + valor grande + divisoria */
+  .layout-content .table > tbody > tr > td:first-child {
+    display: block;              /* ya no es fila etiqueta-valor */
+    padding: 0 0 10px !important;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16) !important;
+    text-align: left;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .layout-content .table > tbody > tr > td:first-child::before {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: var(--t-suave);
+  }
+
+  /* ── Acciones: botones repartidos en el ancho, estilo app ── */
+  .layout-content .table > tbody > tr > td.col-acciones {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 1px dashed rgba(148, 163, 184, 0.18) !important;
+  }
+
+  .layout-content .table > tbody > tr > td.col-acciones::before {
+    content: none;   /* la etiqueta "Acciones" sobra aquí */
+  }
+
+  .layout-content .table > tbody > tr > td.col-acciones .d-flex {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px !important;
+  }
+
+  /* Botones del mismo ancho, texto centrado */
+  .layout-content .table > tbody > tr > td.col-acciones .btn {
+    flex: 1 1 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  /* ── "Sin registros": tarjeta centrada, sin etiqueta ── */
+  .layout-content .table > tbody > tr > td.sin-registros {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .layout-content .table > tbody > tr > td.sin-registros::before {
+    content: none;
+  }
+}

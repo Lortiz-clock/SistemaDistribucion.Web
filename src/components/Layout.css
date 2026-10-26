@@ -1,12 +1,6 @@
-/* ═══ VARIABLES (mismas del login) ═══ */
-.layout-wrapper {
-  --acento: #3b82f6;
-  --acento-2: #1d4ed8;
-  --tarjeta: #111a2e;
-  --texto-suave: #94a3b8;
-}
-
-/* ═══ ESTRUCTURA GENERAL (fija: solo el contenido scrollea) ═══ */
+/* ═══ ESTRUCTURA GENERAL (fija: solo el contenido scrollea)
+   Las variables de color y el fondo viven SOLO en el archivo
+   de tema. Este archivo define estructura y comportamiento. ═══ */
 html, body {
   height: 100%;
   margin: 0;
@@ -18,18 +12,12 @@ html, body {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.12), transparent 45%),
-    linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
 }
 
-/* ═══ SIDEBAR ═══ */
+/* ═══ SIDEBAR (fondo, borde y sombra los pone el tema) ═══ */
 .layout-sidebar {
   width: 250px;
   flex-shrink: 0;
-  background: rgba(17, 26, 46, 0.92);
-  border-right: 2px solid var(--acento);
-  box-shadow: 0 0 24px color-mix(in srgb, var(--acento) 35%, transparent);
   color: white;
   padding: 20px 0;
   overflow-y: auto;
@@ -42,8 +30,8 @@ html, body {
   font-weight: 700;
   position: sticky;
   top: 0;
-  background: rgba(17, 26, 46, 0.98);
-  border-bottom: 1px solid color-mix(in srgb, var(--acento) 45%, transparent);
+  background: var(--t-sidebar);
+  border-bottom: 1px solid var(--t-borde);
   z-index: 1;
 }
 
@@ -61,7 +49,7 @@ html, body {
 }
 
 .layout-nav-link:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--t-hover, rgba(59, 130, 246, 0.1));
   color: #ffffff !important;
 }
 
@@ -82,7 +70,7 @@ html, body {
 }
 
 .layout-grupo-btn:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--t-hover, rgba(59, 130, 246, 0.1));
   color: #ffffff !important;
 }
 
@@ -101,7 +89,7 @@ html, body {
 }
 
 .layout-submenu-link:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--t-hover, rgba(59, 130, 246, 0.1));
   color: #ffffff !important;
 }
 
@@ -114,12 +102,12 @@ html, body {
   min-width: 0;
 }
 
+/* Fondo y borde inferior los pone el tema; aquí solo el
+   comportamiento y el efecto vidrio */
 .layout-header {
-  background: rgba(17, 26, 46, 0.75);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   padding: 15px 30px;
-  border-bottom: 1px solid color-mix(in srgb, var(--acento) 45%, transparent);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -230,7 +218,7 @@ html, body {
     z-index: 1000;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
-    background: rgba(17, 26, 46, 0.98);
+    background: var(--t-sidebar);
   }
 
   .layout-sidebar.abierto {

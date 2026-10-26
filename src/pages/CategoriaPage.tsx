@@ -115,10 +115,10 @@ export default function CategoriaPage() {
                 {filtradas.length > 0 ? (
                   filtradas.map((item) => (
                     <tr key={item.codigoCategoria}>
-                      <td>{item.codigoCategoria}</td>
-                      <td>{item.nombre}</td>
-                      <td>{item.descripcion}</td>
-                      <td>
+                      <td data-label="Código">{item.codigoCategoria}</td>
+                      <td data-label="Nombre">{item.nombre}</td>
+                      <td data-label="Descripción">{item.descripcion}</td>
+                      <td data-label="Acciones" className="col-acciones">
                         <div className="d-flex gap-2 justify-content-center">
                           <button
                             className="btn btn-sm btn-outline-primary"
@@ -133,13 +133,13 @@ export default function CategoriaPage() {
                             }
                           >
                             Editar
-                            </button>
-                            <button
-                             className="btn btn-sm btn-outline-danger"
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
                             onClick={() => desactivarCategoria(item.codigoCategoria)}
                           >
-                             Desactivar
-                              </button>
+                            Desactivar
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -159,7 +159,7 @@ export default function CategoriaPage() {
 
       {mostrarModal && seleccionada && (
         <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog">
+          <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content p-3">
               <h5>Detalle de la categoría</h5>
               <hr />
