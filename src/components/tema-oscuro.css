@@ -457,3 +457,67 @@
   border-radius: 10px;
   border: 1px solid var(--t-borde);
 }
+
+/* ============================================================
+   AJUSTES MÓVILES (teléfonos y tablets)
+   ============================================================ */
+@media (max-width: 991px) {
+
+  /* ── TABLAS: el scroll va DENTRO de la tabla ── */
+  .layout-content .table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── FORMULARIOS: todos los campos apilados en una columna ── */
+  .layout-content .row > [class*="col"] {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  /* ── Inputs nunca más anchos que la pantalla ── */
+  .layout-content .form-control,
+  .layout-content .form-select {
+    max-width: 100%;
+  }
+
+  /* ── MODALES: sin límite de ancho raro (los modales de React
+        se renderizan fuera del layout, por eso va global) ── */
+  .modal-dialog {
+    max-width: 94vw;
+    margin: 10px auto;
+  }
+
+  /* ── Cinturón de seguridad: la página nunca scrollea lateral ── */
+  .layout-content {
+    overflow-x: hidden;
+  }
+}
+
+/* ============================================================
+   LISTADOS COMPACTOS EN MÓVIL
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* ── 1. Botones más compactos en el teléfono ── */
+  .layout-content .btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  /* ── 2. Botones de Acciones apilados (la tabla se vuelve más
+        angosta y se desliza menos) ── */
+  .layout-content .col-acciones .d-flex {
+    flex-direction: column;
+    gap: 4px !important;
+  }
+
+  /* ── 3. PRODUCTOS: ocultar columnas secundarias
+        (la información vive en el modal Detalle) ── */
+  .layout-content .producto-table .col-unidades,
+  .layout-content .producto-table .col-marca {
+    display: none;
+  }
+} 
