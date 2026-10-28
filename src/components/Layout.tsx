@@ -4,7 +4,7 @@ import {
   ShieldUser, Package, Truck, ShoppingCart, ClipboardList,
   ShieldCheck, LayoutDashboard, Layers, ClipboardCheck, PlayingCardsFan,
   ChevronDown, PackageOpen, BriefcaseBusiness, UserCog, Timeline,
-  FileText, BarChart3
+  FileText, BarChart3, Combine
 } from 'lucide-react'
 import './Layout.css'
 import './tema-oscuro.css'
@@ -15,7 +15,7 @@ import type { Modulo } from '../interfaces/UsuarioLogin'
 const iconosDisponibles: Record<string, any> = {
   ShieldUser, Package, Truck, ShoppingCart, ClipboardList, PlayingCardsFan,
   ShieldCheck, Layers, ClipboardCheck, PackageOpen, BriefcaseBusiness, UserCog, Timeline, 
-  FileText, BarChart3
+  FileText, BarChart3, Combine
 }
 
 // ═══ Definición de grupos: módulos que se muestran juntos ═══
