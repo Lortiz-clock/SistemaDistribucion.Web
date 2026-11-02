@@ -291,8 +291,7 @@ export default function PlanificadorRutasPage() {
   }
 
   const retirar = async (codigoClienteRuta: number) => {
-    if (!window.confirm('¿Quitar este cliente de la ruta?')) return
-    setOcupado(true)
+    
     try {
       const res = await retirarCliente(codigoClienteRuta)
       if (res.exito) setAlerta({ tipo: 'success', texto: res.mensaje || 'Cliente retirado de la ruta.' })
