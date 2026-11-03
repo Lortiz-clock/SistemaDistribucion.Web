@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+/*import { useEffect, useMemo, useState } from "react";
 import { Link } from 'react-router-dom';
 import { consultaMeta } from "../services/metaService";
 import { consultarEmpleados } from "../services/empleadoServices";
@@ -9,4 +9,4 @@ export default function MetaPage() {
     const [mensaje, setMensaje] = useState('')
     const [busqueda, setBusqueda] = useState('')    
 
-}
+}*/
