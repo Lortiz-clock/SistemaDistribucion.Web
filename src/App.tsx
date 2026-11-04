@@ -88,6 +88,8 @@ import EditarClienteRutaPage from './pages/EditarClienteRutaPage'
 import ReporteComprasPage from './pages/ReporteComprasPage'
 import ReporteInventarioPage from './pages/ReporteInventarioPage'
 import PlanificadorRutasPage from './pages/PlanificadorRutasPage'
+import MetaPage from './pages/MetaPage'
+import MetaAgregarPage from './pages/MetaAgregarPage'
 
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
@@ -229,7 +231,8 @@ function App() {
           <Route path="reportes/compras" element={<RutaModulo><ReporteComprasPage /></RutaModulo>} />
           <Route path="reportes/inventario" element={<RutaModulo><ReporteInventarioPage /></RutaModulo>} />
           <Route path="planificador" element={<RutaModulo><PlanificadorRutasPage /></RutaModulo>} />
-
+          <Route path="Metas" element={<RutaModulo><MetaPage /></RutaModulo>} />
+          <Route path="metas/agregar" element={<MetaAgregarPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
