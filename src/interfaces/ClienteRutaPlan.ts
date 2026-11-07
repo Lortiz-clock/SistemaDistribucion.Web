@@ -5,4 +5,6 @@ export interface ClienteRutaPlan {
   nombreCliente: string
   direccion: string
   ordenVisita: number
+  latitud: number | null  
+  longitud: number | null
 }
