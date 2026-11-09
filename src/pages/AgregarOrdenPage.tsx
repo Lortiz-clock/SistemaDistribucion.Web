@@ -10,6 +10,8 @@ interface ItemCarrito extends DetalleCompraItem {
   nombreProducto: string
   precioMinimo: string
   precioSugerido: string
+  margenPct: string
+  metaPct: string
 }
 
 // Unidades que trae una caja, tomadas del catalogo de productos.
@@ -27,8 +29,8 @@ function AgregarOrdenPage() {
   const [codigoProducto, setCodigoProducto] = useState(0)
   const [cantidadPedida, setCantidadPedida] = useState(0)
   const [precioCosto, setPrecioCosto] = useState(0)
-  const [margenMinimoPct, setMargenMinimoPct] = useState(0)
-  const [metaUtilidadPct, setMetaUtilidadPct] = useState(0)
+  const [precioMin, setPrecioMin] = useState(0)   // precio mínimo exacto en Q
+  const [precioSug, setPrecioSug] = useState(0)   // precio sugerido exacto en Q
 
   const [proveedores, setProveedores] = useState<any[]>([])
   const [productos, setProductos] = useState<any[]>([])
@@ -43,6 +45,15 @@ function AgregarOrdenPage() {
   // Lo que se guarda siempre son UNIDADES: cajas x factor + sueltas
   const unidadesTotales = (cajasPedidas * factorCaja) + cantidadPedida
 
+  // -- Porcentajes en tiempo real --
+  // Margen: cuánto sube el precio mínimo sobre el costo
+  const margenPct = precioMin > 0 && precioCosto > 0
+  ? ((precioMin - precioCosto) / precioMin) * 100
+  : 0
+const metaPct = precioSug > 0 && precioCosto > 0
+  ? ((precioSug - precioCosto) / precioSug) * 100
+  : 0
+
   const desglosarCajas = (codigoProd: number, unidades: number) => {
     const factor = obtenerFactorCaja(productos.find((p) => p.codigoProducto === codigoProd))
     if (factor <= 1) return `${unidades} un.`
@@ -50,23 +61,32 @@ function AgregarOrdenPage() {
   }
 
   useEffect(() => {
-  const cargarDatos = async () => {
-    try {
-      const respuestaProveedores = await consultarProveedor()
-      if (respuestaProveedores.exito && respuestaProveedores.datos) {  
-        setProveedores(respuestaProveedores.datos)
-      }
+    const cargarDatos = async () => {
+      try {
+        const respuestaProveedores = await consultarProveedor()
+        if (respuestaProveedores.exito && respuestaProveedores.datos) {
+          setProveedores(respuestaProveedores.datos)
+        }
 
-      const respuestaProductos = await consultarProducto()
-      if (respuestaProductos.exito && respuestaProductos.datos) {      
-        setProductos(respuestaProductos.datos)
+        const respuestaProductos = await consultarProducto()
+        if (respuestaProductos.exito && respuestaProductos.datos) {
+          setProductos(respuestaProductos.datos)
+        }
+      } catch (error) {
+        console.error("Error al cargar datos", error)
       }
-    } catch (error) {
-      console.error("Error al cargar datos", error)
     }
+    cargarDatos()
+  }, [])
+
+  const limpiarProducto = () => {
+    setCodigoProducto(0)
+    setCantidadPedida(0)
+    setCajasPedidas(0)
+    setPrecioCosto(0)
+    setPrecioMin(0)
+    setPrecioSug(0)
   }
-  cargarDatos()
-}, [])
 
   const agregarAlCarrito = () => {
     if (codigoProducto === 0 || unidadesTotales <= 0 || precioCosto <= 0) {
@@ -75,31 +95,38 @@ function AgregarOrdenPage() {
       return
     }
 
-    const productoElegido = productos.find((p) => p.codigoProducto === codigoProducto)
+    if (precioMin < precioCosto) {
+      setMensaje('El precio mínimo no puede ser menor al costo.')
+      setExito(false)
+      return
+    }
 
-    const precioMinimo = precioCosto + (precioCosto * (margenMinimoPct / 100))
-    const precioSugerido = precioMinimo + (precioMinimo * (metaUtilidadPct / 100))
+    if (precioSug < precioMin) {
+      setMensaje('El precio sugerido no puede ser menor al precio mínimo.')
+      setExito(false)
+      return
+    }
+
+    const productoElegido = productos.find((p) => p.codigoProducto === codigoProducto)
 
     const nuevoProducto: ItemCarrito = {
       codigoProducto,
       nombreProducto: productoElegido?.nombre ?? '',
       cantidadPedida: unidadesTotales,
       precioCosto,
-      margenMinimoPct,
-      metaUtilidadPct,
-      precioMinimo: precioMinimo.toFixed(2),
-      precioSugerido: precioSugerido.toFixed(2)
+      // Se envían los precios exactos en los mismos campos del DTO
+      margenMinimoPct: precioMin,
+      metaUtilidadPct: precioSug,
+      // Solo para mostrar en la tabla
+      precioMinimo: precioMin.toFixed(2),
+      precioSugerido: precioSug.toFixed(2),
+      margenPct: margenPct.toFixed(2),
+      metaPct: metaPct.toFixed(2)
     }
 
     setCarrito([...carrito, nuevoProducto])
     setMensaje('')
-
-    setCodigoProducto(0)
-    setCantidadPedida(0)
-    setCajasPedidas(0)
-    setPrecioCosto(0)
-    setMargenMinimoPct(0)
-    setMetaUtilidadPct(0)
+    limpiarProducto()
   }
 
   const quitarDelCarrito = (index: number) => {
@@ -114,12 +141,7 @@ function AgregarOrdenPage() {
 
     setCarrito([])
     setOrden({ codigoProveedor: 0, fechaResep: '' })
-    setCodigoProducto(0)
-    setCantidadPedida(0)
-    setCajasPedidas(0)
-    setPrecioCosto(0)
-    setMargenMinimoPct(0)
-    setMetaUtilidadPct(0)
+    limpiarProducto()
     setMensaje('')
     setExito(null)
   }
@@ -144,8 +166,8 @@ function AgregarOrdenPage() {
           codigoProducto: item.codigoProducto,
           cantidadPedida: item.cantidadPedida,
           precioCosto: item.precioCosto,
-          margenMinimoPct: item.margenMinimoPct,
-          metaUtilidadPct: item.metaUtilidadPct
+          margenMinimoPct: item.margenMinimoPct,   // lleva el precio mínimo exacto
+          metaUtilidadPct: item.metaUtilidadPct    // lleva el precio sugerido exacto
         }))
       }
 
@@ -222,6 +244,7 @@ function AgregarOrdenPage() {
             <h5>Agregar Producto</h5>
             <div className="row align-items-end mb-3">
               <div className="col-md-3">
+                <small className="d-block" style={{ minHeight: '1.25rem' }}>&nbsp;</small>
                 <label className="form-label">Producto:</label>
                 <ProductoBuscador
                   productos={productos}
@@ -230,6 +253,7 @@ function AgregarOrdenPage() {
                 />
               </div>
               <div className="col-md-2">
+                <small className="d-block" style={{ minHeight: '1.25rem' }}>&nbsp;</small>
                 <label className="form-label">Cajas / Sueltas:</label>
                 <div className="d-flex gap-1">
                   <input type="number" min={0} className="form-control" placeholder="Cajas" title="Cajas" disabled={factorCaja <= 1} value={cajasPedidas || ''} onChange={(e) => setCajasPedidas(Number(e.target.value))} />
@@ -237,16 +261,29 @@ function AgregarOrdenPage() {
                 </div>
               </div>
               <div className="col-md-2">
+                <small className="d-block" style={{ minHeight: '1.25rem' }}>&nbsp;</small>
                 <label className="form-label">Costo (Q):</label>
-                <input type="number" step="0.01" className="form-control" placeholder="Costo" value={precioCosto || ''} onChange={(e) => setPrecioCosto(Number(e.target.value))} />
+                <input type="number" step="0.01" min={0} className="form-control" placeholder="Costo" value={precioCosto || ''} onChange={(e) => setPrecioCosto(Number(e.target.value))} />
               </div>
               <div className="col-md-2">
-                <label className="form-label">Margen Mín (%):</label>
-                <input type="number" className="form-control" placeholder="Margen" value={margenMinimoPct || ''} onChange={(e) => setMargenMinimoPct(Number(e.target.value))} />
+                <small
+                  className={`d-block ${margenPct < 0 ? 'text-danger' : 'text-muted'}`}
+                  style={{ minHeight: '1.25rem' }}
+                >
+                  {precioMin > 0 && precioCosto > 0 ? `Margen: ${margenPct.toFixed(2)}%` : '\u00A0'}
+                </small>
+                <label className="form-label">Precio Mínimo (Q):</label>
+                <input type="number" step="0.01" min={0} className="form-control" placeholder="Mínimo" value={precioMin || ''} onChange={(e) => setPrecioMin(Number(e.target.value))} />
               </div>
               <div className="col-md-2">
-                <label className="form-label">Meta Util (%):</label>
-                <input type="number" className="form-control" placeholder="Meta" value={metaUtilidadPct || ''} onChange={(e) => setMetaUtilidadPct(Number(e.target.value))} />
+                <small
+                  className={`d-block ${metaPct < 0 ? 'text-danger' : 'text-muted'}`}
+                  style={{ minHeight: '1.25rem' }}
+                >
+                  {precioSug > 0 && precioCosto > 0 ? `Meta: ${metaPct.toFixed(2)}%` : '\u00A0'}
+                </small>
+                <label className="form-label">Precio Sugerido (Q):</label>
+                <input type="number" step="0.01" min={0} className="form-control" placeholder="Sugerido" value={precioSug || ''} onChange={(e) => setPrecioSug(Number(e.target.value))} />
               </div>
               <div className="col-md-1">
                 <button type="button" className="btn btn-success w-100" onClick={agregarAlCarrito}>+</button>
@@ -269,10 +306,10 @@ function AgregarOrdenPage() {
                     <th>Producto</th>
                     <th>Cantidad (un.)</th>
                     <th>Costo</th>
-                    <th>Mín %</th>
-                    <th>Meta %</th>
                     <th>Precio Mínimo</th>
+                    <th>Margen</th>
                     <th>Precio Sugerido</th>
+                    <th>Meta</th>
                     <th>Subtotal</th>
                     <th></th>
                   </tr>
@@ -286,10 +323,10 @@ function AgregarOrdenPage() {
                         <td>{item.nombreProducto}</td>
                         <td>{item.cantidadPedida}<small className="text-muted d-block">{desglosarCajas(item.codigoProducto, item.cantidadPedida)}</small></td>
                         <td>Q{item.precioCosto}</td>
-                        <td>{item.margenMinimoPct}%</td>
-                        <td>{item.metaUtilidadPct}%</td>
                         <td><strong>Q{item.precioMinimo}</strong></td>
+                        <td>{item.margenPct}%</td>
                         <td><strong>Q{item.precioSugerido}</strong></td>
+                        <td>{item.metaPct}%</td>
                         <td>Q{(item.cantidadPedida * item.precioCosto).toFixed(2)}</td>
                         <td className="text-center">
                           <button
@@ -327,9 +364,9 @@ function AgregarOrdenPage() {
 
             <div className="d-flex justify-content-end gap-2">
               <button type="button" className="btn btn-outline-secondary btn-lg" onClick={cancelarOrden}>
-                ✖ Cancelar Orden
+                ✖ Cancelar
               </button>
-              <button type="submit" className="btn btn-primary btn-lg"> Guardar Orden Completa</button>
+              <button type="submit" className="btn btn-primary btn-lg"> Guardar</button>
             </div>
 
           </form>

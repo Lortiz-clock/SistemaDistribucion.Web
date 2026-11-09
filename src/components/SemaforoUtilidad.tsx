@@ -12,7 +12,7 @@ const MENSAJES = {
   VERDE: 'Va a alcanzar la meta',
   AMARILLO: 'Al ritmo llega, pero hay que cuidarlo',
   ROJO: 'No va a alcanzar la meta',
-  GRIS: 'No hay meta definida para esta semana',
+  GRIS: 'No hay meta definida para este período',
 }
 
 function formatearQ(n: number): string {
@@ -23,7 +23,15 @@ function formatearQ(n: number): string {
   }).format(n)
 }
 
-export function SemaforoUtilidad({ datos }: { datos: SemaforoData | null }) {
+export function SemaforoUtilidad({
+  datos,
+  titulo = 'Utilidad de la semana',
+  esDiario = false,
+}: {
+  datos: SemaforoData | null
+  titulo?: string
+  esDiario?: boolean
+}) {
   if (!datos) {
     return (
       <div className="card mb-3">
@@ -60,7 +68,7 @@ export function SemaforoUtilidad({ datos }: { datos: SemaforoData | null }) {
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div className="d-flex align-items-center gap-2">
               <BatteryCharging size={22} style={{ color: c.base }} />
-              <h6 className="mb-0">Utilidad de la semana</h6>
+              <h6 className="mb-0">{titulo}</h6>
             </div>
             <div className="text-end">
               <div className="h3 mb-0 fw-bold" style={{ color: c.base }}>
@@ -166,12 +174,14 @@ export function SemaforoUtilidad({ datos }: { datos: SemaforoData | null }) {
             <div className="col-6">
               <div className="d-flex align-items-center gap-2 mb-1">
                 <Target size={14} className="text-primary" />
-                <small className="text-muted">Meta semanal</small>
+                <small className="text-muted">{esDiario ? 'Meta diaria' : 'Meta semanal'}</small>
               </div>
               <div className="fw-semibold">{formatearQ(datos.metaSemanal)}</div>
-              <small className="text-muted">
-                diaria: {formatearQ(datos.metaSemanal / 6)}
-              </small>
+              {!esDiario && (
+                <small className="text-muted">
+                  diaria: {formatearQ(datos.metaSemanal / 6)}
+                </small>
+              )}
             </div>
             <div className="col-6">
               <div className="d-flex align-items-center gap-2 mb-1">

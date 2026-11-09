@@ -11,6 +11,7 @@ import { SemaforoUtilidad } from '../components/SemaforoUtilidad'
 import { CrearPedidoModal } from '../components/CrearPedidoModal'
 import MapaRuta from '../components/MapaRuta'
 import { NoVisitaModal } from '../components/NoVisitaModal'
+import { data } from 'react-router-dom'
 
 const DIAS = [
   { v: 1, n: 'Lunes' },
@@ -41,6 +42,13 @@ function rangoSemanaActual(): { fechaDesde: string; fechaHasta: string } {
   return { fechaDesde: iso(lunes), fechaHasta: iso(sabado) }
 }
 
+function rangoHoy(): {fechaDesde: string; fechaHasta: string } {
+  const hoy = new Date()
+  const iso = (date: Date) => date.toISOString().split('T')[0]
+  const fechaStr = iso(hoy)
+  return {fechaDesde: fechaStr, fechaHasta: fechaStr}
+}
+
 function extraerMensaje(error: unknown, fallback: string): string {
   if (isAxiosError(error) && error.response?.data?.mensaje) {
     return error.response.data.mensaje
@@ -53,6 +61,7 @@ export default function PedidosPage() {
   const [mostrarSelectorDia, setMostrarSelectorDia] = useState(true)
   const [clientes, setClientes] = useState<ClienteRutaPlan[]>([])
   const [semaforo, setSemaforo] = useState<SemaforoData | null>(null)
+  const [semaforoDiario, setSemaforoDiario] = useState<SemaforoData | null>(null)
   const [cargando, setCargando] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -65,12 +74,18 @@ export default function PedidosPage() {
     setMensaje('')
 
     const { fechaDesde, fechaHasta } = rangoSemanaActual()
+    const { fechaDesde: hoyDesde, fechaHasta: hoyHasta } = rangoHoy()
 
     try {
-      const [resClientes, resSemaforo] = await Promise.all([
+      const [resClientes, resSemaforo, resSemaforoDiario] = await Promise.all([
         obtenerMisClientesDelDia(diaSemana),
         obtenerSemaforoUtilidad(fechaDesde, fechaHasta),
+        obtenerSemaforoUtilidad(hoyDesde, hoyHasta)
       ])
+
+      if(resSemaforoDiario.exito && resSemaforoDiario.datos) {
+        setSemaforoDiario(resSemaforoDiario.datos)
+      }
 
       if (resClientes.exito && resClientes.datos) {
         setClientes(resClientes.datos)
@@ -179,7 +194,9 @@ function onNoVisitaRegistrada() {
           </div>
         )}
 
-        <SemaforoUtilidad datos={semaforo} />
+        <SemaforoUtilidad datos={semaforo} titulo='Utilidad de la semana' />
+        <SemaforoUtilidad datos={semaforoDiario} titulo='Utilidad del dia'/>
+        
 
         <div className="row g-3">
           <div className="col-lg-6">
