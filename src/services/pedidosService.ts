@@ -75,3 +75,13 @@ export async function registrarNoVisita(payload: {
   )
   return respuesta.data
 }
+
+import type { ResumenVendedor } from '../interfaces/ResumenVendedor'
+
+export const obtenerResumenVendedor = async (fechaDesde: string, fechaHasta: string) => {
+  const respuesta = await api.get<RespuestaApi<ResumenVendedor>>(
+    '/api/Pedidos/ResumenVendedor',
+    { params: { fechaDesde, fechaHasta } }
+  )
+  return respuesta.data
+}

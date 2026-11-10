@@ -3,15 +3,14 @@ import { MapPin, Plus, RefreshCw, Calendar, Navigation } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import {
   obtenerMisClientesDelDia,
-  obtenerSemaforoUtilidad,
+  obtenerResumenVendedor,
 } from '../services/pedidosService'
 import type { ClienteRutaPlan } from '../interfaces/ClienteRutaPlan'
-import type { SemaforoUtilidad as SemaforoData } from '../interfaces/SemaforoUtilidad'
-import { SemaforoUtilidad } from '../components/SemaforoUtilidad'
+import type { ResumenVendedor } from '../interfaces/ResumenVendedor'
 import { CrearPedidoModal } from '../components/CrearPedidoModal'
 import MapaRuta from '../components/MapaRuta'
 import { NoVisitaModal } from '../components/NoVisitaModal'
-import { data } from 'react-router-dom'
+import { BateriasVenta } from '../components/BateriasVenta'
 
 const DIAS = [
   { v: 1, n: 'Lunes' },
@@ -32,21 +31,13 @@ function urlWaze(lat: number, lng: number): string {
 
 function rangoSemanaActual(): { fechaDesde: string; fechaHasta: string } {
   const hoy = new Date()
-  const d = hoy.getDay()
-  const lunes = new Date(hoy)
-  const diff = d === 0 ? -6 : 1 - d
-  lunes.setDate(hoy.getDate() + diff)
-  const sabado = new Date(lunes)
-  sabado.setDate(lunes.getDate() + 5)
+  const desdeMiercoles = (hoy.getDay() - 3 + 7) % 7
+  const miercoles = new Date(hoy)
+  miercoles.setDate(hoy.getDate() - desdeMiercoles)
+  const martes = new Date(miercoles)
+  martes.setDate(miercoles.getDate() + 6)
   const iso = (date: Date) => date.toISOString().split('T')[0]
-  return { fechaDesde: iso(lunes), fechaHasta: iso(sabado) }
-}
-
-function rangoHoy(): {fechaDesde: string; fechaHasta: string } {
-  const hoy = new Date()
-  const iso = (date: Date) => date.toISOString().split('T')[0]
-  const fechaStr = iso(hoy)
-  return {fechaDesde: fechaStr, fechaHasta: fechaStr}
+  return { fechaDesde: iso(miercoles), fechaHasta: iso(martes) }
 }
 
 function extraerMensaje(error: unknown, fallback: string): string {
@@ -60,12 +51,11 @@ export default function PedidosPage() {
   const [dia, setDia] = useState<number | null>(null)
   const [mostrarSelectorDia, setMostrarSelectorDia] = useState(true)
   const [clientes, setClientes] = useState<ClienteRutaPlan[]>([])
-  const [semaforo, setSemaforo] = useState<SemaforoData | null>(null)
-  const [semaforoDiario, setSemaforoDiario] = useState<SemaforoData | null>(null)
   const [cargando, setCargando] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const [modalAbierto, setModalAbierto] = useState(false)
   const [clienteSeleccionado, setClienteSeleccionado] = useState<ClienteRutaPlan | null>(null)
+  const [resumen, setResumen] = useState<ResumenVendedor | null>(null)
   const [modalNoVisitaAbierto, setModalNoVisitaAbierto] = useState(false)
   const [clienteNoVisita, setClienteNoVisita] = useState<ClienteRutaPlan | null>(null)
 
@@ -74,18 +64,16 @@ export default function PedidosPage() {
     setMensaje('')
 
     const { fechaDesde, fechaHasta } = rangoSemanaActual()
-    const { fechaDesde: hoyDesde, fechaHasta: hoyHasta } = rangoHoy()
 
     try {
-      const [resClientes, resSemaforo, resSemaforoDiario] = await Promise.all([
-        obtenerMisClientesDelDia(diaSemana),
-        obtenerSemaforoUtilidad(fechaDesde, fechaHasta),
-        obtenerSemaforoUtilidad(hoyDesde, hoyHasta)
-      ])
-
-      if(resSemaforoDiario.exito && resSemaforoDiario.datos) {
-        setSemaforoDiario(resSemaforoDiario.datos)
+      // 1. Obtener datos de resumen (baterías y ventas)
+      const resResumen = await obtenerResumenVendedor(fechaDesde, fechaHasta)
+      if (resResumen.exito && resResumen.datos) {
+        setResumen(resResumen.datos)
       }
+
+      // 2. Obtener clientes asignados al día seleccionado
+      const resClientes = await obtenerMisClientesDelDia(diaSemana)
 
       if (resClientes.exito && resClientes.datos) {
         setClientes(resClientes.datos)
@@ -97,10 +85,6 @@ export default function PedidosPage() {
       } else {
         setClientes([])
         setMensaje(resClientes.mensaje)
-      }
-
-      if (resSemaforo.exito && resSemaforo.datos) {
-        setSemaforo(resSemaforo.datos)
       }
     } catch (error) {
       setMensaje(extraerMensaje(error, 'No se pudieron cargar los datos. Revisa tu conexión.'))
@@ -139,29 +123,30 @@ export default function PedidosPage() {
   function onPedidoCreado() {
     cerrarCrearPedido()
     if (dia) void cargarDatos(dia)
-    setMensaje('Pedido creado correctamente. El semáforo se actualizó.')
+    setMensaje('Pedido creado correctamente. Las baterías se actualizaron.')
   }
 
   function abrirNoVisita(cliente: ClienteRutaPlan) {
-  setClienteNoVisita(cliente)
-  setModalNoVisitaAbierto(true)
-}
+    setClienteNoVisita(cliente)
+    setModalNoVisitaAbierto(true)
+  }
 
-function cerrarNoVisita() {
-  setModalNoVisitaAbierto(false)
-  setClienteNoVisita(null)
-}
+  function cerrarNoVisita() {
+    setModalNoVisitaAbierto(false)
+    setClienteNoVisita(null)
+  }
 
-function onNoVisitaRegistrada() {
-  cerrarNoVisita()
-  setMensaje('No visita registrada correctamente.')
-}
+  function onNoVisitaRegistrada() {
+    cerrarNoVisita()
+    setMensaje('No visita registrada correctamente.')
+  }
 
   const nombreDia = DIAS.find((d) => d.v === dia)?.n ?? ''
 
   return (
     <div className="pedidos-page pagina-lista">
       <div className="pagina-lista-interna">
+        {/* Encabezado */}
         <div className="mb-3 d-flex justify-content-between align-items-center">
           <div>
             <h1>Pedidos</h1>
@@ -194,10 +179,10 @@ function onNoVisitaRegistrada() {
           </div>
         )}
 
-        <SemaforoUtilidad datos={semaforo} titulo='Utilidad de la semana' />
-        <SemaforoUtilidad datos={semaforoDiario} titulo='Utilidad del dia'/>
-        
+        {/* Componente de Baterías de Venta */}
+        <BateriasVenta datos={resumen} />
 
+        {/* --- FILA PRINCIPAL: CLIENTES Y MAPA --- */}
         <div className="row g-3">
           <div className="col-lg-6">
             <div className="tarjeta-lista">
@@ -222,47 +207,46 @@ function onNoVisitaRegistrada() {
               ) : (
                 <ul className="list-group">
                   {clientes.map((c, i) => (
-                  <li
-                  key={c.codigoClienteRuta}
-                  className="list-group-item d-flex align-items-center gap-2"
-                >
-                  <span className="badge bg-dark rounded-pill">{i + 1}</span>
-                  <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                    <div className="fw-semibold">{c.nombreCliente}</div>
-                    <small className="d-flex align-items-center gap-1" style={{ color: '#94a3b8' }}>
-                      <MapPin size={12} className="flex-shrink-0" />
-                      <span>{c.direccion || 'Sin dirección'}</span>
-                    </small>
-                  </div>
-
-                  {/* Botón Navegar con Waze — solo si tiene coordenadas */}
-                  {c.latitud != null && c.longitud != null && (
-                    <a
-                      href={urlWaze(c.latitud, c.longitud)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-sm btn-outline-info"
-                      title="Navegar con Waze"
+                    <li
+                      key={c.codigoClienteRuta}
+                      className="list-group-item d-flex align-items-center gap-2"
                     >
-                      <Navigation size={14} />
-                    </a>
-                  )}
+                      <span className="badge bg-dark rounded-pill">{i + 1}</span>
+                      <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                        <div className="fw-semibold">{c.nombreCliente}</div>
+                        <small className="d-flex align-items-center gap-1" style={{ color: '#94a3b8' }}>
+                          <MapPin size={12} className="flex-shrink-0" />
+                          <span>{c.direccion || 'Sin dirección'}</span>
+                        </small>
+                      </div>
 
-                  <button
-                    className="btn btn-sm btn-outline-warning"
-                    onClick={() => abrirNoVisita(c)}
-                    title="Registrar no visita"
-                  >
-                    No visita
-                  </button>
-                  <button
-                    className="btn btn-sm btn-success"
-                    onClick={() => abrirCrearPedido(c)}
-                  >
-                    <Plus size={14} className="me-1" />
-                    Pedido
-                  </button>
-                </li>
+                      {c.latitud != null && c.longitud != null && (
+                        <a
+                          href={urlWaze(c.latitud, c.longitud)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-sm btn-outline-info"
+                          title="Navegar con Waze"
+                        >
+                          <Navigation size={14} />
+                        </a>
+                      )}
+
+                      <button
+                        className="btn btn-sm btn-outline-warning"
+                        onClick={() => abrirNoVisita(c)}
+                        title="Registrar no visita"
+                      >
+                        No visita
+                      </button>
+                      <button
+                        className="btn btn-sm btn-success"
+                        onClick={() => abrirCrearPedido(c)}
+                      >
+                        <Plus size={14} className="me-1" />
+                        Pedido
+                      </button>
+                    </li>
                   ))}
                 </ul>
               )}
@@ -272,16 +256,19 @@ function onNoVisitaRegistrada() {
           <div className="col-lg-6">
             <div className="tarjeta-lista">
               <h2 className="h5 mb-3">Mapa de la ruta</h2>
-              <MapaRuta clientes={clientes} onSeleccionar={(cod) => {
-                const c = clientes.find((x) => x.codigoCliente === cod)
-                if (c) abrirCrearPedido(c)
-              }} />
+              <MapaRuta
+                clientes={clientes}
+                onSeleccionar={(cod) => {
+                  const c = clientes.find((x) => x.codigoCliente === cod)
+                  if (c) abrirCrearPedido(c)
+                }}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal: Selector de día al entrar */}
+      {/* Modal: Selector de día */}
       {mostrarSelectorDia && (
         <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
           <div className="modal-dialog modal-dialog-centered">
@@ -296,10 +283,10 @@ function onNoVisitaRegistrada() {
                 <div className="d-grid gap-2">
                   {DIAS.map((d) => (
                     <button
-                    key={d.v}
-                    className={`btn ${dia === d.v ? 'btn-primary' : 'btn-outline-primary'}`}
-                    onClick={() => seleccionarDia(d.v)}
-                  >
+                      key={d.v}
+                      className={`btn ${dia === d.v ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => seleccionarDia(d.v)}
+                    >
                       {d.n}
                       {diaDeHoy() === d.v && (
                         <span className="badge bg-success ms-2">hoy</span>
@@ -313,7 +300,7 @@ function onNoVisitaRegistrada() {
         </div>
       )}
 
-      {/* Modal: Crear pedido */}
+      {/* Modales adicionales */}
       {modalAbierto && clienteSeleccionado && (
         <CrearPedidoModal
           codigoCliente={clienteSeleccionado.codigoCliente}
@@ -321,15 +308,16 @@ function onNoVisitaRegistrada() {
           onClose={cerrarCrearPedido}
           onExito={onPedidoCreado}
         />
-        )}
-        {modalNoVisitaAbierto && clienteNoVisita && (
-  <NoVisitaModal
-    codigoCliente={clienteNoVisita.codigoCliente}
-    nombreCliente={clienteNoVisita.nombreCliente}
-    onClose={cerrarNoVisita}
-    onExito={onNoVisitaRegistrada}
-  />
-)}
+      )}
+
+      {modalNoVisitaAbierto && clienteNoVisita && (
+        <NoVisitaModal
+          codigoCliente={clienteNoVisita.codigoCliente}
+          nombreCliente={clienteNoVisita.nombreCliente}
+          onClose={cerrarNoVisita}
+          onExito={onNoVisitaRegistrada}
+        />
+      )}
     </div>
   )
 }
