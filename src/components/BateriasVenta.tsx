@@ -146,3 +146,4 @@ export function BateriasVenta({ datos }: { datos: ResumenVendedor | null }) {
     </div>
   )
 }
+//cambios
