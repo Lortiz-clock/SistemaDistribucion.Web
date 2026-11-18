@@ -1,12 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
-import { MapPin, Plus, RefreshCw, Calendar, Navigation } from 'lucide-react'
+import { MapPin, Plus, RefreshCw, Calendar, Navigation, Edit2, Save, Power, Trash2, PlusCircle, X } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import {
   obtenerMisClientesDelDia,
   obtenerResumenVendedor,
+  consultarPedidos,
+  buscarPedido,
+  editarPedido,
+  cambiarEstadoPedido,
+  agregarCierre,
+  obtenerProductosConStock,
 } from '../services/pedidosService'
+import type { ProductoConStock } from '../interfaces/ProductoConStock'
 import type { ClienteRutaPlan } from '../interfaces/ClienteRutaPlan'
 import type { ResumenVendedor } from '../interfaces/ResumenVendedor'
+import type { PedidoBuscar } from '../interfaces/PedidoBuscar'
+import type { PedidoConsulta } from '../interfaces/PedidoConsulta'
 import { CrearPedidoModal } from '../components/CrearPedidoModal'
 import MapaRuta from '../components/MapaRuta'
 import { NoVisitaModal } from '../components/NoVisitaModal'
@@ -47,12 +56,69 @@ function extraerMensaje(error: unknown, fallback: string): string {
   return fallback
 }
 
+// Extrae codigoEmpleado del token JWT (payload)
+function obtenerCodigoEmpleado(): number {
+  const token = localStorage.getItem('token')
+  if (!token) return 0
+  try {
+    const payload = token.split('.')[1]
+    const decoded = JSON.parse(atob(payload))
+    // El backend ahora incluye 'codigoEmpleado' y 'codigoUsuario' en el token
+    return decoded.codigoEmpleado ?? decoded.codigo_empleado ?? decoded.sub ?? 0
+  } catch {
+    return 0
+  }
+}
+
 export default function PedidosPage() {
+  const codigoEmpleado = obtenerCodigoEmpleado()
+
   const [dia, setDia] = useState<number | null>(null)
+  const [mapaModalOpen, setMapaModalOpen] = useState(false)
+  const [metaModalOpen, setMetaModalOpen] = useState(false)
   const [mostrarSelectorDia, setMostrarSelectorDia] = useState(true)
   const [clientes, setClientes] = useState<ClienteRutaPlan[]>([])
   const [cargando, setCargando] = useState(false)
   const [mensaje, setMensaje] = useState('')
+
+  // Pedidos del día (para editar)
+  const [pedidosDelDia, setPedidosDelDia] = useState<PedidoConsulta[]>([])
+
+  // Pedido seleccionado para editar (desde el listado del día)
+  const [pedidoParaEditar, setPedidoSeleccionadoParaEdicion] = useState<PedidoBuscar | null>(
+    null
+  )
+
+  // Edición de pedido - líneas
+  const [editarAbierto, setEditarAbierto] = useState(false)
+  const [editando, setEditando] = useState(false)
+  const [lineasEditando, setLineasEditando] = useState<Array<{
+    codigoProducto: number
+    nombreProducto: string
+    cantidad: number
+    precioVenta: number
+    esFaltante: boolean
+    codigoPedidoDetalle?: number // undefined = nueva línea
+  }>>([])
+  const [observacionesEditando, setObservacionesEditando] = useState('')
+
+  // Selector de productos para agregar línea
+  const [mostrarSelectorProducto, setMostrarSelectorProducto] = useState(false)
+  const [productosDisponibles, setProductosDisponibles] = useState<ProductoConStock[]>([])
+  const [busquedaProducto, setBusquedaProducto] = useState('')
+  const [cargandoProductos, setCargandoProductos] = useState(false)
+
+  // Cambio de estado
+  const [cambioEstadoAbierto, setCambioEstadoAbierto] = useState(false)
+  const [estadoNuevo, setEstadoNuevo] = useState<number | null>(null)
+  const [motivoEstado, setMotivoEstado] = useState<number | null>(null)
+  const [cambiandoEstado, setCambiandoEstado] = useState(false)
+
+  // Cierre de venta
+  const [cierreAbierto, setCierreAbierto] = useState(false)
+  const [cerrando, setCerrando] = useState(false)
+
+  // Modales existentes
   const [modalAbierto, setModalAbierto] = useState(false)
   const [clienteSeleccionado, setClienteSeleccionado] = useState<ClienteRutaPlan | null>(null)
   const [resumen, setResumen] = useState<ResumenVendedor | null>(null)
@@ -66,13 +132,11 @@ export default function PedidosPage() {
     const { fechaDesde, fechaHasta } = rangoSemanaActual()
 
     try {
-      // 1. Obtener datos de resumen (baterías y ventas)
       const resResumen = await obtenerResumenVendedor(fechaDesde, fechaHasta)
       if (resResumen.exito && resResumen.datos) {
         setResumen(resResumen.datos)
       }
 
-      // 2. Obtener clientes asignados al día seleccionado
       const resClientes = await obtenerMisClientesDelDia(diaSemana)
 
       if (resClientes.exito && resClientes.datos) {
@@ -85,6 +149,14 @@ export default function PedidosPage() {
       } else {
         setClientes([])
         setMensaje(resClientes.mensaje)
+      }
+
+      // Cargar pedidos del día del empleado para saber quién ya tiene pedido
+      const resPedidos = await consultarPedidos(fechaDesde, fechaHasta, codigoEmpleado)
+      if (resPedidos.exito && resPedidos.datos) {
+        setPedidosDelDia(resPedidos.datos)
+      } else {
+        setPedidosDelDia([])
       }
     } catch (error) {
       setMensaje(extraerMensaje(error, 'No se pudieron cargar los datos. Revisa tu conexión.'))
@@ -123,7 +195,7 @@ export default function PedidosPage() {
   function onPedidoCreado() {
     cerrarCrearPedido()
     if (dia) void cargarDatos(dia)
-    setMensaje('Pedido creado correctamente. Las baterías se actualizaron.')
+    setMensaje('Pedido creado correctamente.')
   }
 
   function abrirNoVisita(cliente: ClienteRutaPlan) {
@@ -138,7 +210,187 @@ export default function PedidosPage() {
 
   function onNoVisitaRegistrada() {
     cerrarNoVisita()
+    if (dia) void cargarDatos(dia)
     setMensaje('No visita registrada correctamente.')
+  }
+
+  // ─── Edición de pedido (desde el listado del día) ───
+  async function abrirEdicionPedido(codigoPedido: number) {
+    const res = await buscarPedido(codigoPedido)
+    if (res.exito && res.datos) {
+      setPedidoSeleccionadoParaEdicion(res.datos)
+      // Obtener productos para nombres y selector
+      const productosRes = await obtenerProductosConStock()
+      const mapaProductos = new Map<number, string>()
+      if (productosRes.exito && productosRes.datos) {
+        productosRes.datos.forEach(p => mapaProductos.set(p.codigoProducto, p.nombre))
+        setProductosDisponibles(productosRes.datos)
+      }
+      // Mapear líneas del backend al estado de edición
+      const lineasIniciales = res.datos.detalle.map(d => ({
+        codigoProducto: d.codigoProducto,
+        nombreProducto: mapaProductos.get(d.codigoProducto) || `Producto ${d.codigoProducto}`,
+        cantidad: d.cantidadEntregada ?? d.cantidad,
+        precioVenta: d.precioVenta,
+        esFaltante: d.esFaltante,
+        codigoPedidoDetalle: d.codigoPedidoDetalle,
+      }))
+      setLineasEditando(lineasIniciales)
+      setObservacionesEditando(res.datos.encabezado.observaciones ?? '')
+      setEditarAbierto(true)
+    } else {
+      setMensaje(res.mensaje || 'No se pudo cargar el detalle del pedido.')
+    }
+  }
+
+  function cerrarEdicionPedido() {
+    setEditarAbierto(false)
+    setPedidoSeleccionadoParaEdicion(null)
+    setLineasEditando([])
+    setObservacionesEditando('')
+    setMostrarSelectorProducto(false)
+    setBusquedaProducto('')
+  }
+
+  // ─── Helpers para líneas ───
+  function calcularTotalLineas(): number {
+    return lineasEditando.reduce((sum, l) => sum + l.cantidad * l.precioVenta, 0)
+  }
+
+  function actualizarLinea(index: number, campo: 'cantidad' | 'precioVenta', valor: number) {
+    setLineasEditando(prev => prev.map((l, i) => i === index ? { ...l, [campo]: Math.max(0, valor) } : l))
+  }
+
+  function eliminarLinea(index: number) {
+    setLineasEditando(prev => prev.filter((_, i) => i !== index))
+  }
+
+  function abrirSelectorProducto() {
+    setBusquedaProducto('')
+    setMostrarSelectorProducto(true)
+    // Si no hay productos cargados, cargarlos
+    if (productosDisponibles.length === 0) {
+      cargarProductosParaSelector()
+    }
+  }
+
+  async function cargarProductosParaSelector() {
+    setCargandoProductos(true)
+    try {
+      const res = await obtenerProductosConStock()
+      if (res.exito && res.datos) {
+        setProductosDisponibles(res.datos)
+      }
+    } catch {
+      // silencioso
+    } finally {
+      setCargandoProductos(false)
+    }
+  }
+
+  function agregarLineaDesdeSelector(producto: ProductoConStock) {
+    // Verificar si ya existe
+    const existe = lineasEditando.some(l => l.codigoProducto === producto.codigoProducto)
+    if (existe) {
+      setMensaje('Ese producto ya está en el pedido.')
+      return
+    }
+    setLineasEditando(prev => [...prev, {
+      codigoProducto: producto.codigoProducto,
+      nombreProducto: producto.nombre,
+      cantidad: 1,
+      precioVenta: producto.precioSugerido,
+      esFaltante: false,
+    }])
+    setMostrarSelectorProducto(false)
+    setBusquedaProducto('')
+  }
+
+  async function guardarEdicionPedido() {
+    if (!pedidoParaEditar) return
+    if (lineasEditando.length === 0) {
+      setMensaje('El pedido debe tener al menos un producto.')
+      return
+    }
+    setEditando(true)
+    try {
+      const lineasParaEnviar = lineasEditando.map(l => ({
+        codigoProducto: l.codigoProducto,
+        cantidad: l.cantidad,
+        precioVenta: l.precioVenta,
+      }))
+      const res = await editarPedido({
+        codigoPedido: pedidoParaEditar.encabezado.codigoPedido,
+        observaciones: observacionesEditando.trim() || undefined,
+        lineas: lineasParaEnviar,
+      })
+      if (res.exito) {
+        setMensaje('Pedido editado correctamente.')
+        cerrarEdicionPedido()
+        if (dia) void cargarDatos(dia)
+      } else {
+        setMensaje(res.mensaje || 'No se pudo editar el pedido.')
+      }
+    } catch (error) {
+      setMensaje(extraerMensaje(error, 'No se pudo editar el pedido.'))
+    } finally {
+      setEditando(false)
+    }
+  }
+
+  // ─── Cambiar estado ───
+  function abrirCambioEstado(pedido: PedidoBuscar) {
+    setPedidoSeleccionadoParaEdicion(pedido)
+    setCambioEstadoAbierto(true)
+  }
+
+  function cerrarCambioEstado() {
+    setCambioEstadoAbierto(false)
+    setEstadoNuevo(null)
+    setMotivoEstado(null)
+  }
+
+  async function guardarCambioEstado() {
+    if (!pedidoParaEditar || estadoNuevo === null) return
+    setCambiandoEstado(true)
+    try {
+      const res = await cambiarEstadoPedido({
+        codigoPedido: pedidoParaEditar.encabezado.codigoPedido,
+        codigoEstadoNuevo: estadoNuevo,
+        codigoMotivo: motivoEstado ?? undefined,
+      })
+      if (res.exito) {
+        setMensaje('Estado del pedido actualizado.')
+        cerrarCambioEstado()
+        if (dia) void cargarDatos(dia)
+      } else {
+        setMensaje(res.mensaje || 'No se pudo cambiar el estado.')
+      }
+    } catch (error) {
+      setMensaje(extraerMensaje(error, 'No se pudo cambiar el estado.'))
+    } finally {
+      setCambiandoEstado(false)
+    }
+  }
+
+  // ─── Cierre de venta / día ───
+  async function guardarCierre() {
+    setCerrando(true)
+    const fechaVenta = new Date().toISOString().split('T')[0]
+    try {
+      const res = await agregarCierre({ codigoEmpleado, fechaVenta })
+      if (res.exito) {
+        setMensaje('Cierre de venta registrado correctamente.')
+        setCierreAbierto(false)
+        if (dia) void cargarDatos(dia)
+      } else {
+        setMensaje(res.mensaje || 'No se pudo registrar el cierre.')
+      }
+    } catch (error) {
+      setMensaje(extraerMensaje(error, 'No se pudo registrar el cierre.'))
+    } finally {
+      setCerrando(false)
+    }
   }
 
   const nombreDia = DIAS.find((d) => d.v === dia)?.n ?? ''
@@ -163,13 +415,65 @@ export default function PedidosPage() {
               </p>
             )}
           </div>
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            onClick={() => dia && cargarDatos(dia)}
-            disabled={cargando}
-          >
-            <RefreshCw size={14} className={cargando ? 'spin' : ''} />
-          </button>
+          <div className="d-flex align-items-center gap-2">
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => dia && cargarDatos(dia)}
+              disabled={cargando}
+              title="Refrescar"
+            >
+              <RefreshCw size={14} className={cargando ? 'spin' : ''} />
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => setMetaModalOpen(true)}
+              title="Meta"
+            >
+              Meta
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => setMapaModalOpen(true)}
+              title="Mapa"
+            >
+              Mapa
+            </button>
+            {pedidoParaEditar && (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-warning"
+                  onClick={() => abrirCambioEstado(pedidoParaEditar)}
+                  disabled={cambiandoEstado}
+                  title="Cambiar estado"
+                >
+                  Estado
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => abrirEdicionPedido(pedidoParaEditar.encabezado.codigoPedido)}
+                  disabled={editando}
+                  title="Editar pedido"
+                >
+                  <Edit2 size={14} />
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              className="btn btn-sm btn-danger"
+              onClick={() => setCierreAbierto(true)}
+              disabled={cerrando}
+              title="Cierre de venta"
+            >
+              {cerrando ? <Power size={14} className="spin" /> : <Power size={14} />}
+              Cierre
+            </button>
+          </div>
         </div>
 
         {mensaje && (
@@ -179,12 +483,35 @@ export default function PedidosPage() {
           </div>
         )}
 
-        {/* Componente de Baterías de Venta */}
-        <BateriasVenta datos={resumen} />
+        {/* Pedido seleccionado para editar */}
+        {pedidoParaEditar && (
+          <div className="card mb-3">
+            <div className="card-header bg-light">
+              <h6 className="mb-0">
+                Pedido #{pedidoParaEditar.encabezado.codigoPedido}
+                <span className="badge bg-secondary ms-2">
+                  Estado: {pedidoParaEditar.encabezado.codigoEstadoPedido}
+                </span>
+              </h6>
+            </div>
+            <div className="card-body">
+              <div className="row g-3">
+                <div className="col-sm-6">
+                  <p className="mb-1"><strong>Cliente:</strong> {pedidoParaEditar.encabezado.codigoCliente}</p>
+                  <p className="mb-1"><strong>Fecha pedido:</strong> {pedidoParaEditar.encabezado.fechaPedido}</p>
+                </div>
+                <div className="col-sm-6">
+                  <p className="mb-1"><strong>Observaciones:</strong> {pedidoParaEditar.encabezado.observaciones || '—'}</p>
+                  <p className="mb-1"><strong>Motivo:</strong> {pedidoParaEditar.encabezado.codigoMotivo || '—'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-        {/* --- FILA PRINCIPAL: CLIENTES Y MAPA --- */}
+        {/* --- FILA PRINCIPAL: CLIENTES --- */}
         <div className="row g-3">
-          <div className="col-lg-6">
+          <div className="col-12">
             <div className="tarjeta-lista">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h2 className="h5 m-0">
@@ -211,9 +538,14 @@ export default function PedidosPage() {
                       key={c.codigoClienteRuta}
                       className="list-group-item d-flex align-items-center gap-2"
                     >
-                      <span className="badge bg-dark rounded-pill">{i + 1}</span>
+                      <span className={`badge rounded-pill ${c.visitado ? 'bg-success' : 'bg-dark'}`}>
+                        {i + 1}
+                      </span>
                       <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                        <div className="fw-semibold">{c.nombreCliente}</div>
+                        <div className={`fw-semibold ${c.visitado ? 'text-decoration-line-through' : ''}`}>
+                          {c.nombreCliente}
+                          {c.visitado && <span className="badge bg-success ms-1">Visitado</span>}
+                        </div>
                         <small className="d-flex align-items-center gap-1" style={{ color: '#94a3b8' }}>
                           <MapPin size={12} className="flex-shrink-0" />
                           <span>{c.direccion || 'Sin dirección'}</span>
@@ -232,37 +564,63 @@ export default function PedidosPage() {
                         </a>
                       )}
 
-                      <button
-                        className="btn btn-sm btn-outline-warning"
-                        onClick={() => abrirNoVisita(c)}
-                        title="Registrar no visita"
-                      >
-                        No visita
-                      </button>
-                      <button
-                        className="btn btn-sm btn-success"
-                        onClick={() => abrirCrearPedido(c)}
-                      >
-                        <Plus size={14} className="me-1" />
-                        Pedido
-                      </button>
+                      {!c.visitado && (
+                        <button
+                          className="btn btn-sm btn-outline-warning"
+                          onClick={() => abrirNoVisita(c)}
+                          title="Registrar no visita"
+                          disabled={cargando}
+                        >
+                          No visita
+                        </button>
+                      )}
+
+                      {c.codigoPedido != null && c.codigoPedido > 0 ? (
+                        <>
+                          {(() => {
+                            const codigoPedido = c.codigoPedido
+                            const p = pedidosDelDia.find((x) => x.codigoPedido === codigoPedido)
+                            const estaCerrado = p ? p.codigoCierre !== null : false
+                            if (estaCerrado) {
+                              return (
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-secondary"
+                                  disabled
+                                  title="Venta finalizada"
+                                >
+                                  Venta finalizada
+                                </button>
+                              )
+                            }
+                            return (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-secondary"
+                                onClick={() => abrirEdicionPedido(codigoPedido)}
+                                title="Editar productos del pedido"
+                              >
+                                <Edit2 size={14} className="me-1" />
+                                Editar productos
+                              </button>
+                            )
+                          })()}
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-success"
+                          onClick={() => abrirCrearPedido(c)}
+                          disabled={cargando}
+                        >
+                          <Plus size={14} className="me-1" />
+                          Nuevo pedido
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
               )}
-            </div>
-          </div>
-
-          <div className="col-lg-6">
-            <div className="tarjeta-lista">
-              <h2 className="h5 mb-3">Mapa de la ruta</h2>
-              <MapaRuta
-                clientes={clientes}
-                onSeleccionar={(cod) => {
-                  const c = clientes.find((x) => x.codigoCliente === cod)
-                  if (c) abrirCrearPedido(c)
-                }}
-              />
             </div>
           </div>
         </div>
@@ -300,7 +658,7 @@ export default function PedidosPage() {
         </div>
       )}
 
-      {/* Modales adicionales */}
+      {/* Modales existentes */}
       {modalAbierto && clienteSeleccionado && (
         <CrearPedidoModal
           codigoCliente={clienteSeleccionado.codigoCliente}
@@ -317,6 +675,334 @@ export default function PedidosPage() {
           onClose={cerrarNoVisita}
           onExito={onNoVisitaRegistrada}
         />
+      )}
+
+      {/* Modal: Mapa de la ruta */}
+      {mapaModalOpen && (
+        <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Mapa de la ruta</h5>
+                <button type="button" className="btn-close" onClick={() => setMapaModalOpen(false)} />
+              </div>
+              <div className="modal-body p-0">
+                <MapaRuta
+                  clientes={clientes}
+                  onSeleccionar={(cod) => {
+                    const c = clientes.find((x) => x.codigoCliente === cod)
+                    if (c) abrirCrearPedido(c)
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Meta de utilidad */}
+      {metaModalOpen && (
+        <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Meta de utilidad</h5>
+                <button type="button" className="btn-close" onClick={() => setMetaModalOpen(false)} />
+              </div>
+              <div className="modal-body">
+                <BateriasVenta datos={resumen} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Editar pedido */}
+      {editarAbierto && pedidoParaEditar && (
+        <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1060 }}>
+          <div className="modal-dialog modal-xl modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Editar pedido #{pedidoParaEditar.encabezado.codigoPedido}</h5>
+                <button type="button" className="btn-close" onClick={cerrarEdicionPedido} disabled={editando} />
+              </div>
+              <div className="modal-body">
+                {/* Observaciones */}
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Observaciones</label>
+                  <textarea
+                    className="form-control"
+                    rows={2}
+                    maxLength={500}
+                    value={observacionesEditando}
+                    onChange={(e) => setObservacionesEditando(e.target.value)}
+                    disabled={editando}
+                    placeholder="Notas internas del pedido…"
+                  />
+                </div>
+
+                {/* Tabla de líneas */}
+                <div className="table-responsive">
+                  <table className="table table-sm table-bordered align-middle mb-3">
+                    <thead className="table-light">
+                      <tr>
+                        <th style={{ width: '40%' }}>Producto</th>
+                        <th style={{ width: '15%' }}>Cantidad</th>
+                        <th style={{ width: '20%' }}>Precio unitario</th>
+                        <th style={{ width: '15%' }}>Subtotal</th>
+                        <th style={{ width: '10%' }} className="text-center">Estado</th>
+                        <th style={{ width: '5%' }}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lineasEditando.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="text-center text-muted py-4">
+                            No hay productos en el pedido. Haz clic en "Agregar producto" para añadir líneas.
+                          </td>
+                        </tr>
+                      ) : (
+                        lineasEditando.map((linea, index) => (
+                          <tr key={index}>
+                            <td>
+                              <strong>{linea.nombreProducto}</strong>
+                              <br />
+                              <small className="text-muted">Código: {linea.codigoProducto}</small>
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                className="form-control form-control-sm"
+                                value={linea.cantidad}
+                                onChange={(e) => actualizarLinea(index, 'cantidad', parseInt(e.target.value) || 0)}
+                                min="1"
+                                disabled={editando}
+                                style={{ width: '80px' }}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                className="form-control form-control-sm"
+                                value={linea.precioVenta.toFixed(2)}
+                                onChange={(e) => actualizarLinea(index, 'precioVenta', parseFloat(e.target.value) || 0)}
+                                min="0.01"
+                                step="0.01"
+                                disabled={editando}
+                                style={{ width: '120px' }}
+                              />
+                            </td>
+                            <td className="fw-semibold">
+                              Q {(linea.cantidad * linea.precioVenta).toFixed(2)}
+                            </td>
+                            <td className="text-center">
+                              {linea.esFaltante ? (
+                                <span className="badge bg-warning text-dark">Faltante</span>
+                              ) : (
+                                <span className="badge bg-success">OK</span>
+                              )}
+                            </td>
+                            <td className="text-center">
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => eliminarLinea(index)}
+                                disabled={editando}
+                                title="Eliminar línea"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                    <tfoot>
+                      <tr className="table-light">
+                        <td colSpan={3} className="text-end fw-bold">Total:</td>
+                        <td className="fw-bold fs-5">Q {calcularTotalLineas().toFixed(2)}</td>
+                        <td colSpan={2}></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* Botón agregar producto */}
+                <div className="mb-3 text-end">
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={abrirSelectorProducto}
+                    disabled={editando || lineasEditando.length >= 20}
+                  >
+                    <PlusCircle size={14} className="me-1" /> Agregar producto
+                  </button>
+                </div>
+
+                {/* Selector de productos (dropdown) */}
+                {mostrarSelectorProducto && (
+                  <div className="card card-body mb-3" style={{ maxHeight: '300px', overflow: 'auto' }}>
+                    <div className="mb-2">
+                      <input
+                        type="text"
+                        className="form-control form-control-sm"
+                        placeholder="Buscar producto..."
+                        value={busquedaProducto}
+                        onChange={(e) => setBusquedaProducto(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                    {cargandoProductos ? (
+                      <div className="text-center text-muted py-3">
+                        <div className="spinner-border spinner-border-sm me-2" /> Cargando productos…
+                      </div>
+                    ) : (
+                      <ul className="list-group list-group-flush">
+                        {productosDisponibles
+                          .filter(p =>
+                            p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()) ||
+                            p.codigoProducto.toString().includes(busquedaProducto)
+                          )
+                          .filter(p => !lineasEditando.some(l => l.codigoProducto === p.codigoProducto))
+                          .slice(0, 50)
+                          .map(producto => (
+                            <li
+                              key={producto.codigoProducto}
+                              className="list-group-item d-flex justify-content-between align-items-center px-0"
+                              onClick={() => agregarLineaDesdeSelector(producto)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <div>
+                                <strong>{producto.nombre}</strong>
+                                <br />
+                                <small className="text-muted">
+                                  Código: {producto.codigoProducto} | Stock: {producto.existenciaDisponible} | Precio sugerido: Q {producto.precioSugerido.toFixed(2)}
+                                </small>
+                              </div>
+                              <Plus size={16} className="text-primary" />
+                            </li>
+                          ))}
+                        {productosDisponibles.length === 0 && !cargandoProductos && (
+                          <li className="list-group-item text-center text-muted px-0">No hay productos con stock disponible</li>
+                        )}
+                      </ul>
+                    )}
+                    <div className="text-end mt-2">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => setMostrarSelectorProducto(false)}
+                      >
+                        <X size={14} className="me-1" /> Cerrar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline-secondary" onClick={cerrarEdicionPedido} disabled={editando}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={guardarEdicionPedido}
+                  disabled={editando || lineasEditando.length === 0}
+                >
+                  {editando ? <><Save size={14} className="spin" /> Guardando…</> : <><Save size={14} /> Guardar cambios</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Cambiar estado */}
+      {cambioEstadoAbierto && pedidoParaEditar && (
+        <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Cambiar estado del pedido #{pedidoParaEditar.encabezado.codigoPedido}</h5>
+                <button type="button" className="btn-close" onClick={cerrarCambioEstado} disabled={cambiandoEstado} />
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Nuevo estado (código numérico)</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={estadoNuevo ?? ''}
+                    onChange={(e) => setEstadoNuevo(e.target.value ? parseInt(e.target.value, 10) : null)}
+                    disabled={cambiandoEstado}
+                    placeholder="Ej: 2 = en preparación"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Código de motivo (opcional)</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={motivoEstado ?? ''}
+                    onChange={(e) => setMotivoEstado(e.target.value ? parseInt(e.target.value, 10) : null)}
+                    disabled={cambiandoEstado}
+                    placeholder="Código de motivo…"
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline-secondary" onClick={cerrarCambioEstado} disabled={cambiandoEstado}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-warning"
+                  onClick={guardarCambioEstado}
+                  disabled={cambiandoEstado || estadoNuevo === null}
+                >
+                  {cambiandoEstado ? 'Actualizando…' : 'Cambiar estado'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Cierre de venta */}
+      {cierreAbierto && (
+        <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header bg-danger text-white">
+                <h5 className="modal-title">Cierre de venta / día</h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setCierreAbierto(false)} disabled={cerrando} />
+              </div>
+              <div className="modal-body">
+                <p>
+                  Esto registrará el cierre de venta para el empleado <strong>{codigoEmpleado}</strong>
+                  con fecha <strong>{new Date().toISOString().split('T')[0]}</strong>.
+                </p>
+                <div className="alert alert-warning">
+                  <Power size={16} />{' '}
+                  Esta acción cambiará el estado de los pedidos a "en preparación" y cerrará la venta del día.
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline-secondary" onClick={() => setCierreAbierto(false)} disabled={cerrando}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={guardarCierre}
+                  disabled={cerrando || !codigoEmpleado}
+                >
+                  {cerrando ? <><Power size={14} className="spin" /> Cerrando…</> : <><Power size={14} /> Confirmar cierre</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

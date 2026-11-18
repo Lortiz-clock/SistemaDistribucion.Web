@@ -232,7 +232,7 @@ function App() {
           <Route path="reportes/compras" element={<RutaModulo><ReporteComprasPage /></RutaModulo>} />
           <Route path="reportes/inventario" element={<RutaModulo><ReporteInventarioPage /></RutaModulo>} />
           <Route path="planificador" element={<RutaModulo><PlanificadorRutasPage /></RutaModulo>} />
-          <Route path="Metas" element={<RutaModulo><MetaPage /></RutaModulo>} />
+          <Route path="metas" element={<RutaModulo><MetaPage /></RutaModulo>} />
           <Route path="metas/agregar" element={<MetaAgregarPage />} />
           <Route path="pedidos" element={<RutaModulo><PedidosPage /></RutaModulo>} />
         </Route>

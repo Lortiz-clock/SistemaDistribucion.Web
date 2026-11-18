@@ -7,4 +7,6 @@ export interface ClienteRutaPlan {
   ordenVisita: number
   latitud: number | null  
   longitud: number | null
+  visitado: boolean
+  codigoPedido: number | null
 }

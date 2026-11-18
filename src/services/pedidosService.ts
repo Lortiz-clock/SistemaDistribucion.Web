@@ -7,6 +7,20 @@ import type { ProductoConStock } from '../interfaces/ProductoConStock'
 import type { SemaforoUtilidad } from '../interfaces/SemaforoUtilidad'
 import type { ClienteRutaPlan } from '../interfaces/ClienteRutaPlan'
 
+// Lee codigoUsuario del token JWT (claim 'codigoUsuario' o 'nameidentifier')
+function obtenerCodigoUsuario(): number {
+  const token = localStorage.getItem('token')
+  if (!token) return 0
+  try {
+    const payload = token.split('.')[1]
+    const decoded = JSON.parse(atob(payload))
+    // El backend ahora incluye 'codigoUsuario' y 'nameidentifier' en el token
+    return decoded.codigoUsuario ?? decoded.nameidentifier ?? decoded.sub ?? 0
+  } catch {
+    return 0
+  }
+}
+
 // ─── Consultar pedidos por rango de fechas ───
 export const consultarPedidos = async (
   fechaDesde: string,
@@ -14,9 +28,20 @@ export const consultarPedidos = async (
   codigoEmpleado?: number,
   codigoEstadoPedido?: number
 ) => {
+  const params: Record<string, string | number | undefined> = {
+    fechaDesde,
+    fechaHasta,
+  }
+  if (codigoEmpleado && codigoEmpleado > 0) {
+    params.codigoEmpleado = codigoEmpleado
+  }
+  if (codigoEstadoPedido && codigoEstadoPedido > 0) {
+    params.codigoEstadoPedido = codigoEstadoPedido
+  }
+
   const respuesta = await api.get<RespuestaApi<PedidoConsulta[]>>(
     '/api/Pedidos/ConsultarPedidos',
-    { params: { fechaDesde, fechaHasta, codigoEmpleado, codigoEstadoPedido } }
+    { params }
   )
   return respuesta.data
 }
@@ -82,6 +107,54 @@ export const obtenerResumenVendedor = async (fechaDesde: string, fechaHasta: str
   const respuesta = await api.get<RespuestaApi<ResumenVendedor>>(
     '/api/Pedidos/ResumenVendedor',
     { params: { fechaDesde, fechaHasta } }
+  )
+  return respuesta.data
+}
+
+// ─── Editar pedido existente ───
+export const editarPedido = async (pedido: {
+  codigoPedido: number
+  observaciones?: string
+  lineas: { codigoProducto: number; cantidad: number; precioVenta: number }[]
+}) => {
+  const respuesta = await api.put<RespuestaApi<boolean>>(
+    '/api/Pedidos/EditarPedido',
+    {
+      ...pedido,
+      codigoUsuario: obtenerCodigoUsuario(),
+    }
+  )
+  return respuesta.data
+}
+
+// ─── Cambiar estado de un pedido ───
+export const cambiarEstadoPedido = async (payload: {
+  codigoPedido: number
+  codigoEstadoNuevo: number
+  codigoMotivo?: number
+}) => {
+  const respuesta = await api.post<RespuestaApi<boolean>>(
+    '/api/Pedidos/CambiarEstado',
+    payload
+  )
+  return respuesta.data
+}
+
+// ─── Cierre de venta / día ───
+export const agregarCierre = async (payload: {
+  codigoEmpleado?: number
+  fechaVenta: string
+}) => {
+  const body: Record<string, string | number | undefined> = {
+    fechaVenta: payload.fechaVenta
+  }
+  if (payload.codigoEmpleado && payload.codigoEmpleado > 0) {
+    body.codigoEmpleado = payload.codigoEmpleado
+  }
+
+  const respuesta = await api.post<RespuestaApi<boolean>>(
+    '/api/Pedidos/AgregarCierre',
+    body
   )
   return respuesta.data
 }
