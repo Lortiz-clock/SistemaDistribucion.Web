@@ -122,6 +122,12 @@ export const editarPedido = async (pedido: {
     {
       ...pedido,
       codigoUsuario: obtenerCodigoUsuario(),
+      observaciones: pedido.observaciones ?? '',
+      lineas: pedido.lineas.map(l => ({
+        codigoProducto: l.codigoProducto,
+        cantidad: l.cantidad ?? 1,
+        precioVenta: l.precioVenta ?? 0.01,
+      })),
     }
   )
   return respuesta.data
@@ -133,9 +139,18 @@ export const cambiarEstadoPedido = async (payload: {
   codigoEstadoNuevo: number
   codigoMotivo?: number
 }) => {
+  const body: {
+    codigoPedido: number
+    codigoEstadoNuevo: number
+    codigoMotivo?: number | undefined
+  } = {
+    codigoPedido: payload.codigoPedido,
+    codigoEstadoNuevo: Number(payload.codigoEstadoNuevo) || 1,
+    codigoMotivo: payload.codigoMotivo ?? undefined,
+  }
   const respuesta = await api.post<RespuestaApi<boolean>>(
     '/api/Pedidos/CambiarEstado',
-    payload
+    body
   )
   return respuesta.data
 }

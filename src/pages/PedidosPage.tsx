@@ -351,12 +351,14 @@ export default function PedidosPage() {
   }
 
   async function guardarCambioEstado() {
-    if (!pedidoParaEditar || estadoNuevo === null) return
+    if (!pedidoParaEditar) return
+    const estadoNum = Number(estadoNuevo)
+    if (!Number.isFinite(estadoNum) || isNaN(estadoNum)) return
     setCambiandoEstado(true)
     try {
       const res = await cambiarEstadoPedido({
         codigoPedido: pedidoParaEditar.encabezado.codigoPedido,
-        codigoEstadoNuevo: estadoNuevo,
+        codigoEstadoNuevo: estadoNum,
         codigoMotivo: motivoEstado ?? undefined,
       })
       if (res.exito) {
