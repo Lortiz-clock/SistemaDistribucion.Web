@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { MapPin, Plus, RefreshCw, Calendar, Navigation, Edit2, Save, Power, Trash2, PlusCircle, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { MapPin, Plus, RefreshCw, Calendar, Navigation, Edit2, Save, Power, Trash2, PlusCircle, X, Truck } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import {
   obtenerMisClientesDelDia,
@@ -216,30 +217,34 @@ export default function PedidosPage() {
 
   // ─── Edición de pedido (desde el listado del día) ───
   async function abrirEdicionPedido(codigoPedido: number) {
-    const res = await buscarPedido(codigoPedido)
-    if (res.exito && res.datos) {
-      setPedidoSeleccionadoParaEdicion(res.datos)
-      // Obtener productos para nombres y selector
-      const productosRes = await obtenerProductosConStock()
-      const mapaProductos = new Map<number, string>()
-      if (productosRes.exito && productosRes.datos) {
-        productosRes.datos.forEach(p => mapaProductos.set(p.codigoProducto, p.nombre))
-        setProductosDisponibles(productosRes.datos)
+    try {
+      const res = await buscarPedido(codigoPedido)
+      if (res.exito && res.datos) {
+        setPedidoSeleccionadoParaEdicion(res.datos)
+        // Obtener productos para nombres y selector
+        const productosRes = await obtenerProductosConStock()
+        const mapaProductos = new Map<number, string>()
+        if (productosRes.exito && productosRes.datos) {
+          productosRes.datos.forEach(p => mapaProductos.set(p.codigoProducto, p.nombre))
+          setProductosDisponibles(productosRes.datos)
+        }
+        // Mapear líneas del backend al estado de edición
+        const lineasIniciales = res.datos.detalle.map(d => ({
+          codigoProducto: d.codigoProducto,
+          nombreProducto: mapaProductos.get(d.codigoProducto) || `Producto ${d.codigoProducto}`,
+          cantidad: d.cantidadEntregada ?? d.cantidad,
+          precioVenta: d.precioVenta,
+          esFaltante: d.esFaltante,
+          codigoPedidoDetalle: d.codigoPedidoDetalle,
+        }))
+        setLineasEditando(lineasIniciales)
+        setObservacionesEditando(res.datos.encabezado.observaciones ?? '')
+        setEditarAbierto(true)
+      } else {
+        setMensaje(res.mensaje || 'No se pudo cargar el detalle del pedido.')
       }
-      // Mapear líneas del backend al estado de edición
-      const lineasIniciales = res.datos.detalle.map(d => ({
-        codigoProducto: d.codigoProducto,
-        nombreProducto: mapaProductos.get(d.codigoProducto) || `Producto ${d.codigoProducto}`,
-        cantidad: d.cantidadEntregada ?? d.cantidad,
-        precioVenta: d.precioVenta,
-        esFaltante: d.esFaltante,
-        codigoPedidoDetalle: d.codigoPedidoDetalle,
-      }))
-      setLineasEditando(lineasIniciales)
-      setObservacionesEditando(res.datos.encabezado.observaciones ?? '')
-      setEditarAbierto(true)
-    } else {
-      setMensaje(res.mensaje || 'No se pudo cargar el detalle del pedido.')
+    } catch (error) {
+      setMensaje(extraerMensaje(error, 'No se pudo cargar el detalle del pedido.'))
     }
   }
 
@@ -396,6 +401,9 @@ export default function PedidosPage() {
   }
 
   const nombreDia = DIAS.find((d) => d.v === dia)?.n ?? ''
+  const clientesConIndice = clientes.map((c, indiceRuta) => ({ c, indiceRuta }))
+  const pendientes = clientesConIndice.filter((x) => !x.c.visitado)
+  const atendidos = clientesConIndice.filter((x) => x.c.visitado)
 
   return (
     <div className="pedidos-page pagina-lista">
@@ -465,6 +473,14 @@ export default function PedidosPage() {
                 </button>
               </>
             )}
+            <Link
+              to="/dashboard/pedidos/asignar-piloto"
+              className="btn btn-sm btn-outline-primary"
+              title="Asignar a piloto"
+            >
+              <Truck size={14} />
+              Asignar a piloto
+            </Link>
             <button
               type="button"
               className="btn btn-sm btn-danger"
@@ -534,94 +550,180 @@ export default function PedidosPage() {
                   <small>El administrador puede asignarlos desde el planificador de rutas.</small>
                 </div>
               ) : (
-                <ul className="list-group">
-                  {clientes.map((c, i) => (
-                    <li
-                      key={c.codigoClienteRuta}
-                      className="list-group-item d-flex align-items-center gap-2"
-                    >
-                      <span className={`badge rounded-pill ${c.visitado ? 'bg-success' : 'bg-dark'}`}>
-                        {i + 1}
-                      </span>
-                      <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                        <div className={`fw-semibold ${c.visitado ? 'text-decoration-line-through' : ''}`}>
-                          {c.nombreCliente}
-                          {c.visitado && <span className="badge bg-success ms-1">Visitado</span>}
-                        </div>
-                        <small className="d-flex align-items-center gap-1" style={{ color: '#94a3b8' }}>
-                          <MapPin size={12} className="flex-shrink-0" />
-                          <span>{c.direccion || 'Sin dirección'}</span>
-                        </small>
+                <>
+                  {pendientes.length === 0 ? (
+                    <div className="text-center text-muted py-3 mb-3">
+                      No hay clientes pendientes por atender.
+                    </div>
+                  ) : (
+                    <ul className="list-group mb-3">
+                      {pendientes.map(({ c, indiceRuta }) => (
+                        <li
+                          key={c.codigoClienteRuta}
+                          className="list-group-item d-flex align-items-center gap-2"
+                        >
+                          <span className="badge rounded-pill bg-dark">{indiceRuta + 1}</span>
+                          <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                            <div className="fw-semibold">{c.nombreCliente}</div>
+                            <small className="d-flex align-items-center gap-1" style={{ color: '#94a3b8' }}>
+                              <MapPin size={12} className="flex-shrink-0" />
+                              <span>{c.direccion || 'Sin dirección'}</span>
+                            </small>
+                          </div>
+
+                          {c.latitud != null && c.longitud != null && (
+                            <a
+                              href={urlWaze(c.latitud, c.longitud)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-sm btn-outline-info"
+                              title="Navegar con Waze"
+                            >
+                              <Navigation size={14} />
+                            </a>
+                          )}
+
+                          <button
+                            className="btn btn-sm btn-outline-warning"
+                            onClick={() => abrirNoVisita(c)}
+                            title="Registrar no visita"
+                            disabled={cargando}
+                          >
+                            No visita
+                          </button>
+
+                          {c.codigoPedido != null && c.codigoPedido > 0 ? (
+                            <>
+                              {(() => {
+                                const codigoPedido = c.codigoPedido
+                                const p = pedidosDelDia.find((x) => x.codigoPedido === codigoPedido)
+                                const estaCerrado = p ? p.codigoCierre !== null : false
+                                if (estaCerrado) {
+                                  return (
+                                    <button
+                                      type="button"
+                                      className="btn btn-sm btn-outline-secondary"
+                                      disabled
+                                      title="Venta finalizada"
+                                    >
+                                      Venta finalizada
+                                    </button>
+                                  )
+                                }
+                                return (
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline-secondary"
+                                    onClick={() => abrirEdicionPedido(codigoPedido)}
+                                    title="Editar productos del pedido"
+                                  >
+                                    <Edit2 size={14} className="me-1" />
+                                    Editar productos
+                                  </button>
+                                )
+                              })()}
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-success"
+                              onClick={() => abrirCrearPedido(c)}
+                              disabled={cargando}
+                            >
+                              <Plus size={14} className="me-1" />
+                              Nuevo pedido
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {atendidos.length > 0 && (
+                    <>
+                      <div className="d-flex justify-content-between align-items-center mb-2 mt-2">
+                        <h3 className="h6 m-0">
+                          Atendidos <span className="badge bg-success">{atendidos.length}</span>
+                        </h3>
                       </div>
+                      <ul className="list-group">
+                        {atendidos.map(({ c, indiceRuta }) => (
+                          <li
+                            key={c.codigoClienteRuta}
+                            className="list-group-item d-flex align-items-center gap-2"
+                          >
+                            <span className="badge rounded-pill bg-success">{indiceRuta + 1}</span>
+                            <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                              <div className="fw-semibold">
+                                {c.nombreCliente}
+                                <span className="badge bg-success ms-1">Visitado</span>
+                              </div>
+                              <small className="d-flex align-items-center gap-1" style={{ color: '#94a3b8' }}>
+                                <MapPin size={12} className="flex-shrink-0" />
+                                <span>{c.direccion || 'Sin dirección'}</span>
+                              </small>
+                            </div>
 
-                      {c.latitud != null && c.longitud != null && (
-                        <a
-                          href={urlWaze(c.latitud, c.longitud)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-sm btn-outline-info"
-                          title="Navegar con Waze"
-                        >
-                          <Navigation size={14} />
-                        </a>
-                      )}
+                            {c.latitud != null && c.longitud != null && (
+                              <a
+                                href={urlWaze(c.latitud, c.longitud)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-sm btn-outline-info"
+                                title="Navegar con Waze"
+                              >
+                                <Navigation size={14} />
+                              </a>
+                            )}
 
-                      {!c.visitado && (
-                        <button
-                          className="btn btn-sm btn-outline-warning"
-                          onClick={() => abrirNoVisita(c)}
-                          title="Registrar no visita"
-                          disabled={cargando}
-                        >
-                          No visita
-                        </button>
-                      )}
-
-                      {c.codigoPedido != null && c.codigoPedido > 0 ? (
-                        <>
-                          {(() => {
-                            const codigoPedido = c.codigoPedido
-                            const p = pedidosDelDia.find((x) => x.codigoPedido === codigoPedido)
-                            const estaCerrado = p ? p.codigoCierre !== null : false
-                            if (estaCerrado) {
-                              return (
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-outline-secondary"
-                                  disabled
-                                  title="Venta finalizada"
-                                >
-                                  Venta finalizada
-                                </button>
-                              )
-                            }
-                            return (
+                            {c.codigoPedido != null && c.codigoPedido > 0 ? (
+                              <>
+                                {(() => {
+                                  const codigoPedido = c.codigoPedido
+                                  const p = pedidosDelDia.find((x) => x.codigoPedido === codigoPedido)
+                                  const estaCerrado = p ? p.codigoCierre !== null : false
+                                  if (estaCerrado) {
+                                    return (
+                                      <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary"
+                                        disabled
+                                        title="Venta finalizada"
+                                      >
+                                        Venta finalizada
+                                      </button>
+                                    )
+                                  }
+                                  return (
+                                    <button
+                                      type="button"
+                                      className="btn btn-sm btn-outline-secondary"
+                                      onClick={() => abrirEdicionPedido(codigoPedido)}
+                                      title="Editar productos del pedido"
+                                    >
+                                      <Edit2 size={14} className="me-1" />
+                                      Editar productos
+                                    </button>
+                                  )
+                                })()}
+                              </>
+                            ) : (
                               <button
                                 type="button"
-                                className="btn btn-sm btn-outline-secondary"
-                                onClick={() => abrirEdicionPedido(codigoPedido)}
-                                title="Editar productos del pedido"
+                                className="btn btn-sm btn-success"
+                                onClick={() => abrirCrearPedido(c)}
+                                disabled={cargando}
                               >
-                                <Edit2 size={14} className="me-1" />
-                                Editar productos
+                                <Plus size={14} className="me-1" />
+                                Nuevo pedido
                               </button>
-                            )
-                          })()}
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-success"
-                          onClick={() => abrirCrearPedido(c)}
-                          disabled={cargando}
-                        >
-                          <Plus size={14} className="me-1" />
-                          Nuevo pedido
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </>
               )}
             </div>
           </div>
