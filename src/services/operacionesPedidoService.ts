@@ -6,6 +6,7 @@ export const obtenerPreparacion = async () => (await api.get<RespuestaApi<Pedido
 export const confirmarPreparado = async (codigoPedido: number) => (await api.post<RespuestaApi<boolean>>(`/api/OperacionesPedido/Preparacion/${codigoPedido}/Confirmar`)).data
 export const obtenerCarga = async () => (await api.get<RespuestaApi<PedidoOperacion[]>>('/api/OperacionesPedido/Carga')).data
 export const asignarDespacho = async (payload: { codigoRepartidor: number; pedidos: number[] }) => (await api.post<RespuestaApi<number>>('/api/OperacionesPedido/Despacho/Asignar', payload)).data
+export const confirmarCargaDespacho = async (codigoDespacho: number) => (await api.post<RespuestaApi<number>>(`/api/OperacionesPedido/Despacho/${codigoDespacho}/ConfirmarCarga`)).data
 export const obtenerMisEntregas = async (codigoRepartidor: number) => (await api.get<RespuestaApi<PedidoOperacion[]>>('/api/OperacionesPedido/MisEntregas', { params: { codigoRepartidor } })).data
 export const marcarEntregado = async (codigoPedido: number) => (await api.post<RespuestaApi<boolean>>(`/api/OperacionesPedido/MisEntregas/${codigoPedido}/Entregado`)).data
 export const registrarRechazo = async (payload: { codigoPedido: number; motivo?: string; esParcial: boolean; detalles: { codigoPedidoDetalle: number; cantidadRechazada: number }[] }) => (await api.post<RespuestaApi<number>>('/api/OperacionesPedido/Rechazos', payload)).data

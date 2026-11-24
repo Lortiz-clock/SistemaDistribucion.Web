@@ -23,6 +23,7 @@ export interface PedidoConsulta {
 export interface PedidoDetalle {
   codigoPedidoDetalle: number
   codigoProducto: number
+  nombreProducto: string
   codigoProductoBodega: number | null
   cantidad: number
   cantidadEntregada: number | null
@@ -32,6 +33,8 @@ export interface PedidoDetalle {
   cantidadRechazada: number
   cantidadDevuelta: number
   esContable: boolean
+  cantidadContable?: number
+  cantidadNoContable?: number
 }
 
 export interface PedidoHistorial {

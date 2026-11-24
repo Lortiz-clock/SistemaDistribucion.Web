@@ -7,4 +7,6 @@ export interface ResumenVendedor {
   porcentajeDia: number
   utilidadSemana: number
   utilidadDia: number
+  metaSemanal: number
+  metaDiaria: number
 }

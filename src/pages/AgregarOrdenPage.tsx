@@ -45,7 +45,7 @@ function AgregarOrdenPage() {
   const factorCaja = obtenerFactorCaja(productoActual)
   const usarCaja = modoCaja && factorCaja > 1
   const unidadesTotales = usarCaja ? cajasPedidas * factorCaja : cantidadPedida
-  const costoUnidad = usarCaja && factorCaja > 0 ? redondear05(precioCosto / factorCaja) : precioCosto
+  const costoUnidad = usarCaja && factorCaja > 0 ? precioCosto / factorCaja : precioCosto
   const minUnidad = usarCaja && factorCaja > 0 ? redondear05(precioMin / factorCaja) : precioMin
   const sugUnidad = usarCaja && factorCaja > 0 ? redondear05(precioSug / factorCaja) : precioSug
   const margenPct = minUnidad > 0 && costoUnidad > 0 ? ((minUnidad - costoUnidad) / minUnidad) * 100 : 0
@@ -299,7 +299,7 @@ function AgregarOrdenPage() {
                       <tr key={index}>
                         <td>{item.nombreProducto}</td>
                         <td>{item.cantidadPedida}<small className="text-muted d-block">{desglosarCajas(item.codigoProducto, item.cantidadPedida)}</small></td>
-                        <td>Q{item.precioCosto}</td>
+                        <td>Q{Number(item.precioCosto).toFixed(6).replace(/\.?0+$/,'')}</td>
                         <td><strong>Q{item.precioMinimo}</strong></td>
                         <td>{item.margenPct}%</td>
                         <td><strong>Q{item.precioSugerido}</strong></td>

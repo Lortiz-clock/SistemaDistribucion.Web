@@ -146,9 +146,10 @@ function FilaDisponible({ cliente, marcado, onAlternar }: FilaDisponibleProps) {
       <label
         htmlFor={`cli-${cliente.codigoCliente}`}
         className="flex-grow-1 mb-0"
-        style={{ cursor: 'grab' }}
+        style={{ cursor: 'grab', minWidth: 0 }}
       >
-        {cliente.nombre}
+        <div className="fw-semibold text-truncate">{cliente.nombre}</div>
+        <small className="text-muted d-block text-truncate">{cliente.direccion || 'Sin direcci?n'}</small>
       </label>
     </li>
   )
@@ -440,17 +441,19 @@ export default function PlanificadorRutasPage() {
                     items={ruta.map(c => c.codigoClienteRuta)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <ul className="list-group">
-                      {ruta.map((c, i) => (
-                        <FilaCliente
-                          key={c.codigoClienteRuta}
-                          cliente={c}
-                          posicion={i + 1}
-                          ocupado={ocupado}
-                          onRetirar={retirar}
-                        />
-                      ))}
-                    </ul>
+                    <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                      <ul className="list-group">
+                        {ruta.map((c, i) => (
+                          <FilaCliente
+                            key={c.codigoClienteRuta}
+                            cliente={c}
+                            posicion={i + 1}
+                            ocupado={ocupado}
+                            onRetirar={retirar}
+                          />
+                        ))}
+                      </ul>
+                    </div>
                   </SortableContext>
                 )}
               </ZonaRuta>
@@ -481,16 +484,18 @@ export default function PlanificadorRutasPage() {
                   Todos los clientes ya tienen visita el {nombreDia.toLowerCase()}.
                 </div>
               ) : (
-                <ul className="list-group">
-                  {disponibles.map(c => (
-                    <FilaDisponible
-                      key={c.codigoCliente}
-                      cliente={c}
-                      marcado={marcados.includes(c.codigoCliente)}
-                      onAlternar={alternarMarcado}
-                    />
-                  ))}
-                </ul>
+                <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                  <ul className="list-group">
+                    {disponibles.map(c => (
+                      <FilaDisponible
+                        key={c.codigoCliente}
+                        cliente={c}
+                        marcado={marcados.includes(c.codigoCliente)}
+                        onAlternar={alternarMarcado}
+                      />
+                    ))}
+                  </ul>
+                </div>
               )}
 
               <small className="text-muted d-block mt-2">

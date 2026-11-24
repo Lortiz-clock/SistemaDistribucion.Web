@@ -1,8 +1,9 @@
-﻿import { BatteryCharging, Calendar, Target } from 'lucide-react'
+import { BatteryCharging, Calendar, Target } from 'lucide-react'
 import type { ResumenVendedor } from '../interfaces/ResumenVendedor'
 
-const VACIO: ResumenVendedor = { ventaSemana: 0, ventaDia: 0, pedidosDia: 0, diasConVenta: 0, porcentajeSemana: 0, porcentajeDia: 0, utilidadSemana: 0, utilidadDia: 0 }
+const VACIO: ResumenVendedor = { ventaSemana: 0, ventaDia: 0, pedidosDia: 0, diasConVenta: 0, porcentajeSemana: 0, porcentajeDia: 0, utilidadSemana: 0, utilidadDia: 0, metaSemanal: 0, metaDiaria: 0 }
 const colorBateria = (p: number) => (p >= 100 ? '#22c55e' : p >= 70 ? '#f59e0b' : '#ef4444')
+const q = (n: number) => `Q ${Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 function Bateria({ titulo, porcentaje }: { titulo: string; porcentaje: number }) {
   const color = colorBateria(porcentaje)
@@ -24,15 +25,26 @@ function Bateria({ titulo, porcentaje }: { titulo: string; porcentaje: number })
   )
 }
 
+function Dato({ label, valor, icon }: { label: string; valor: string; icon: React.ReactNode }) {
+  return (
+    <div className="col-12 col-md-6">
+      <div style={{ background: '#111a2e', border: '1px solid #334155', borderRadius: 8, padding: '10px 12px' }}>
+        <div style={{ color: '#94a3b8', fontSize: '0.9rem' }} className="d-flex align-items-center gap-2">{icon}{label}</div>
+        <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.05rem' }}>{valor}</div>
+      </div>
+    </div>
+  )
+}
+
 export function BateriasVenta({ datos }: { datos: ResumenVendedor | null }) {
   const r = datos ?? VACIO
   return (
     <div style={{ background: '#1a2438', border: '1px solid #1e40af', borderRadius: 8, padding: '20px 24px', marginBottom: 16 }}>
-      <Bateria titulo="Utilidad de la semana" porcentaje={r.porcentajeSemana} />
-      <Bateria titulo="Utilidad del día" porcentaje={r.porcentajeDia} />
+      <Bateria titulo="Meta de la semana" porcentaje={r.porcentajeSemana} />
+      <Bateria titulo="Meta del d?a" porcentaje={r.porcentajeDia} />
       <div className="row g-3">
-        <div className="col-6 col-md-4"><div style={{ color: '#94a3b8', fontSize: '0.9rem' }} className="d-flex align-items-center gap-2"><Target size={14} color="#22c55e" />Pedidos del día</div><div style={{ color: '#fff', fontWeight: 700 }}>{r.pedidosDia}</div></div>
-        <div className="col-6 col-md-4"><div style={{ color: '#94a3b8', fontSize: '0.9rem' }} className="d-flex align-items-center gap-2"><Calendar size={14} color="#eab308" />Días con venta</div><div style={{ color: '#fff', fontWeight: 700 }}>{r.diasConVenta} / 6</div></div>
+        <Dato label="Venta total acumulada del d?a" valor={q(r.ventaDia)} icon={<Target size={14} color="#22c55e" />} />
+        <Dato label="Meta acumulada de la semana" valor={q(r.metaSemanal)} icon={<Calendar size={14} color="#eab308" />} />
       </div>
     </div>
   )

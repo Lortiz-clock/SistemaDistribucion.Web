@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
-import { MapPin, Plus, RefreshCw, Calendar, Navigation, Edit2, Save, Power, Trash2, PlusCircle, X } from 'lucide-react'
+import { MapPin, Plus, RefreshCw, Calendar, Navigation, Edit2, Power } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import {
   obtenerMisClientesDelDia,
   obtenerResumenVendedor,
   consultarPedidos,
   buscarPedido,
-  editarPedido,
   cambiarEstadoPedido,
   agregarCierre,
-  obtenerProductosConStock,
 } from '../services/pedidosService'
-import type { ProductoConStock } from '../interfaces/ProductoConStock'
 import type { ClienteRutaPlan } from '../interfaces/ClienteRutaPlan'
 import type { ResumenVendedor } from '../interfaces/ResumenVendedor'
 import type { PedidoBuscar } from '../interfaces/PedidoBuscar'
@@ -89,22 +86,8 @@ export default function PedidosPage() {
 
   // Edición de pedido - líneas
   const [editarAbierto, setEditarAbierto] = useState(false)
-  const [editando, setEditando] = useState(false)
-  const [lineasEditando, setLineasEditando] = useState<Array<{
-    codigoProducto: number
-    nombreProducto: string
-    cantidad: number
-    precioVenta: number
-    esFaltante: boolean
-    codigoPedidoDetalle?: number // undefined = nueva línea
-  }>>([])
-  const [observacionesEditando, setObservacionesEditando] = useState('')
 
   // Selector de productos para agregar línea
-  const [mostrarSelectorProducto, setMostrarSelectorProducto] = useState(false)
-  const [productosDisponibles, setProductosDisponibles] = useState<ProductoConStock[]>([])
-  const [busquedaProducto, setBusquedaProducto] = useState('')
-  const [cargandoProductos, setCargandoProductos] = useState(false)
 
   // Cambio de estado
   const [cambioEstadoAbierto, setCambioEstadoAbierto] = useState(false)
@@ -216,130 +199,17 @@ export default function PedidosPage() {
   async function abrirEdicionPedido(codigoPedido: number) {
     try {
       const res = await buscarPedido(codigoPedido)
-      if (res.exito && res.datos) {
-        setPedidoSeleccionadoParaEdicion(res.datos)
-        // Obtener productos para nombres y selector
-        const productosRes = await obtenerProductosConStock()
-        const mapaProductos = new Map<number, string>()
-        if (productosRes.exito && productosRes.datos) {
-          productosRes.datos.forEach(p => mapaProductos.set(p.codigoProducto, p.nombre))
-          setProductosDisponibles(productosRes.datos)
-        }
-        // Mapear líneas del backend al estado de edición
-        const lineasIniciales = res.datos.detalle.map(d => ({
-          codigoProducto: d.codigoProducto,
-          nombreProducto: mapaProductos.get(d.codigoProducto) || `Producto ${d.codigoProducto}`,
-          cantidad: d.cantidadEntregada ?? d.cantidad,
-          precioVenta: d.precioVenta,
-          esFaltante: d.esFaltante,
-          codigoPedidoDetalle: d.codigoPedidoDetalle,
-        }))
-        setLineasEditando(lineasIniciales)
-        setObservacionesEditando(res.datos.encabezado.observaciones ?? '')
-        setEditarAbierto(true)
-      } else {
-        setMensaje(res.mensaje || 'No se pudo cargar el detalle del pedido.')
-      }
-    } catch (error) {
-      setMensaje(extraerMensaje(error, 'No se pudo cargar el detalle del pedido.'))
-    }
+      if (res.exito && res.datos) { setPedidoSeleccionadoParaEdicion(res.datos); setEditarAbierto(true) }
+      else setMensaje(res.mensaje || 'No se pudo cargar el detalle del pedido.')
+    } catch (error) { setMensaje(extraerMensaje(error, 'No se pudo cargar el detalle del pedido.')) }
   }
 
   function cerrarEdicionPedido() {
     setEditarAbierto(false)
     setPedidoSeleccionadoParaEdicion(null)
-    setLineasEditando([])
-    setObservacionesEditando('')
-    setMostrarSelectorProducto(false)
-    setBusquedaProducto('')
   }
 
   // ─── Helpers para líneas ───
-  function calcularTotalLineas(): number {
-    return lineasEditando.reduce((sum, l) => sum + l.cantidad * l.precioVenta, 0)
-  }
-
-  function actualizarLinea(index: number, campo: 'cantidad' | 'precioVenta', valor: number) {
-    setLineasEditando(prev => prev.map((l, i) => i === index ? { ...l, [campo]: Math.max(0, valor) } : l))
-  }
-
-  function eliminarLinea(index: number) {
-    setLineasEditando(prev => prev.filter((_, i) => i !== index))
-  }
-
-  function abrirSelectorProducto() {
-    setBusquedaProducto('')
-    setMostrarSelectorProducto(true)
-    // Si no hay productos cargados, cargarlos
-    if (productosDisponibles.length === 0) {
-      cargarProductosParaSelector()
-    }
-  }
-
-  async function cargarProductosParaSelector() {
-    setCargandoProductos(true)
-    try {
-      const res = await obtenerProductosConStock()
-      if (res.exito && res.datos) {
-        setProductosDisponibles(res.datos)
-      }
-    } catch {
-      // silencioso
-    } finally {
-      setCargandoProductos(false)
-    }
-  }
-
-  function agregarLineaDesdeSelector(producto: ProductoConStock) {
-    // Verificar si ya existe
-    const existe = lineasEditando.some(l => l.codigoProducto === producto.codigoProducto)
-    if (existe) {
-      setMensaje('Ese producto ya está en el pedido.')
-      return
-    }
-    setLineasEditando(prev => [...prev, {
-      codigoProducto: producto.codigoProducto,
-      nombreProducto: producto.nombre,
-      cantidad: 1,
-      precioVenta: producto.precioSugerido,
-      esFaltante: false,
-    }])
-    setMostrarSelectorProducto(false)
-    setBusquedaProducto('')
-  }
-
-  async function guardarEdicionPedido() {
-    if (!pedidoParaEditar) return
-    if (lineasEditando.length === 0) {
-      setMensaje('El pedido debe tener al menos un producto.')
-      return
-    }
-    setEditando(true)
-    try {
-      const lineasParaEnviar = lineasEditando.map(l => ({
-        codigoProducto: l.codigoProducto,
-        cantidad: l.cantidad,
-        precioVenta: l.precioVenta,
-      }))
-      const res = await editarPedido({
-        codigoPedido: pedidoParaEditar.encabezado.codigoPedido,
-        observaciones: observacionesEditando.trim() || undefined,
-        lineas: lineasParaEnviar,
-      })
-      if (res.exito) {
-        setMensaje('Pedido editado correctamente.')
-        cerrarEdicionPedido()
-        if (dia) void cargarDatos(dia)
-      } else {
-        setMensaje(res.mensaje || 'No se pudo editar el pedido.')
-      }
-    } catch (error) {
-      setMensaje(extraerMensaje(error, 'No se pudo editar el pedido.'))
-    } finally {
-      setEditando(false)
-    }
-  }
-
   // ─── Cambiar estado ───
   function abrirCambioEstado(pedido: PedidoBuscar) {
     setPedidoSeleccionadoParaEdicion(pedido)
@@ -455,7 +325,7 @@ export default function PedidosPage() {
                   type="button"
                   className="btn btn-sm btn-outline-secondary"
                   onClick={() => abrirEdicionPedido(pedidoParaEditar.encabezado.codigoPedido)}
-                  disabled={editando}
+                  
                   title="Editar pedido"
                 >
                   <Edit2 size={14} />
@@ -766,204 +636,15 @@ export default function PedidosPage() {
         </div>
       )}
 
-      {/* Modal: Editar pedido */}
+            {/* Modal: Editar pedido */}
       {editarAbierto && pedidoParaEditar && (
-        <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1060 }}>
-          <div className="modal-dialog modal-xl modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Editar pedido #{pedidoParaEditar.encabezado.codigoPedido}</h5>
-                <button type="button" className="btn-close" onClick={cerrarEdicionPedido} disabled={editando} />
-              </div>
-              <div className="modal-body">
-                {/* Observaciones */}
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Observaciones</label>
-                  <textarea
-                    className="form-control"
-                    rows={2}
-                    maxLength={500}
-                    value={observacionesEditando}
-                    onChange={(e) => setObservacionesEditando(e.target.value)}
-                    disabled={editando}
-                    placeholder="Notas internas del pedido…"
-                  />
-                </div>
-
-                {/* Tabla de líneas */}
-                <div className="table-responsive">
-                  <table className="table table-sm table-bordered align-middle mb-3">
-                    <thead className="table-light">
-                      <tr>
-                        <th style={{ width: '40%' }}>Producto</th>
-                        <th style={{ width: '15%' }}>Cantidad</th>
-                        <th style={{ width: '20%' }}>Precio unitario</th>
-                        <th style={{ width: '15%' }}>Subtotal</th>
-                        <th style={{ width: '10%' }} className="text-center">Estado</th>
-                        <th style={{ width: '5%' }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lineasEditando.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="text-center text-muted py-4">
-                            No hay productos en el pedido. Haz clic en "Agregar producto" para añadir líneas.
-                          </td>
-                        </tr>
-                      ) : (
-                        lineasEditando.map((linea, index) => (
-                          <tr key={index}>
-                            <td>
-                              <strong>{linea.nombreProducto}</strong>
-                              <br />
-                              <small className="text-muted">Código: {linea.codigoProducto}</small>
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                className="form-control form-control-sm"
-                                value={linea.cantidad}
-                                onChange={(e) => actualizarLinea(index, 'cantidad', parseInt(e.target.value) || 0)}
-                                min="1"
-                                disabled={editando}
-                                style={{ width: '80px' }}
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                className="form-control form-control-sm"
-                                value={linea.precioVenta.toFixed(2)}
-                                onChange={(e) => actualizarLinea(index, 'precioVenta', parseFloat(e.target.value) || 0)}
-                                min="0.01"
-                                step="0.01"
-                                disabled={editando}
-                                style={{ width: '120px' }}
-                              />
-                            </td>
-                            <td className="fw-semibold">
-                              Q {(linea.cantidad * linea.precioVenta).toFixed(2)}
-                            </td>
-                            <td className="text-center">
-                              {linea.esFaltante ? (
-                                <span className="badge bg-warning text-dark">Faltante</span>
-                              ) : (
-                                <span className="badge bg-success">OK</span>
-                              )}
-                            </td>
-                            <td className="text-center">
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={() => eliminarLinea(index)}
-                                disabled={editando}
-                                title="Eliminar línea"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                    <tfoot>
-                      <tr className="table-light">
-                        <td colSpan={3} className="text-end fw-bold">Total:</td>
-                        <td className="fw-bold fs-5">Q {calcularTotalLineas().toFixed(2)}</td>
-                        <td colSpan={2}></td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-
-                {/* Botón agregar producto */}
-                <div className="mb-3 text-end">
-                  <button
-                    type="button"
-                    className="btn btn-outline-primary btn-sm"
-                    onClick={abrirSelectorProducto}
-                    disabled={editando || lineasEditando.length >= 20}
-                  >
-                    <PlusCircle size={14} className="me-1" /> Agregar producto
-                  </button>
-                </div>
-
-                {/* Selector de productos (dropdown) */}
-                {mostrarSelectorProducto && (
-                  <div className="card card-body mb-3" style={{ maxHeight: '300px', overflow: 'auto' }}>
-                    <div className="mb-2">
-                      <input
-                        type="text"
-                        className="form-control form-control-sm"
-                        placeholder="Buscar producto..."
-                        value={busquedaProducto}
-                        onChange={(e) => setBusquedaProducto(e.target.value)}
-                        autoFocus
-                      />
-                    </div>
-                    {cargandoProductos ? (
-                      <div className="text-center text-muted py-3">
-                        <div className="spinner-border spinner-border-sm me-2" /> Cargando productos…
-                      </div>
-                    ) : (
-                      <ul className="list-group list-group-flush">
-                        {productosDisponibles
-                          .filter(p =>
-                            p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()) ||
-                            p.codigoProducto.toString().includes(busquedaProducto)
-                          )
-                          .filter(p => !lineasEditando.some(l => l.codigoProducto === p.codigoProducto))
-                          .slice(0, 50)
-                          .map(producto => (
-                            <li
-                              key={producto.codigoProducto}
-                              className="list-group-item d-flex justify-content-between align-items-center px-0"
-                              onClick={() => agregarLineaDesdeSelector(producto)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              <div>
-                                <strong>{producto.nombre}</strong>
-                                <br />
-                                <small className="text-muted">
-                                  Código: {producto.codigoProducto} | Stock: {producto.existenciaDisponible} | Precio sugerido: Q {producto.precioSugerido.toFixed(2)}
-                                </small>
-                              </div>
-                              <Plus size={16} className="text-primary" />
-                            </li>
-                          ))}
-                        {productosDisponibles.length === 0 && !cargandoProductos && (
-                          <li className="list-group-item text-center text-muted px-0">No hay productos con stock disponible</li>
-                        )}
-                      </ul>
-                    )}
-                    <div className="text-end mt-2">
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline-secondary"
-                        onClick={() => setMostrarSelectorProducto(false)}
-                      >
-                        <X size={14} className="me-1" /> Cerrar
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-outline-secondary" onClick={cerrarEdicionPedido} disabled={editando}>
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={guardarEdicionPedido}
-                  disabled={editando || lineasEditando.length === 0}
-                >
-                  {editando ? <><Save size={14} className="spin" /> Guardando…</> : <><Save size={14} /> Guardar cambios</>}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CrearPedidoModal
+          codigoCliente={pedidoParaEditar.encabezado.codigoCliente}
+          nombreCliente={clientes.find(c => c.codigoCliente === pedidoParaEditar.encabezado.codigoCliente)?.nombreCliente || `Cliente ${pedidoParaEditar.encabezado.codigoCliente}`}
+          pedidoExistente={pedidoParaEditar}
+          onClose={cerrarEdicionPedido}
+          onExito={() => { cerrarEdicionPedido(); if (dia) void cargarDatos(dia) }}
+        />
       )}
 
       {/* Modal: Cambiar estado */}
@@ -1017,23 +698,23 @@ export default function PedidosPage() {
         </div>
       )}
 
-      {/* Modal: Cierre de venta */}
+            {/* Modal: Cierre de venta */}
       {cierreAbierto && (
         <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header bg-danger text-white">
-                <h5 className="modal-title">Cierre de venta / día</h5>
+                <h5 className="modal-title">Cierre de venta del d?a</h5>
                 <button type="button" className="btn-close btn-close-white" onClick={() => setCierreAbierto(false)} disabled={cerrando} />
               </div>
               <div className="modal-body">
-                <p>
-                  Esto registrará el cierre de venta para el empleado <strong>{codigoEmpleado}</strong>
-                  con fecha <strong>{new Date().toISOString().split('T')[0]}</strong>.
+                <p className="mb-2">
+                  ?Confirmas el cierre de venta del <strong>{new Date().toISOString().split('T')[0]}</strong>
+                  {codigoEmpleado > 0 ? <> (Empleado <strong>{codigoEmpleado}</strong>)</> : ''}?
                 </p>
-                <div className="alert alert-warning">
-                  <Power size={16} />{' '}
-                  Esta acción cambiará el estado de los pedidos a "en preparación" y cerrará la venta del día.
+                <div className="alert alert-warning mb-0">
+                  <Power size={16} className="me-1" />
+                  Al cerrar la venta del d?a, los pedidos pasar?n a <strong>"En preparaci?n"</strong> y no podr?s ingresar m?s pedidos para esta fecha.
                 </div>
               </div>
               <div className="modal-footer">
@@ -1046,7 +727,7 @@ export default function PedidosPage() {
                   onClick={guardarCierre}
                   disabled={cerrando || !codigoEmpleado}
                 >
-                  {cerrando ? <><Power size={14} className="spin" /> Cerrando…</> : <><Power size={14} /> Confirmar cierre</>}
+                  {cerrando ? <><Power size={14} className="spin" /> Cerrando...</> : <><Power size={14} /> Confirmar cierre</>}
                 </button>
               </div>
             </div>

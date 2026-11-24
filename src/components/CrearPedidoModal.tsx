@@ -11,6 +11,7 @@ interface Linea {
   cantidad: number
   precioVenta: number
   modoCaja: boolean
+  cantidadOriginal?: number
 }
 
 interface Props {
@@ -51,11 +52,12 @@ export function CrearPedidoModal({ codigoCliente, nombreCliente, onClose, onExit
           codigoProducto: d.codigoProducto,
           nombre: `Producto ${d.codigoProducto}`,
           precioSugerido: d.precioVenta,
-          precioMinimo: 0, // El backend no devuelve precioMinimo en el detalle; 0 no bloquea precios válidos
+          precioMinimo: 0,
           existenciaDisponible: d.cantidadEntregada ?? d.cantidad,
           stockPrimerLote: d.cantidad,
         } as unknown as ProductoConStock,
         cantidad: d.cantidad,
+        cantidadOriginal: d.cantidad,
         precioVenta: d.precioVenta,
         modoCaja: false,
       }))
@@ -84,7 +86,8 @@ export function CrearPedidoModal({ codigoCliente, nombreCliente, onClose, onExit
           setLineas(prev => prev.map(l => {
             const p = res.datos!.find(x => x.codigoProducto === l.producto.codigoProducto)
             if (!p) return l
-            return { ...l, producto: p }
+            const original = l.cantidadOriginal ?? l.cantidad
+            return { ...l, producto: { ...p, existenciaDisponible: p.existenciaDisponible + original } }
           }))
         }
       }
@@ -260,50 +263,53 @@ export function CrearPedidoModal({ codigoCliente, nombreCliente, onClose, onExit
 
             {!resultado && (
               <>
-                <label className="form-label fw-semibold">Buscar producto</label>
-                <div className="input-group mb-2">
-                  <span className="input-group-text"><Search size={16} /></span>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Escribe el nombre del producto…"
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    disabled={cargando}
-                  />
+                <label className="form-label fw-semibold">Agregar producto</label>
+                <div className="border rounded mb-3">
+                  <div className="p-2 border-bottom bg-light">
+                    <div className="input-group">
+                      <span className="input-group-text"><Search size={16} /></span>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Buscar producto por nombre..."
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                        disabled={cargando}
+                      />
+                    </div>
+                  </div>
+                  {cargando ? (
+                    <div className="text-center text-muted py-3">
+                      <span className="spinner-border spinner-border-sm me-2" />
+                      Cargando productos...
+                    </div>
+                  ) : (
+                    <div style={{ maxHeight: 190, overflowY: 'auto' }}>
+                      {productosDisponibles.length === 0 ? (
+                        <div className="text-center text-muted py-3 small">
+                          {busqueda ? 'No se encontraron productos con ese nombre.' : 'Todos los productos ya están en el pedido.'}
+                        </div>
+                      ) : (
+                        <ul className="list-group list-group-flush">
+                          {productosDisponibles.slice(0, 20).map((p) => (
+                            <li key={p.codigoProducto} className="list-group-item d-flex align-items-center justify-content-between py-2">
+                              <div>
+                                <div className="fw-semibold">{p.nombre}</div>
+                                <small className="text-muted">
+                                  Disponible: {p.existenciaDisponible} unidades · Sugerido: {formatearQ(p.precioSugerido)}
+                                </small>
+                              </div>
+                              <button className="btn btn-sm btn-outline-primary" onClick={() => agregarLinea(p)}>
+                                <Plus size={14} className="me-1" />
+                                Agregar
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
                 </div>
-
-                {cargando ? (
-                  <div className="text-center text-muted py-3">
-                    <span className="spinner-border spinner-border-sm me-2" />
-                    Cargando productos…
-                  </div>
-                ) : (
-                  <div className="border rounded mb-3" style={{ maxHeight: 160, overflowY: 'auto' }}>
-                    {productosDisponibles.length === 0 ? (
-                      <div className="text-center text-muted py-3 small">
-                        {busqueda ? 'No se encontraron productos con ese nombre.' : 'Todos los productos ya están en el pedido.'}
-                      </div>
-                    ) : (
-                      <ul className="list-group list-group-flush">
-                        {productosDisponibles.slice(0, 20).map((p) => (
-                          <li key={p.codigoProducto} className="list-group-item d-flex align-items-center justify-content-between">
-                            <div>
-                              <div className="fw-semibold">{p.nombre}</div>
-                              <small className="text-muted">
-                                Stock: {p.existenciaDisponible} · Sugerido: {formatearQ(p.precioSugerido)}
-                              </small>
-                            </div>
-                            <button className="btn btn-sm btn-outline-primary" onClick={() => agregarLinea(p)}>
-                              <Plus size={14} className="me-1" />
-                              Agregar
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
 
                 <label className="form-label fw-semibold">
                   L?neas del pedido ({lineas.length})
@@ -335,13 +341,15 @@ export function CrearPedidoModal({ codigoCliente, nombreCliente, onClose, onExit
                             const minMostrado = porCaja ? l.producto.precioMinimo * fc : l.producto.precioMinimo
                             const color = colorPrecio(precioMostrado, sugMostrado, minMostrado)
                             const texto = textoPrecio(precioMostrado, sugMostrado, minMostrado)
-                            const cruzaLotes = l.cantidad > l.producto.stockPrimerLote
                             return (
                               <tr key={l.producto.codigoProducto}>
                                 <td>
                                   <div className="fw-semibold small">{l.producto.nombre}</div>
-                                  <small className="text-muted">Disp: {l.producto.existenciaDisponible} | Sug: {formatearQ(sugMostrado)}{porCaja ? '/caja' : '/und'}</small>
-                                  {cruzaLotes && <small className="text-warning d-block">Cruza varios lotes</small>}
+                                  <small className="text-muted">
+                                    Disp: {porCaja
+                                      ? `${Math.floor(l.producto.existenciaDisponible / fc)} cajas (${l.producto.existenciaDisponible % fc} und)`
+                                      : `${l.producto.existenciaDisponible} unidades`} | Sug: {formatearQ(sugMostrado)}{porCaja ? '/caja' : '/und'}
+                                  </small>
                                 </td>
                                 <td>
                                   {fc > 1 ? (
@@ -357,15 +365,15 @@ export function CrearPedidoModal({ codigoCliente, nombreCliente, onClose, onExit
                                 <td>
                                   <input type="number" className="form-control form-control-sm" style={{ width: "100%", minWidth: 75 }} min={1}
                                     max={porCaja ? Math.floor(l.producto.existenciaDisponible / fc) : l.producto.existenciaDisponible}
-                                    value={porCaja ? Math.round(l.cantidad / fc) : l.cantidad}
-                                    onChange={(e) => { const v = parseInt(e.target.value) || 0; actualizarLinea(i, { cantidad: porCaja ? v * fc : v }) }} />
+                                    value={porCaja ? (Math.round(l.cantidad / fc) || '') : (l.cantidad || '')}
+                                    onChange={(e) => { const raw = e.target.value; const v = raw === '' ? 0 : parseInt(raw, 10); actualizarLinea(i, { cantidad: porCaja ? (Number.isNaN(v) ? 0 : v * fc) : (Number.isNaN(v) ? 0 : v) }) }} />
                                   <div style={{ minHeight: 18 }}><small className="text-muted">{porCaja ? `${l.cantidad} und` : ""}</small></div>
                                 </td>
                                 <td>
                                   <div className="d-flex align-items-center gap-1">
                                     <input type="number" step="0.01" className="form-control form-control-sm" style={{ width: "100%", minWidth: 110 }} min={0}
-                                      value={Number(precioMostrado.toFixed(2))}
-                                      onChange={(e) => { const v = parseFloat(e.target.value) || 0; actualizarLinea(i, { precioVenta: porCaja ? v / fc : v }) }} />
+                                      value={precioMostrado === 0 ? '' : Number(precioMostrado.toFixed(2))}
+                                      onChange={(e) => { const raw = e.target.value; const v = raw === '' ? 0 : parseFloat(raw); actualizarLinea(i, { precioVenta: porCaja ? (Number.isNaN(v) ? 0 : v / fc) : (Number.isNaN(v) ? 0 : v) }) }} />
                                     <div className="rounded-circle flex-shrink-0" style={{ width: 14, height: 14, backgroundColor: color, boxShadow: `0 0 6px ${color}80` }} title={texto} />
                                   </div>
                                   <div style={{ minHeight: 18 }}><small className="text-muted">{porCaja ? `${formatearQ(l.precioVenta)}/und` : texto}</small></div>
@@ -398,8 +406,10 @@ export function CrearPedidoModal({ codigoCliente, nombreCliente, onClose, onExit
 
           <div className="modal-footer d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-center gap-3">
-              <span className="fw-semibold text-muted me-2">Total del pedido:</span>
-              <span className="h5 mb-0 fw-bold text-primary">{formatearQ(total)}</span>
+              <div className="rounded px-3 py-2 shadow-sm" style={{ backgroundColor: '#ffffff', border: '1px solid #ced4da' }}>
+                <span className="fw-bold me-2" style={{ color: '#212529' }}>Total del pedido:</span>
+                <span className="h5 mb-0 fw-bold" style={{ color: '#212529' }}>{formatearQ(total)}</span>
+              </div>
               <button type="button" className="btn btn-outline-secondary" onClick={onClose} disabled={guardando}>
                 {resultado ? 'Cerrar' : 'Cancelar'}
               </button>
