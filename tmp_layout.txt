@@ -1,0 +1,121 @@
+﻿import { useState, useEffect } from 'react'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import {
+  ShieldUser, Package, Truck, ShoppingCart, ClipboardList,
+  ShieldCheck, LayoutDashboard, Layers, ClipboardCheck, PlayingCardsFan,
+  ChevronDown, PackageOpen, BriefcaseBusiness, UserCog, Timeline,
+  FileText, BarChart3, Combine, ChartSpline, Navigation, XCircle, Wallet, BadgePercent
+} from 'lucide-react'
+import './Layout.css'
+import './tema-oscuro.css'
+import './menu-acordeon.css'
+import { obtenerNombreUsuario } from '../services/authService'
+import type { Modulo } from '../interfaces/UsuarioLogin'
+
+const iconosDisponibles: Record<string, any> = {
+  ShieldUser, Package, Truck, ShoppingCart, ClipboardList, PlayingCardsFan,
+  ShieldCheck, Layers, ClipboardCheck, PackageOpen, BriefcaseBusiness, UserCog, Timeline, 
+  FileText, BarChart3, Combine, ChartSpline, Navigation, XCircle, Wallet, BadgePercent
+}
+
+// â•â•â• DefiniciÃ³n de grupos: mÃ³dulos que se muestran juntos â•â•â•
+// IMPORTANTE: cada "contiene" debe ser IGUAL a la rutaFront que viene de la base de datos.
+const definicionGrupos = [
+  {
+    nombre: 'Ordenes de Compra',
+    icono: ShoppingCart,
+    prefijos: ['/dashboard/ordenes', '/dashboard/recepcion'],
+    items: [
+      { contiene: '/dashboard/ordenes/nueva', nombre: 'Nueva Orden' },
+      { contiene: '/dashboard/ordenes/listar', nombre: 'Ã“rdenes de Compra' },
+      { contiene: '/dashboard/recepcion', nombre: 'RecepciÃ³n' }
+    ]
+  },
+  {
+    nombre: 'CatÃ¡logo e Inventario',
+    icono: Package,
+    prefijos: [
+      '/dashboard/productos',
+      '/dashboard/inventario',
+      '/dashboard/marca',
+      '/dashboard/categorias'
+    ],
+    items: [
+      { contiene: '/dashboard/productos', nombre: 'Productos' },
+      { contiene: '/dashboard/inventario', nombre: 'Inventario' },
+      { contiene: '/dashboard/marca', nombre: 'Marca' },
+      { contiene: '/dashboard/categorias', nombre: 'CategorÃ­as' }
+    ]
+  },
+  {
+    nombre: 'AdministraciÃ³n',
+    icono: ShieldUser,
+    prefijos: [
+      '/dashboard/usuarios',
+      '/dashboard/roles',
+      '/dashboard/modulos',
+      '/dashboard/empleados',
+      '/dashboard/puestos',
+      '/dashboard/repartidores'
+    ],
+    items: [
+      { contiene: '/dashboard/usuarios', nombre: 'Usuarios' },
+      { contiene: '/dashboard/roles', nombre: 'Roles' },
+      { contiene: '/dashboard/modulos', nombre: 'MÃ³dulos' },
+      { contiene: '/dashboard/empleados', nombre: 'Empleados' },
+      { contiene: '/dashboard/puestos', nombre: 'Puestos' },
+      { contiene: '/dashboard/repartidores', nombre: 'Repartidores' }
+    ]
+  }
+]
+
+interface GrupoMenu {
+  nombre: string
+  icono: any
+  items: Modulo[]
+  esLinkDirecto: boolean
+  ruta?: string
+}
+
+function agruparModulos(modulos: Modulo[]): GrupoMenu[] {
+  const grupos: GrupoMenu[] = []
+  const yaAgrupados: string[] = []
+
+  for (const def of definicionGrupos) {
+    // Los mÃ³dulos del usuario que pertenecen a este grupo (en el orden del grupo)
+    const items = def.items
+      .map((i) => modulos.find((m) => m.rutaFront === i.contiene))
+      .filter((m): m is Modulo => !!m)
+
+    if (items.length >= 2) {
+      // â•â•â• 2 o mÃ¡s mÃ³dulos del grupo â†’ ACORDEÃ“N â•â•â•
+      grupos.push({ nombre: def.nombre, icono: def.icono, items, esLinkDirecto: false })
+      items.forEach((i) => yaAgrupados.push(i.rutaFront))
+    } else if (items.length === 1) {
+      // â•â•â• Solo 1 mÃ³dulo del grupo â†’ LINK DIRECTO (sin acordeÃ³n) â•â•â•
+      grupos.push({
+        nombre: items[0].nombre,
+        icono: iconosDisponibles[items[0].icono] || def.icono,
+        items: [items[0]],
+        esLinkDirecto: true,
+        ruta: items[0].rutaFront
+      })
+      yaAgrupados.push(items[0].rutaFront)
+    }
+  }
+
+  // Los demÃ¡s mÃ³dulos: links directos, en su orden original
+  modulos
+    .filter((m) => !yaAgrupados.includes(m.rutaFront))
+    .forEach((m) => {
+      grupos.push({
+        nombre: m.nombre,
+        icono: iconosDisponibles[m.icono] || LayoutDashboard,
+        items: [m],
+        esLinkDirecto: true,
+        ruta: m.rutaFront
+      })
+    })
+
+  return grupos
+}

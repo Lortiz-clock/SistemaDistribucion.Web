@@ -7,6 +7,9 @@ import {
   buscarPendientesAutorizacion
 } from '../services/recepcionDetalleService'
 import { consultarOrdenesCompra } from '../services/ordenCompraService'
+import { consultarBodegas } from '../services/bodegaService'
+import type { BodegaConsulta } from '../interfaces/Bodega'
+import ConfirmarModal from '../components/ConfirmarModal'
 import type { RecepcionDetalleConsulta, RecepcionPendiente } from '../interfaces/Recepcion'
 import './RecepcionPage.css'
 import { tienePermiso } from '../utils/permisos'
@@ -30,7 +33,7 @@ function RecepcionPage() {
 
   // ═══ LISTADO (órdenes por recibir) ═══
   const [ordenesPorRecibir, setOrdenesPorRecibir] = useState<any[]>([])
-  const [codigoBodega, setCodigoBodega] = useState(0)
+  const [codigoBodega, setCodigoBodega] = useState<number>(() => Number(sessionStorage.getItem('recepcion.codigoBodega') || 0))
   const [pendientes, setPendientes] = useState<RecepcionPendiente[]>([])
   const [vista, setVista] = useState<'listado' | 'registro'>('listado')
   const [codigoRecepcion, setCodigoRecepcion] = useState(0)
@@ -48,6 +51,9 @@ function RecepcionPage() {
   const [mensaje, setMensaje] = useState('')
   const [exito, setExito] = useState<boolean | null>(null)
   const [abriendo, setAbriendo] = useState(false)
+  const [confirmarCerrar, setConfirmarCerrar] = useState(false)
+  const [confirmarCancelar, setConfirmarCancelar] = useState(false)
+  const [confirmarRechazo, setConfirmarRechazo] = useState<{codigo:number, precio:number} | null>(null)
 
   // ⚠️ TODO: reemplazar por el código real del empleado logueado
   const codigoEmpleado = 1
@@ -58,8 +64,20 @@ function RecepcionPage() {
   // ═══ CARGA INICIAL ═══
   useEffect(() => {
     cargarOrdenes()
+    cargarBodegas()
     if (puedeResolver) cargarPendientes()
   }, [])
+
+  useEffect(() => {
+    sessionStorage.setItem('recepcion.codigoBodega', String(codigoBodega || 0))
+  }, [codigoBodega])
+
+  const cargarBodegas = async () => {
+    try {
+      const r = await consultarBodegas()
+      if (r.exito && r.datos && r.datos.length > 0) setBodegas(r.datos.filter(b => b.estado))
+    } catch { /* usa fallback */ }
+  }
 
   const cargarOrdenes = async () => {
     try {
@@ -89,12 +107,10 @@ function RecepcionPage() {
 
 
 
-  // ⚠️ Simplificación V1: bodegas fijas. Si tienes servicio de bodegas, úsalo.
-  const bodegas = [
-    { codigoBodega: 1, nombre: 'Bodega Central' },
-    { codigoBodega: 2, nombre: 'Bodega Contable' },
-    { codigoBodega: 3, nombre: 'Bodega No Contable' }
-  ]
+  const [bodegas, setBodegas] = useState<BodegaConsulta[]>([
+    { codigoBodega: 2, nombre: 'Bodega Contable', tipo: 'Contable', estado: true },
+    { codigoBodega: 3, nombre: 'Bodega No Contable', tipo: 'NoContable', estado: true }
+  ])
 
   // ═══ RECIBIR una orden (desde el listado) ═══
   const recibir = async (orden: any) => {
@@ -229,49 +245,47 @@ function RecepcionPage() {
     }
   }
 
-  // ═══ CERRAR RECEPCIÓN ═══
   const cerrar = async () => {
-    if (!window.confirm('¿Cerrar la recepción? Los productos autorizados ingresarán a bodega.')) return
-
     try {
       const respuesta = await cerrarRecepcion(codigoRecepcion)
       if (respuesta.exito) {
-        setMensaje('✅ Recepción cerrada. Inventario actualizado.')
+        setMensaje('Recepci?n cerrada. Inventario actualizado.')
         setExito(true)
         setVista('listado')
         setRecepcion(null)
         await cargarOrdenes()
       } else {
-        setMensaje(respuesta.mensaje || 'No se pudo cerrar la recepción.')
+        setMensaje(respuesta.mensaje || 'No se pudo cerrar la recepci?n.')
         setExito(false)
       }
     } catch {
       setMensaje('No fue posible comunicarse con la API.')
       setExito(false)
+    } finally {
+      setConfirmarCerrar(false)
     }
   }
 
-  // ═══ CANCELAR RECEPCIÓN ═══
   const cancelar = async () => {
-    if (!window.confirm('¿Cancelar la recepción? Se perderán los registros y la orden volverá a Pendiente.')) return
-
     try {
       const respuesta = await cancelarRecepcion(codigoRecepcion)
       if (respuesta.exito) {
         setRecepcion(null)
         setDetalles([])
         setCodigoRecepcion(0)
-        setMensaje('Recepción cancelada. La orden volvió a Pendiente.')
+        setMensaje('Recepci?n cancelada. La orden volvi? a Pendiente.')
         setExito(true)
         setVista('listado')
         await cargarOrdenes()
       } else {
-        setMensaje(respuesta.mensaje || 'No se pudo cancelar la recepción.')
+        setMensaje(respuesta.mensaje || 'No se pudo cancelar la recepci?n.')
         setExito(false)
       }
     } catch {
       setMensaje('No fue posible comunicarse con la API.')
       setExito(false)
+    } finally {
+      setConfirmarCancelar(false)
     }
   }
 
@@ -454,14 +468,14 @@ function RecepcionPage() {
                 </span>
               </div>
 
-              <div className="table-responsive mb-3">
+              <div className="table-responsive mb-3" style={{ maxHeight: "55vh", overflowY: "auto" }}>
                 <table className="table table-bordered align-middle">
                   <thead className="table-dark">
                     <tr>
                       <th>Producto</th>
                       <th className="text-center">Pedidas</th>
                       <th style={{ width: '170px' }} className="text-center">Recibidas (cajas + sueltas)</th>
-                      <th style={{ width: '110px' }} className="text-center">Precio factura</th>
+                      <th style={{ minWidth: '170px', width: '170px' }} className="text-center">Precio factura (caja)</th>
                       <th style={{ width: '140px' }}>Vence</th>
                       <th>Comentario</th>
                       <th className="text-center">Estado</th>
@@ -508,11 +522,16 @@ function RecepcionPage() {
                                     />
                                   </div>
                                 </td>
-                                <td>
+                                <td style={{ minWidth: '170px' }}>
                                   <input
-                                    type="number" step="0.01" className="form-control form-control-sm"
-                                    value={filaEnEdicion!.precioFacturado || ''}
-                                    onChange={(e) => setFilaEnEdicion({ ...filaEnEdicion!, precioFacturado: Number(e.target.value) })}
+                                    type="number" step="0.01" min="0" className="form-control form-control-sm"
+                                    style={{ width: '100%', minWidth: '120px' }}
+                                    value={filaEnEdicion!.precioFacturado ? Number((filaEnEdicion!.precioFacturado * (unidadesPorCaja(d.codigoDetalle) || 1)).toFixed(2)) : ''}
+                                    onChange={(e) => {
+                                      const uc = unidadesPorCaja(d.codigoDetalle) || 1
+                                      const v = Number(e.target.value)
+                                      setFilaEnEdicion({ ...filaEnEdicion!, precioFacturado: uc > 0 ? v / uc : v })
+                                    }}
                                   />
                                 </td>
                                 <td>
@@ -546,7 +565,10 @@ function RecepcionPage() {
                                     + {d.cantidadRecibidaUnidades % (d.unidadesCaja || 1)} sueltas
                                   </small>
                                 </td>
-                                <td className="text-center">Q{d.precioFacturado.toFixed(2)}</td>
+                                <td className="text-center">
+                                  Q{(d.precioFacturado * (d.unidadesCaja || 1)).toFixed(2)}
+                                  <small className="text-muted d-block">Unidad: Q{d.precioFacturado.toFixed(2)}</small>
+                                </td>
                                 <td className="text-center">{d.fechaVencimiento || '—'}</td>
                                 <td>
                                   <small>{d.comentario || ''}</small>
@@ -607,16 +629,16 @@ function RecepcionPage() {
               </div>
 
               <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div className="border rounded p-2 px-3" style={{ backgroundColor: '#f8f9fa' }}>
-                  <strong>Total recibido: </strong>
-                  <strong>Q{totalRecibido.toFixed(2)}</strong>
+                <div className="border rounded p-2 px-3" style={{ backgroundColor: '#f8f9fa', color: '#1f2937' }}>
+                  <strong style={{ color: '#1f2937' }}>Total recibido: </strong>
+                  <strong style={{ color: '#1f2937' }}>Q{totalRecibido.toFixed(2)}</strong>
                 </div>
 
                 <div className="d-flex gap-2">
-                  <button className="btn btn-outline-danger" onClick={cancelar}>
+                  <button className="btn btn-outline-danger" onClick={() => setConfirmarCancelar(true)}>
                     ✖ Cancelar Recepción
                   </button>
-                  <button className="btn btn-primary" onClick={cerrar}>
+                  <button className="btn btn-primary" onClick={() => setConfirmarCerrar(true)}>
                      Cerrar Recepción
                   </button>
                 </div>
@@ -627,6 +649,33 @@ function RecepcionPage() {
 
         </div>
       </div>
+
+      <ConfirmarModal
+        visible={confirmarCerrar}
+        titulo="Cerrar recepci?n"
+        mensaje="?Cerrar la recepci?n? Los productos autorizados ingresar?n a bodega."
+        textoAceptar="Cerrar recepci?n"
+        onAceptar={cerrar}
+        onCancelar={() => setConfirmarCerrar(false)}
+      />
+      <ConfirmarModal
+        visible={confirmarCancelar}
+        titulo="Cancelar recepci?n"
+        mensaje="?Cancelar la recepci?n? Se perder?n los registros y la orden volver? a Pendiente."
+        textoAceptar="Cancelar recepci?n"
+        claseAceptar="btn-danger"
+        onAceptar={cancelar}
+        onCancelar={() => setConfirmarCancelar(false)}
+      />
+      <ConfirmarModal
+        visible={!!confirmarRechazo}
+        titulo="Rechazar producto"
+        mensaje="?Rechazar este producto? No ingresar? a bodega."
+        textoAceptar="Rechazar"
+        claseAceptar="btn-danger"
+        onAceptar={() => { if (confirmarRechazo) { resolver(confirmarRechazo.codigo, confirmarRechazo.precio, false); setConfirmarRechazo(null) } }}
+        onCancelar={() => setConfirmarRechazo(null)}
+      />
     </div>
   )
 }

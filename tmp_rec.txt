@@ -1,0 +1,141 @@
+﻿        setVista('listado')
+        setRecepcion(null)
+        await cargarOrdenes()
+      } else {
+        setMensaje(respuesta.mensaje || 'No se pudo cerrar la recepciÃ³n.')
+        setExito(false)
+      }
+    } catch {
+      setMensaje('No fue posible comunicarse con la API.')
+      setExito(false)
+    }
+  }
+
+  // â•â•â• CANCELAR RECEPCIÃ“N â•â•â•
+  const cancelar = async () => {
+    if (!window.confirm('Â¿Cancelar la recepciÃ³n? Se perderÃ¡n los registros y la orden volverÃ¡ a Pendiente.')) return
+
+    try {
+      const respuesta = await cancelarRecepcion(codigoRecepcion)
+      if (respuesta.exito) {
+        setRecepcion(null)
+        setDetalles([])
+        setCodigoRecepcion(0)
+        setMensaje('RecepciÃ³n cancelada. La orden volviÃ³ a Pendiente.')
+        setExito(true)
+        setVista('listado')
+        await cargarOrdenes()
+      } else {
+        setMensaje(respuesta.mensaje || 'No se pudo cancelar la recepciÃ³n.')
+        setExito(false)
+      }
+    } catch {
+      setMensaje('No fue posible comunicarse con la API.')
+      setExito(false)
+    }
+  }
+
+  // Helper: el factor de conversiÃ³n de una lÃ­nea (del catÃ¡logo)
+  const unidadesPorCaja = (codigoDetalle: number): number => {
+    const d = detalles.find((x) => x.codigoDetalle === codigoDetalle)
+    return d?.unidadesCaja || 1
+  }
+
+  const totalRecibido = detalles
+    .filter((d) => d.estadoDetalle === 'Ingresado')
+    .reduce((total, d) => total + (d.cantidadRecibidaUnidades * d.precioAcordado), 0)
+
+  // â•â•â•â•â•â•â•â•â•â• RENDER â•â•â•â•â•â•â•â•â•â•
+  return (
+    <div className="recepcion-page">
+      <div className="recepcion-container">
+
+        <div className="recepcion-header">
+          <h1 className="recepcion-title">RecepciÃ³n de MercaderÃ­a</h1>
+          <p className="recepcion-subtitle">Ã“rdenes de compra pendientes de recibir.</p>
+        </div>
+
+        <div className="recepcion-card">
+
+          {mensaje && (
+            <div className={exito ? 'alert alert-success mx-3 mt-3' : 'alert alert-danger mx-3 mt-3'}>
+              {mensaje}
+            </div>
+          )}
+
+          {/* â•â•â•â•â• PANEL DE PENDIENTES (solo admin) â•â•â•â•â• */}
+          {puedeResolver && pendientes.length > 0 && (
+            <div className="alert alert-warning mx-3 mt-3 mb-0">
+              <h6 className="alert-heading">
+                âš ï¸ Productos pendientes de autorizaciÃ³n ({pendientes.length})
+              </h6>
+              <div className="table-responsive">
+                <table className="table table-sm table-bordered mb-0 bg-white">
+                  <thead>
+                    <tr>
+                      <th>Orden</th>
+                      <th>Producto</th>
+                      <th className="text-center">Recibidas</th>
+                      <th className="text-center">Acordado</th>
+                      <th className="text-center">Facturado</th>
+                      <th>Bodega</th>
+                      <th>RecibiÃ³</th>
+                      <th className="text-center">AcciÃ³n</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendientes.map((p) => (
+                      <tr key={p.codigoRecepcionDetalle}>
+                        <td>#{p.codigoCompra}</td>
+                        <td>{p.producto}</td>
+                        <td className="text-center">{p.cantidadRecibidaUnidades}</td>
+                        <td className="text-center">Q{p.precioAcordado.toFixed(2)}</td>
+                        <td className="text-center text-danger fw-bold">Q{p.precioFacturado.toFixed(2)}</td>
+                        <td>{p.bodega}</td>
+                        <td>{p.recibidoPor}</td>
+                        <td className="text-center">
+                          <div className="d-flex gap-1 justify-content-center">
+                            <button
+                              className="btn btn-sm btn-outline-success"
+                              title="Autorizar precio e ingresar"
+                              onClick={() => resolver(p.codigoRecepcionDetalle, p.precioFacturado, true)}
+                            >
+                              âœ“
+                            </button>
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              title="Rechazar producto"
+                              onClick={() => {
+                                if (window.confirm('Â¿Rechazar este producto? No ingresarÃ¡ a bodega.')) {
+                                  resolver(p.codigoRecepcionDetalle, p.precioFacturado, false)
+                                }
+                              }}
+                            >
+                              âœ–
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* â•â•â•â•â• VISTA LISTADO: Ã³rdenes por recibir â•â•â•â•â• */}
+          {vista === 'listado' && (
+            <div className="p-3">
+
+              <div className="row mb-3">
+                <div className="col-md-4">
+                  <label className="form-label">Bodega destino para las recepciones:</label>
+                  <select
+                    className="form-select"
+                    value={codigoBodega}
+                    onChange={(e) => setCodigoBodega(Number(e.target.value))}
+                  >
+                    <option value={0}>Seleccione bodega...</option>
+                    {bodegas.map((b) => (
+                      <option key={b.codigoBodega} value={b.codigoBodega}>
+                        {b.nombre}

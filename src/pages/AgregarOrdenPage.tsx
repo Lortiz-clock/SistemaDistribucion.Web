@@ -29,8 +29,9 @@ function AgregarOrdenPage() {
   const [codigoProducto, setCodigoProducto] = useState(0)
   const [cantidadPedida, setCantidadPedida] = useState(0)
   const [precioCosto, setPrecioCosto] = useState(0)
-  const [precioMin, setPrecioMin] = useState(0)   // precio mínimo exacto en Q
-  const [precioSug, setPrecioSug] = useState(0)   // precio sugerido exacto en Q
+  const [precioMin, setPrecioMin] = useState(0)
+  const [precioSug, setPrecioSug] = useState(0)
+  const [modoCaja, setModoCaja] = useState(false)
 
   const [proveedores, setProveedores] = useState<any[]>([])
   const [productos, setProductos] = useState<any[]>([])
@@ -38,21 +39,17 @@ function AgregarOrdenPage() {
   const [mensaje, setMensaje] = useState('')
   const [exito, setExito] = useState<boolean | null>(null)
 
-  // -- Conversion a cajas --
+  const redondear05 = (v: number) => Math.ceil((v - 0.000001) * 20) / 20
   const [cajasPedidas, setCajasPedidas] = useState(0)
   const productoActual = productos.find((p) => p.codigoProducto === codigoProducto)
   const factorCaja = obtenerFactorCaja(productoActual)
-  // Lo que se guarda siempre son UNIDADES: cajas x factor + sueltas
-  const unidadesTotales = (cajasPedidas * factorCaja) + cantidadPedida
-
-  // -- Porcentajes en tiempo real --
-  // Margen: cuánto sube el precio mínimo sobre el costo
-  const margenPct = precioMin > 0 && precioCosto > 0
-  ? ((precioMin - precioCosto) / precioMin) * 100
-  : 0
-const metaPct = precioSug > 0 && precioCosto > 0
-  ? ((precioSug - precioCosto) / precioSug) * 100
-  : 0
+  const usarCaja = modoCaja && factorCaja > 1
+  const unidadesTotales = usarCaja ? cajasPedidas * factorCaja : cantidadPedida
+  const costoUnidad = usarCaja && factorCaja > 0 ? redondear05(precioCosto / factorCaja) : precioCosto
+  const minUnidad = usarCaja && factorCaja > 0 ? redondear05(precioMin / factorCaja) : precioMin
+  const sugUnidad = usarCaja && factorCaja > 0 ? redondear05(precioSug / factorCaja) : precioSug
+  const margenPct = minUnidad > 0 && costoUnidad > 0 ? ((minUnidad - costoUnidad) / minUnidad) * 100 : 0
+  const metaPct = sugUnidad > 0 && costoUnidad > 0 ? ((sugUnidad - costoUnidad) / sugUnidad) * 100 : 0
 
   const desglosarCajas = (codigoProd: number, unidades: number) => {
     const factor = obtenerFactorCaja(productos.find((p) => p.codigoProducto === codigoProd))
@@ -86,6 +83,7 @@ const metaPct = precioSug > 0 && precioCosto > 0
     setPrecioCosto(0)
     setPrecioMin(0)
     setPrecioSug(0)
+    setModoCaja(false)
   }
 
   const agregarAlCarrito = () => {
@@ -94,36 +92,29 @@ const metaPct = precioSug > 0 && precioCosto > 0
       setExito(false)
       return
     }
-
     if (precioMin < precioCosto) {
       setMensaje('El precio mínimo no puede ser menor al costo.')
       setExito(false)
       return
     }
-
     if (precioSug < precioMin) {
       setMensaje('El precio sugerido no puede ser menor al precio mínimo.')
       setExito(false)
       return
     }
-
     const productoElegido = productos.find((p) => p.codigoProducto === codigoProducto)
-
     const nuevoProducto: ItemCarrito = {
       codigoProducto,
       nombreProducto: productoElegido?.nombre ?? '',
       cantidadPedida: unidadesTotales,
-      precioCosto,
-      // Se envían los precios exactos en los mismos campos del DTO
-      margenMinimoPct: precioMin,
-      metaUtilidadPct: precioSug,
-      // Solo para mostrar en la tabla
-      precioMinimo: precioMin.toFixed(2),
-      precioSugerido: precioSug.toFixed(2),
+      precioCosto: costoUnidad,
+      margenMinimoPct: minUnidad,
+      metaUtilidadPct: sugUnidad,
+      precioMinimo: minUnidad.toFixed(2),
+      precioSugerido: sugUnidad.toFixed(2),
       margenPct: margenPct.toFixed(2),
       metaPct: metaPct.toFixed(2)
     }
-
     setCarrito([...carrito, nuevoProducto])
     setMensaje('')
     limpiarProducto()
@@ -244,46 +235,33 @@ const metaPct = precioSug > 0 && precioCosto > 0
             <h5>Agregar Producto</h5>
             <div className="row align-items-end mb-3">
               <div className="col-md-3">
-                <small className="d-block" style={{ minHeight: '1.25rem' }}>&nbsp;</small>
                 <label className="form-label">Producto:</label>
-                <ProductoBuscador
-                  productos={productos}
-                  seleccionado={codigoProducto}
-                  onSeleccionar={(p) => setCodigoProducto(p ? p.codigoProducto : 0)}
-                />
+                <ProductoBuscador productos={productos} seleccionado={codigoProducto} onSeleccionar={(p) => { setCodigoProducto(p ? p.codigoProducto : 0); setModoCaja(false); setCajasPedidas(0); setCantidadPedida(0); }} />
+              </div>
+              <div className="col-md-1">
+                <label className="form-label">Tipo</label>
+                <select className="form-select" value={usarCaja ? 'caja' : 'unidad'} onChange={(e) => { setModoCaja(e.target.value === 'caja'); setCajasPedidas(0); setCantidadPedida(0); }} disabled={factorCaja <= 1}>
+                  <option value="unidad">Unidad</option>
+                  <option value="caja" disabled={factorCaja <= 1}>Caja</option>
+                </select>
+              </div>
+              <div className="col-md-1">
+                <label className="form-label">{usarCaja ? 'Cajas' : 'Cantidad'}</label>
+                <input type="number" min={0} className="form-control" value={(usarCaja ? cajasPedidas : cantidadPedida) || ''} onChange={(e) => usarCaja ? setCajasPedidas(Number(e.target.value)) : setCantidadPedida(Number(e.target.value))} />
               </div>
               <div className="col-md-2">
-                <small className="d-block" style={{ minHeight: '1.25rem' }}>&nbsp;</small>
-                <label className="form-label">Cajas / Sueltas:</label>
-                <div className="d-flex gap-1">
-                  <input type="number" min={0} className="form-control" placeholder="Cajas" title="Cajas" disabled={factorCaja <= 1} value={cajasPedidas || ''} onChange={(e) => setCajasPedidas(Number(e.target.value))} />
-                  <input type="number" min={0} className="form-control" placeholder="Suel." title="Unidades sueltas" value={cantidadPedida || ''} onChange={(e) => setCantidadPedida(Number(e.target.value))} />
-                </div>
+                <label className="form-label">{usarCaja ? 'Costo caja (Q)' : 'Costo (Q)'}</label>
+                <input type="number" step="0.01" min={0} className="form-control" value={precioCosto || ''} onChange={(e) => setPrecioCosto(Number(e.target.value))} />
               </div>
               <div className="col-md-2">
-                <small className="d-block" style={{ minHeight: '1.25rem' }}>&nbsp;</small>
-                <label className="form-label">Costo (Q):</label>
-                <input type="number" step="0.01" min={0} className="form-control" placeholder="Costo" value={precioCosto || ''} onChange={(e) => setPrecioCosto(Number(e.target.value))} />
+                <small className={`d-block ${margenPct < 0 ? 'text-danger' : 'text-muted'}`} style={{ minHeight: '1.25rem' }}>{precioMin > 0 && precioCosto > 0 ? `Margen: ${margenPct.toFixed(2)}%` : '\u00A0'}</small>
+                <label className="form-label">{usarCaja ? 'Mínimo caja (Q)' : 'Precio Mínimo (Q)'}</label>
+                <input type="number" step="0.01" min={0} className="form-control" value={precioMin || ''} onChange={(e) => setPrecioMin(Number(e.target.value))} />
               </div>
               <div className="col-md-2">
-                <small
-                  className={`d-block ${margenPct < 0 ? 'text-danger' : 'text-muted'}`}
-                  style={{ minHeight: '1.25rem' }}
-                >
-                  {precioMin > 0 && precioCosto > 0 ? `Margen: ${margenPct.toFixed(2)}%` : '\u00A0'}
-                </small>
-                <label className="form-label">Precio Mínimo (Q):</label>
-                <input type="number" step="0.01" min={0} className="form-control" placeholder="Mínimo" value={precioMin || ''} onChange={(e) => setPrecioMin(Number(e.target.value))} />
-              </div>
-              <div className="col-md-2">
-                <small
-                  className={`d-block ${metaPct < 0 ? 'text-danger' : 'text-muted'}`}
-                  style={{ minHeight: '1.25rem' }}
-                >
-                  {precioSug > 0 && precioCosto > 0 ? `Meta: ${metaPct.toFixed(2)}%` : '\u00A0'}
-                </small>
-                <label className="form-label">Precio Sugerido (Q):</label>
-                <input type="number" step="0.01" min={0} className="form-control" placeholder="Sugerido" value={precioSug || ''} onChange={(e) => setPrecioSug(Number(e.target.value))} />
+                <small className={`d-block ${metaPct < 0 ? 'text-danger' : 'text-muted'}`} style={{ minHeight: '1.25rem' }}>{precioSug > 0 && precioCosto > 0 ? `Meta: ${metaPct.toFixed(2)}%` : '\u00A0'}</small>
+                <label className="form-label">{usarCaja ? 'Sugerido caja (Q)' : 'Precio Sugerido (Q)'}</label>
+                <input type="number" step="0.01" min={0} className="form-control" value={precioSug || ''} onChange={(e) => setPrecioSug(Number(e.target.value))} />
               </div>
               <div className="col-md-1">
                 <button type="button" className="btn btn-success w-100" onClick={agregarAlCarrito}>+</button>
@@ -291,14 +269,13 @@ const metaPct = precioSug > 0 && precioCosto > 0
               {codigoProducto !== 0 && (
                 <div className="col-12 mt-2">
                   <small className="text-muted">
-                    {factorCaja > 1 ? `1 caja = ${factorCaja} un.` : 'Este producto no tiene factor de caja (solo unidades)'}
-                    {' · '}Total a pedir: <strong>{unidadesTotales}</strong> un.
-                    {factorCaja > 1 && ` (${cajasPedidas} cajas + ${cantidadPedida} sueltas)`}
+                    {factorCaja > 1 ? `1 caja = ${factorCaja} un.` : 'Producto sin factor de caja.'}
+                    {usarCaja && factorCaja > 0 && <> | Costo unidad: <strong>Q{costoUnidad.toFixed(2)}</strong> | Mínimo unidad: <strong>Q{minUnidad.toFixed(2)}</strong> | Sugerido unidad: <strong>Q{sugUnidad.toFixed(2)}</strong></>}
+                    {' | '}Total a pedir: <strong>{unidadesTotales}</strong> un.{usarCaja ? ` (${cajasPedidas} cajas)` : ''}
                   </small>
                 </div>
               )}
             </div>
-
             <div className="table-responsive mb-4">
               <table className="table table-bordered">
                 <thead className="table-dark">

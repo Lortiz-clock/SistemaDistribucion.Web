@@ -91,7 +91,14 @@ import PlanificadorRutasPage from './pages/PlanificadorRutasPage'
 import MetaPage from './pages/MetaPage'
 import MetaAgregarPage from './pages/MetaAgregarPage'
 import PedidosPage from './pages/PedidosPage'
-import AsignacionPilotoPage from './pages/AsignacionPilotoPage'
+import PreparacionPedidosPage from './pages/PreparacionPedidosPage'
+import DespachoCargaPage from './pages/DespachoCargaPage'
+import MisEntregasPage from './pages/MisEntregasPage'
+import RechazosPage from './pages/RechazosPage'
+import LiquidacionPage from './pages/LiquidacionPage'
+import FacturacionFELPage from './pages/FacturacionFELPage'
+import ComisionesPage from './pages/ComisionesPage'
+import ReporteVendedoresPage from './pages/ReporteVendedoresPage'
 
 function RutaProtegida({ children }: { children: ReactNode }) {
   const estaLogueado = !!localStorage.getItem('token')
@@ -236,7 +243,14 @@ function App() {
           <Route path="metas" element={<RutaModulo><MetaPage /></RutaModulo>} />
           <Route path="metas/agregar" element={<MetaAgregarPage />} />
           <Route path="pedidos" element={<RutaModulo><PedidosPage /></RutaModulo>} />
-          <Route path="pedidos/asignar-piloto" element={<RutaModulo><AsignacionPilotoPage /></RutaModulo>} />
+          <Route path="despacho" element={<RutaModulo><DespachoCargaPage /></RutaModulo>} />
+          <Route path="entregas" element={<RutaModulo><MisEntregasPage /></RutaModulo>} />
+          <Route path="rechazos" element={<RutaModulo><RechazosPage /></RutaModulo>} />
+          <Route path="liquidacion" element={<RutaModulo><LiquidacionPage /></RutaModulo>} />
+          <Route path="facturacion" element={<RutaModulo><FacturacionFELPage /></RutaModulo>} />
+          <Route path="reportes/vendedores" element={<RutaModulo><ReporteVendedoresPage /></RutaModulo>} />
+          <Route path="comisiones" element={<RutaModulo><ComisionesPage /></RutaModulo>} />
+          <Route path="preparacion" element={<RutaModulo><PreparacionPedidosPage /></RutaModulo>} />
         </Route>
       </Routes>
     </BrowserRouter>

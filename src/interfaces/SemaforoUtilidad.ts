@@ -8,4 +8,8 @@ export interface SemaforoUtilidad {
   diasTotales: number
   diasConVenta: number
   color: 'VERDE' | 'AMARILLO' | 'ROJO' | 'GRIS'
+  utilidadDia: number
+  metaDiaria: number
+  porcentajeDia: number
+  colorDia: 'VERDE' | 'AMARILLO' | 'ROJO' | 'GRIS'
 }

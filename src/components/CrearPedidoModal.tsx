@@ -7,9 +7,10 @@ import type { PedidoBuscar } from '../interfaces/PedidoBuscar'
 import type { ProductoConStock } from '../interfaces/ProductoConStock'
 
 interface Linea {
-  producto: ProductoConStock    // ← era ProductoStock
+  producto: ProductoConStock
   cantidad: number
   precioVenta: number
+  modoCaja: boolean
 }
 
 interface Props {
@@ -56,6 +57,7 @@ export function CrearPedidoModal({ codigoCliente, nombreCliente, onClose, onExit
         } as unknown as ProductoConStock,
         cantidad: d.cantidad,
         precioVenta: d.precioVenta,
+        modoCaja: false,
       }))
     }
     return []
@@ -76,7 +78,16 @@ export function CrearPedidoModal({ codigoCliente, nombreCliente, onClose, onExit
     setCargando(true)
     try {
       const res = await obtenerProductosConStock()
-      if (res.exito && res.datos) setProductos(res.datos)
+      if (res.exito && res.datos) {
+        setProductos(res.datos)
+        if (pedidoExistente?.detalle) {
+          setLineas(prev => prev.map(l => {
+            const p = res.datos!.find(x => x.codigoProducto === l.producto.codigoProducto)
+            if (!p) return l
+            return { ...l, producto: p }
+          }))
+        }
+      }
       else setError(res.mensaje)
     } catch (err) {
       setError(
@@ -101,8 +112,9 @@ export function CrearPedidoModal({ codigoCliente, nombreCliente, onClose, onExit
   }, [productosFiltrados, lineas])
 
   function agregarLinea(producto: ProductoConStock) {
+    const porCaja = (producto.unidadesCaja || 1) > 1
     setLineas((prev) => [
-      { producto, cantidad: 1, precioVenta: producto.precioSugerido },
+      { producto, cantidad: porCaja ? (producto.unidadesCaja || 1) : 1, precioVenta: producto.precioSugerido, modoCaja: porCaja },
       ...prev,
     ])
     setBusqueda('')
@@ -118,6 +130,7 @@ export function CrearPedidoModal({ codigoCliente, nombreCliente, onClose, onExit
     setLineas((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const factorCaja = (p: ProductoConStock) => Math.max(1, p.unidadesCaja || 1)
   const total = lineas.reduce((sum, l) => sum + l.cantidad * l.precioVenta, 0)
 
   async function guardar() {
@@ -293,77 +306,72 @@ export function CrearPedidoModal({ codigoCliente, nombreCliente, onClose, onExit
                 )}
 
                 <label className="form-label fw-semibold">
-                  Líneas del pedido ({lineas.length})
+                  L?neas del pedido ({lineas.length})
                 </label>
                 {lineas.length === 0 ? (
                   <div className="text-center text-muted py-3 border rounded small">
                     No hay productos en el pedido. Agrega uno desde el buscador.
                   </div>
                 ) : (
-                  <div style={{ maxHeight: 180, overflowY: 'auto' }}>
+                  <div style={{ maxHeight: 220, overflowY: 'auto' }}>
                     <div className="table-responsive">
                       <table className="table table-sm align-middle">
                         <thead>
-                          <tr>
+                          <tr style={{ verticalAlign: 'middle' }}>
                             <th>Producto</th>
-                            <th style={{ width: 80 }}>Cant.</th>
-                            <th style={{ width: 150 }}>Precio</th>
-                            <th style={{ width: 100 }}>Subtotal</th>
+                            <th style={{ minWidth: 140 }}>Tipo</th>
+                            <th style={{ minWidth: 95 }}>Cant.</th>
+                            <th style={{ minWidth: 190 }}>Precio</th>
+                            <th style={{ minWidth: 100 }}>Subtotal</th>
                             <th style={{ width: 40 }} />
                           </tr>
                         </thead>
                         <tbody>
                           {lineas.map((l, i) => {
-                            const color = colorPrecio(l.precioVenta, l.producto.precioSugerido, l.producto.precioMinimo)
-                            const texto = textoPrecio(l.precioVenta, l.producto.precioSugerido, l.producto.precioMinimo)
+                            const fc = factorCaja(l.producto)
+                            const porCaja = l.modoCaja && fc > 1
+                            const precioMostrado = porCaja ? l.precioVenta * fc : l.precioVenta
+                            const sugMostrado = porCaja ? l.producto.precioSugerido * fc : l.producto.precioSugerido
+                            const minMostrado = porCaja ? l.producto.precioMinimo * fc : l.producto.precioMinimo
+                            const color = colorPrecio(precioMostrado, sugMostrado, minMostrado)
+                            const texto = textoPrecio(precioMostrado, sugMostrado, minMostrado)
                             const cruzaLotes = l.cantidad > l.producto.stockPrimerLote
                             return (
                               <tr key={l.producto.codigoProducto}>
                                 <td>
                                   <div className="fw-semibold small">{l.producto.nombre}</div>
-                                  <small className="text-muted">
-                                    Disp: {l.producto.existenciaDisponible} · Sug: {formatearQ(l.producto.precioSugerido)}
-                                  </small>
-                                  {cruzaLotes && (
-                                    <small className="text-warning d-block">⚠ Cruza varios lotes</small>
-                                  )}
+                                  <small className="text-muted">Disp: {l.producto.existenciaDisponible} | Sug: {formatearQ(sugMostrado)}{porCaja ? '/caja' : '/und'}</small>
+                                  {cruzaLotes && <small className="text-warning d-block">Cruza varios lotes</small>}
                                 </td>
                                 <td>
-                                  <input
-                                    type="number"
-                                    className="form-control form-control-sm"
-                                    style={{ width: 60 }}
-                                    min={1}
-                                    max={l.producto.existenciaDisponible}
-                                    value={l.cantidad}
-                                    onChange={(e) => actualizarLinea(i, { cantidad: parseInt(e.target.value) || 0 })}
-                                  />
+                                  {fc > 1 ? (
+                                    <select className="form-select form-select-sm" style={{ width: "100%", minWidth: 120 }} value={porCaja ? 'caja' : 'unidad'} onChange={e => {
+                                      const esCaja = e.target.value === 'caja'
+                                      actualizarLinea(i, { modoCaja: esCaja, cantidad: esCaja ? fc : 1 })
+                                    }}>
+                                      <option value="unidad">Unidad</option>
+                                      <option value="caja">Caja ({fc})</option>
+                                    </select>
+                                  ) : <span className="text-muted small">Unidad</span>}
+                                </td>
+                                <td>
+                                  <input type="number" className="form-control form-control-sm" style={{ width: "100%", minWidth: 75 }} min={1}
+                                    max={porCaja ? Math.floor(l.producto.existenciaDisponible / fc) : l.producto.existenciaDisponible}
+                                    value={porCaja ? Math.round(l.cantidad / fc) : l.cantidad}
+                                    onChange={(e) => { const v = parseInt(e.target.value) || 0; actualizarLinea(i, { cantidad: porCaja ? v * fc : v }) }} />
+                                  <div style={{ minHeight: 18 }}><small className="text-muted">{porCaja ? `${l.cantidad} und` : ""}</small></div>
                                 </td>
                                 <td>
                                   <div className="d-flex align-items-center gap-1">
-                                    <input
-                                      type="number"
-                                      step="0.01"
-                                      className="form-control form-control-sm"
-                                      style={{ width: 80 }}
-                                      min={0}
-                                      value={l.precioVenta}
-                                      onChange={(e) => actualizarLinea(i, { precioVenta: parseFloat(e.target.value) || 0 })}
-                                    />
-                                    <div
-                                      className="rounded-circle flex-shrink-0"
-                                      style={{ width: 14, height: 14, backgroundColor: color, boxShadow: `0 0 6px ${color}80` }}
-                                      title={texto}
-                                    />
+                                    <input type="number" step="0.01" className="form-control form-control-sm" style={{ width: "100%", minWidth: 110 }} min={0}
+                                      value={Number(precioMostrado.toFixed(2))}
+                                      onChange={(e) => { const v = parseFloat(e.target.value) || 0; actualizarLinea(i, { precioVenta: porCaja ? v / fc : v }) }} />
+                                    <div className="rounded-circle flex-shrink-0" style={{ width: 14, height: 14, backgroundColor: color, boxShadow: `0 0 6px ${color}80` }} title={texto} />
                                   </div>
-                                  <small className="text-muted">{texto}</small>
+                                  <div style={{ minHeight: 18 }}><small className="text-muted">{porCaja ? `${formatearQ(l.precioVenta)}/und` : texto}</small></div>
                                 </td>
                                 <td className="fw-semibold">{formatearQ(l.cantidad * l.precioVenta)}</td>
-                                <td>
-                                  <button className="btn btn-sm btn-outline-danger p-1" onClick={() => quitarLinea(i)}>
-                                    <Trash2 size={14} />
-                                  </button>
-                                </td>
+                                <td><button className="btn btn-sm btn-outline-danger p-1" onClick={() => quitarLinea(i)}><Trash2 size={14} /></button></td>
                               </tr>
                             )
                           })}

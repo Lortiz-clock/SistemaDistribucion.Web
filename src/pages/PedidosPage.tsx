@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { MapPin, Plus, RefreshCw, Calendar, Navigation, Edit2, Save, Power, Trash2, PlusCircle, X, Truck } from 'lucide-react'
+import { MapPin, Plus, RefreshCw, Calendar, Navigation, Edit2, Save, Power, Trash2, PlusCircle, X } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import {
   obtenerMisClientesDelDia,
@@ -18,7 +17,6 @@ import type { ResumenVendedor } from '../interfaces/ResumenVendedor'
 import type { PedidoBuscar } from '../interfaces/PedidoBuscar'
 import type { PedidoConsulta } from '../interfaces/PedidoConsulta'
 import { CrearPedidoModal } from '../components/CrearPedidoModal'
-import MapaRuta from '../components/MapaRuta'
 import { NoVisitaModal } from '../components/NoVisitaModal'
 import { BateriasVenta } from '../components/BateriasVenta'
 
@@ -75,7 +73,6 @@ export default function PedidosPage() {
   const codigoEmpleado = obtenerCodigoEmpleado()
 
   const [dia, setDia] = useState<number | null>(null)
-  const [mapaModalOpen, setMapaModalOpen] = useState(false)
   const [metaModalOpen, setMetaModalOpen] = useState(false)
   const [mostrarSelectorDia, setMostrarSelectorDia] = useState(true)
   const [clientes, setClientes] = useState<ClienteRutaPlan[]>([])
@@ -443,14 +440,6 @@ export default function PedidosPage() {
             >
               Meta
             </button>
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-secondary"
-              onClick={() => setMapaModalOpen(true)}
-              title="Mapa"
-            >
-              Mapa
-            </button>
             {pedidoParaEditar && (
               <>
                 <button
@@ -473,14 +462,6 @@ export default function PedidosPage() {
                 </button>
               </>
             )}
-            <Link
-              to="/dashboard/pedidos/asignar-piloto"
-              className="btn btn-sm btn-outline-primary"
-              title="Asignar a piloto"
-            >
-              <Truck size={14} />
-              Asignar a piloto
-            </Link>
             <button
               type="button"
               className="btn btn-sm btn-danger"
@@ -557,7 +538,10 @@ export default function PedidosPage() {
                     </div>
                   ) : (
                     <ul className="list-group mb-3">
-                      {pendientes.map(({ c, indiceRuta }) => (
+                      {pendientes.filter(({ c }) => {
+                        const p = c.codigoPedido ? pedidosDelDia.find(x => x.codigoPedido === c.codigoPedido) : null
+                        return !(p && p.codigoCierre !== null)
+                      }).map(({ c, indiceRuta }) => (
                         <li
                           key={c.codigoClienteRuta}
                           className="list-group-item d-flex align-items-center gap-2"
@@ -647,7 +631,10 @@ export default function PedidosPage() {
                         </h3>
                       </div>
                       <ul className="list-group">
-                        {atendidos.map(({ c, indiceRuta }) => (
+                        {atendidos.filter(({ c }) => {
+                          const p = c.codigoPedido ? pedidosDelDia.find(x => x.codigoPedido === c.codigoPedido) : null
+                          return !(p && p.codigoCierre !== null)
+                        }).map(({ c, indiceRuta }) => (
                           <li
                             key={c.codigoClienteRuta}
                             className="list-group-item d-flex align-items-center gap-2"
@@ -678,34 +665,15 @@ export default function PedidosPage() {
 
                             {c.codigoPedido != null && c.codigoPedido > 0 ? (
                               <>
-                                {(() => {
-                                  const codigoPedido = c.codigoPedido
-                                  const p = pedidosDelDia.find((x) => x.codigoPedido === codigoPedido)
-                                  const estaCerrado = p ? p.codigoCierre !== null : false
-                                  if (estaCerrado) {
-                                    return (
-                                      <button
-                                        type="button"
-                                        className="btn btn-sm btn-outline-secondary"
-                                        disabled
-                                        title="Venta finalizada"
-                                      >
-                                        Venta finalizada
-                                      </button>
-                                    )
-                                  }
-                                  return (
-                                    <button
-                                      type="button"
-                                      className="btn btn-sm btn-outline-secondary"
-                                      onClick={() => abrirEdicionPedido(codigoPedido)}
-                                      title="Editar productos del pedido"
-                                    >
-                                      <Edit2 size={14} className="me-1" />
-                                      Editar productos
-                                    </button>
-                                  )
-                                })()}
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-secondary"
+                                  onClick={() => abrirEdicionPedido(c.codigoPedido!)}
+                                  title="Editar productos del pedido"
+                                >
+                                  <Edit2 size={14} className="me-1" />
+                                  Editar productos
+                                </button>
                               </>
                             ) : (
                               <button
@@ -779,29 +747,6 @@ export default function PedidosPage() {
           onClose={cerrarNoVisita}
           onExito={onNoVisitaRegistrada}
         />
-      )}
-
-      {/* Modal: Mapa de la ruta */}
-      {mapaModalOpen && (
-        <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
-          <div className="modal-dialog modal-lg modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Mapa de la ruta</h5>
-                <button type="button" className="btn-close" onClick={() => setMapaModalOpen(false)} />
-              </div>
-              <div className="modal-body p-0">
-                <MapaRuta
-                  clientes={clientes}
-                  onSeleccionar={(cod) => {
-                    const c = clientes.find((x) => x.codigoCliente === cod)
-                    if (c) abrirCrearPedido(c)
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Modal: Meta de utilidad */}

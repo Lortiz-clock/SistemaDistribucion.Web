@@ -117,7 +117,7 @@ export const editarPedido = async (pedido: {
   observaciones?: string
   lineas: { codigoProducto: number; cantidad: number; precioVenta: number }[]
 }) => {
-  const respuesta = await api.put<RespuestaApi<boolean>>(
+  const respuesta = await api.put<RespuestaApi<PedidoAgregarRespuesta>>(
     '/api/Pedidos/EditarPedido',
     {
       ...pedido,

@@ -1,8 +1,11 @@
 export interface PedidoConsulta {
   codigoPedido: number
   codigoCliente: number
+  nombreCliente: string
   codigoEmpleado: number
   fechaPedido: string
+  fechaVenta: string
+  fechaEntregaProgramada?: string | null
   codigoEstadoPedido: number
   nombreEstado: string
   codigoCierre: number | null
@@ -10,17 +13,25 @@ export interface PedidoConsulta {
   observaciones: string | null
   totalVenta: number
   utilidad: number
+  codigoRepartidor?: number | null
+  codigoUsuarioPrepara?: number | null
+  codigoUsuarioCarga?: number | null
+  codigoUsuarioEntrega?: number | null
+  codigoUsuarioLiquida?: number | null
 }
 
 export interface PedidoDetalle {
   codigoPedidoDetalle: number
   codigoProducto: number
-  codigoProductoBodega: number
+  codigoProductoBodega: number | null
   cantidad: number
   cantidadEntregada: number | null
   precioVenta: number
   utilidadUnitaria: number
   esFaltante: boolean
+  cantidadRechazada: number
+  cantidadDevuelta: number
+  esContable: boolean
 }
 
 export interface PedidoHistorial {

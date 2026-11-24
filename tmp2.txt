@@ -1,0 +1,33 @@
+﻿
+              <div className="table-responsive mb-3" style={{ maxHeight: "55vh", overflowY: "auto" }}>
+                <table className="table table-bordered align-middle">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>Producto</th>
+                      <th className="text-center">Pedidas</th>
+                      <th style={{ width: '170px' }} className="text-center">Recibidas (cajas + sueltas)</th>
+                      <th style={{ width: '130px' }} className="text-center">Precio factura (caja)</th>
+                      <th style={{ width: '140px' }}>Vence</th>
+                      <th>Comentario</th>
+                      <th className="text-center">Estado</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detalles.length === 0 ? (
+                      <tr><td colSpan={8} className="text-center text-muted py-4">
+                        Esta orden no tiene productos.
+                      </td></tr>
+                    ) : (
+                      detalles.map((d) => {
+                        const enEdicion = filaEnEdicion?.codigoDetalle === d.codigoDetalle
+                        const faltante = d.cantidadPedida - d.cantidadRecibidaUnidades
+                        const precioDistinto = d.estadoDetalle === 'PendienteAutorizacion'
+
+                        return (
+                          <tr
+                            key={d.codigoRecepcionDetalle || d.codigoDetalle}
+                            className={precioDistinto ? 'table-warning' : ''}
+                          >
+                            <td>{d.producto}</td>
+                            <td className="text-center">{d.cantidadPedida}</td>

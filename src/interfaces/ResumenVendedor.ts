@@ -5,4 +5,6 @@ export interface ResumenVendedor {
   diasConVenta: number
   porcentajeSemana: number
   porcentajeDia: number
+  utilidadSemana: number
+  utilidadDia: number
 }
