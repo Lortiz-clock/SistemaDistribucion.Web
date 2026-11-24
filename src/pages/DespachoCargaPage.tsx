@@ -128,18 +128,14 @@ export default function DespachoCargaPage() {
       const map = await obtenerDetallesDespacho(g.pedidos)
       const bloques = g.pedidos.map(p => {
         const det = map[p.codigoPedido] || []
-        const filas = det.map(d => {
-          const precio = Number(d.precioVenta || 0)
-          const totalLinea = Number(d.cantidad || 0) * precio
-          return `<tr><td>${d.nombreProducto || `Producto ${d.codigoProducto}`}</td><td style="text-align:right">${d.cantidad}</td><td style="text-align:right">Q ${totalLinea.toFixed(2)}</td></tr>`
-        }).join('')
+        const filas = det.map(d => `<tr><td>${d.nombreProducto || `Producto ${d.codigoProducto}`}</td><td style="text-align:right">${d.cantidad}</td></tr>`).join('')
         const total = det.reduce((a, d) => a + Number(d.cantidad || 0) * Number(d.precioVenta || 0), 0)
-        const head = `<tr><th>Producto</th><th style="${ticket ? 'width:55px' : 'width:90px'};text-align:right">Cant.</th><th style="${ticket ? 'width:70px' : 'width:120px'};text-align:right">Total</th></tr>`
+        const head = `<tr><th>Producto</th><th style="${ticket ? 'width:55px' : 'width:90px'};text-align:right">Cant.</th></tr>`
         return `<div class="pedido">
           <h3>Pedido #${p.codigoPedido}</h3>
           <div><strong>Cliente:</strong> ${p.nombreCliente}</div>
           <div><strong>Dirección:</strong> ${p.direccion || ''}</div>
-          <table><thead>${head}</thead><tbody>${filas || '<tr><td colspan="3">Sin detalle</td></tr>'}</tbody></table>
+          <table><thead>${head}</thead><tbody>${filas || '<tr><td colspan="2">Sin detalle</td></tr>'}</tbody></table>
           <div class="tot">Total pedido: Q ${total.toFixed(2)}</div>
           <div class="muted"><strong>Dirección entrega:</strong> ${p.direccion || ''}</div>
         </div>`
