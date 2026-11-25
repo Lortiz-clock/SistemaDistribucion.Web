@@ -63,6 +63,7 @@ export default function ClientesPage() {
         normalizar(c.nombre).includes(texto) ||
         normalizar(c.nit).includes(texto) ||
         normalizar(c.direccion).includes(texto) ||
+        normalizar(c.telefono).includes(texto) ||
         normalizar(c.referencia).includes(texto)
 
       const ubicacionOk =
@@ -217,7 +218,7 @@ export default function ClientesPage() {
               <tbody>
                 {cargando ? (
                   <tr>
-                    <td colSpan={7} className="text-center">
+                    <td colSpan={8} className="text-center">
                       Cargando clientes...
                     </td>
                   </tr>
@@ -226,6 +227,7 @@ export default function ClientesPage() {
                     <tr key={c.codigoCliente}>
                       <td>{c.nombre}</td>
                       <td>{c.nit || 'CF'}</td>
+                      <td>{c.telefono || '-'}</td>
                       <td>{c.direccion}</td>
                       <td>{c.referencia}</td>
                       <td>
@@ -269,7 +271,7 @@ export default function ClientesPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="sin-registros text-center">
+                    <td colSpan={8} className="sin-registros text-center">
                       No existen clientes con esos filtros.
                     </td>
                   </tr>

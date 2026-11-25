@@ -14,6 +14,7 @@ export default function EditarClientePage() {
 
   const [nombre, setNombre] = useState('')
   const [nit, setNit] = useState('')
+  const [telefono, setTelefono] = useState('')
   const [direccion, setDireccion] = useState('')
   const [referencia, setReferencia] = useState('')
   const [latitud, setLatitud] = useState('')
@@ -35,6 +36,7 @@ export default function EditarClientePage() {
           const c = respuesta.datos
           setNombre(c.nombre ?? '')
           setNit(c.nit ?? '')
+          setTelefono(c.telefono ?? '')
           setDireccion(c.direccion ?? '')
           setReferencia(c.referencia ?? '')
           setLatitud(c.latitud != null ? String(c.latitud) : '')
@@ -129,6 +131,7 @@ export default function EditarClientePage() {
       codigoCliente: Number(codigoCliente),
       nombre: nombre.trim(),
       nit: nit.trim(),
+      telefono: telefono.trim() || null,
       direccion: direccion.trim(),
       referencia: referencia.trim(),
       latitud: lat,
@@ -197,6 +200,16 @@ export default function EditarClientePage() {
                     placeholder="Vacío = CF"
                     value={nit}
                     onChange={(e) => setNit(e.target.value)}
+                  />
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label fw-bold">Tel?fono</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={telefono}
+                    onChange={(e) => setTelefono(e.target.value)}
                   />
                 </div>
 
