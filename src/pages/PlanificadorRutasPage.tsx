@@ -481,7 +481,7 @@ export default function PlanificadorRutasPage() {
 
               {disponibles.length === 0 ? (
                 <div className="border rounded-3 p-4 text-center text-muted bg-light">
-                  Todos los clientes ya tienen visita el {nombreDia.toLowerCase()}.
+                  Todos los clientes activos ya tienen una visita programada.
                 </div>
               ) : (
                 <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
