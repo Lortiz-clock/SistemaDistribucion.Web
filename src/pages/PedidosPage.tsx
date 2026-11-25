@@ -36,13 +36,19 @@ function urlWaze(lat: number, lng: number): string {
 
 function rangoSemanaActual(): { fechaDesde: string; fechaHasta: string } {
   const hoy = new Date()
-  const desdeMiercoles = (hoy.getDay() - 3 + 7) % 7
-  const miercoles = new Date(hoy)
-  miercoles.setDate(hoy.getDate() - desdeMiercoles)
-  const martes = new Date(miercoles)
-  martes.setDate(miercoles.getDate() + 6)
-  const iso = (date: Date) => date.toISOString().split('T')[0]
-  return { fechaDesde: iso(miercoles), fechaHasta: iso(martes) }
+  const dia = hoy.getDay() // 0=Dom,1=Lun,...,6=Sab
+  const desdeLunes = dia === 0 ? 6 : dia - 1
+  const lunes = new Date(hoy)
+  lunes.setDate(hoy.getDate() - desdeLunes)
+  const sabado = new Date(lunes)
+  sabado.setDate(lunes.getDate() + 5)
+  const iso = (date: Date) => {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+  return { fechaDesde: iso(lunes), fechaHasta: iso(sabado) }
 }
 
 function extraerMensaje(error: unknown, fallback: string): string {

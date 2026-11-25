@@ -40,7 +40,7 @@ export default function PreparacionPedidosPage() {
 
   return (
     <div className="container-fluid">
-      <h3>Preparaci?n de pedidos</h3>
+      <h3>Preparacion de pedidos</h3>
       {msg && <div className="alert alert-info py-2">{msg}</div>}
       <div className="table-responsive" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
         <table className="table table-sm table-hover align-middle">
@@ -88,7 +88,7 @@ export default function PreparacionPedidosPage() {
                 )}
               </>
             ))}
-            {!items.length && <tr><td colSpan={7} className="text-muted">No hay pedidos en preparaci?n</td></tr>}
+            {!items.length && <tr><td colSpan={7} className="text-muted">No hay pedidos en preparacion</td></tr>}
           </tbody>
         </table>
       </div>

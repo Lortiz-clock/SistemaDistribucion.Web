@@ -172,7 +172,7 @@ export default function AgregarClientePage() {
               </div>
 
               <div className="col-md-4">
-                <label className="form-label fw-bold">Tel?fono</label>
+                <label className="form-label fw-bold">Telefono</label>
                 <input
                   type="text"
                   className="form-control"
@@ -208,7 +208,7 @@ export default function AgregarClientePage() {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Ej: frente a la tienda X, portón verde"
+                  placeholder="Ej: frente..."
                   value={referencia}
                   onChange={(e) => setReferencia(e.target.value)}
                 />

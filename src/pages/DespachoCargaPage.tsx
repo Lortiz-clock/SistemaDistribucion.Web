@@ -151,7 +151,8 @@ export default function DespachoCargaPage() {
     const m = new Map<string, { key: string; codigoDespacho?: number | null; estadoDespacho?: string; codigoRepartidor?: number | null; nombreRepartidor: string; pedidos: PedidoOperacion[] }>()
     for (const p of items) {
       const key = p.codigoDespacho ? `d-${p.codigoDespacho}` : p.codigoRepartidor ? `r-${p.codigoRepartidor}` : 'sin'
-      const actual = m.get(key) || { key, codigoDespacho: p.codigoDespacho, estadoDespacho: p.estadoDespacho, codigoRepartidor: p.codigoRepartidor, nombreRepartidor: p.nombreRepartidor || (p.codigoRepartidor ? `Repartidor ${p.codigoRepartidor}` : 'Sin asignar'), pedidos: [] }
+      const actual = m.get(key) || 
+      { key, codigoDespacho: p.codigoDespacho, estadoDespacho: p.estadoDespacho, codigoRepartidor: p.codigoRepartidor, nombreRepartidor: p.nombreRepartidor || (p.codigoRepartidor ? `Repartidor ${p.codigoRepartidor}` : 'Sin asignar'), pedidos: [] }
       actual.pedidos.push(p)
       m.set(key, actual)
     }
@@ -169,13 +170,17 @@ export default function DespachoCargaPage() {
         <div className="card-body d-flex gap-2 align-items-end flex-wrap">
           <div>
             <label className="form-label mb-1">Repartidor</label>
-            <select className="form-select" style={{ minWidth: 280 }} value={rep || ''} onChange={e => setRep(Number(e.target.value))}>
+            <select className="form-select" style={{ minWidth: 280 }} value={rep || ''} onChange=
+            {e => setRep(Number(e.target.value))}>
               <option value="">Seleccione repartidor...</option>
-              {repartidores.map(r => <option key={r.codigoRepartidor} value={r.codigoRepartidor}>{r.nombreEmpleado}</option>)}
+              {repartidores.map(r => <option key={r.codigoRepartidor} value=
+              {r.codigoRepartidor}>{r.nombreEmpleado}</option>)}
             </select>
           </div>
-          <button className="btn btn-primary" onClick={() => void asignar()} disabled={ocupado || !rep || sel.length === 0}>Asignar pedidos</button>
-          <span className="text-muted small">Selecciona pedidos preparados sin repartidor. La carga se confirma despu?s.</span>
+          <button className="btn btn-primary" onClick=
+          {() => void asignar()} disabled={ocupado || !rep || sel.length === 0}>Asignar pedidos</button>
+          <span className="text-muted small">
+            Selecciona pedidos preparados sin repartidor. La carga se confirma despues.</span>
         </div>
       </div>
 
@@ -184,37 +189,55 @@ export default function DespachoCargaPage() {
           <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
               <strong>{g.nombreRepartidor}</strong>
-              {g.codigoDespacho ? <span className="ms-2 badge text-bg-secondary">Despacho {g.codigoDespacho}</span> : null}
-              {g.estadoDespacho ? <span className="ms-2 badge text-bg-info">{g.estadoDespacho}</span> : <span className="ms-2 badge text-bg-warning">SIN ASIGNAR</span>}
+              {g.codigoDespacho ? <span className="ms-2 badge text-bg-secondary">Despacho {g.codigoDespacho}
+
+              </span> : null}
+              {g.estadoDespacho ? <span className="ms-2 badge text-bg-info">{g.estadoDespacho}
+
+              </span> : <span className="ms-2 badge text-bg-warning">SIN ASIGNAR</span>}
             </div>
             <div className="d-flex gap-2 flex-wrap">
-              {g.key !== 'sin' && <button className="btn btn-sm btn-outline-dark" disabled={ocupado} onClick={() => void imprimirHojaRuta(g, false)}>Hoja ruta carta</button>}
-              {g.key !== 'sin' && <button className="btn btn-sm btn-outline-dark" disabled={ocupado} onClick={() => void imprimirHojaRuta(g, true)}>Hoja ruta ticket</button>}
-              {g.key !== 'sin' && <button className="btn btn-sm btn-outline-primary" disabled={ocupado} onClick={() => void imprimirPedidos(g, false)}>Nota carga carta</button>}
-              {g.key !== 'sin' && <button className="btn btn-sm btn-outline-primary" disabled={ocupado} onClick={() => void imprimirPedidos(g, true)}>Nota carga ticket</button>}
+              {g.key !== 'sin' && <button className="btn btn-sm btn-outline-dark" disabled={ocupado} onClick=
+              {() => void imprimirHojaRuta(g, false)}>Hoja ruta carta</button>}
+              {g.key !== 'sin' && <button className="btn btn-sm btn-outline-dark" disabled={ocupado} onClick=
+              {() => void imprimirHojaRuta(g, true)}>Hoja ruta ticket</button>}
+              {g.key !== 'sin' && <button className="btn btn-sm btn-outline-primary" disabled={ocupado} onClick=
+              {() => void imprimirPedidos(g, false)}>Nota carga carta</button>}
+              {g.key !== 'sin' && <button className="btn btn-sm btn-outline-primary" disabled={ocupado} onClick=
+              {() => void imprimirPedidos(g, true)}>Nota carga ticket</button>}
               {g.codigoDespacho && g.estadoDespacho === 'PLANIFICADO' && (
-                <button className="btn btn-sm btn-success" disabled={ocupado} onClick={() => void confirmarCarga(g.codigoDespacho!)}>Confirmar carga</button>
+                <button className="btn btn-sm btn-success" disabled={ocupado} onClick={() => 
+                  void confirmarCarga(g.codigoDespacho!)}>Confirmar carga</button>
               )}
             </div>
           </div>
           <div className="table-responsive" style={{ maxHeight: '45vh', overflowY: 'auto' }}>
             <table className="table table-sm align-middle mb-0">
               <thead className="table-light" style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-                <tr><th></th><th>Pedido</th><th>Cliente</th><th>Direcci?n</th><th>Entrega</th><th className="text-end">Unidades</th><th className="text-end">Total</th><th>Estado</th><th></th></tr>
+                <tr><th></th><th>Pedido</th><th>Cliente</th><th>Direccion</th><th>Entrega</th>
+                <th className="text-end">Unidades</th><th className="text-end">Total</th>
+                <th>Estado
+                  </th><th></th></tr>
               </thead>
               <tbody>
                 {g.pedidos.map(p => (
                   <>
                     <tr key={p.codigoPedido}>
-                      <td>{p.codigoEstadoPedido === 3 && !p.codigoRepartidor ? <input type="checkbox" checked={sel.includes(p.codigoPedido)} onChange={() => toggle(p.codigoPedido)} /> : null}</td>
+                      <td>{p.codigoEstadoPedido === 3 && !p.codigoRepartidor ? 
+                        <input type="checkbox" checked={sel.includes(p.codigoPedido)} onChange={() =>
+                         toggle(p.codigoPedido)} /> : null}</td>
                       <td>{p.codigoPedido}</td>
                       <td>{p.nombreCliente}</td>
                       <td className="small">{p.direccion}</td>
-                      <td>{p.fechaEntregaProgramada ? new Date(p.fechaEntregaProgramada).toLocaleDateString() : ''}</td>
+                      <td>{p.fechaEntregaProgramada ? new Date(p.fechaEntregaProgramada).toLocaleDateString() : ''}
+
+                      </td>
                       <td className="text-end">{p.totalUnidades}</td>
                       <td className="text-end">Q {Number(p.totalVenta).toFixed(2)}</td>
                       <td>{p.nombreEstado}</td>
-                      <td><button className="btn btn-sm btn-outline-secondary" onClick={() => void verDetalle(p.codigoPedido)}>{abierto === p.codigoPedido ? 'Ocultar' : 'Productos'}</button></td>
+                      <td><button className="btn btn-sm btn-outline-secondary" onClick={() => 
+                        void verDetalle(p.codigoPedido)}>{abierto === p.codigoPedido ? 'Ocultar' : 'Productos'}
+                        </button></td>
                     </tr>
                     {abierto === p.codigoPedido && (
                       <tr key={`${p.codigoPedido}-det`}><td colSpan={9} className="bg-light p-0">

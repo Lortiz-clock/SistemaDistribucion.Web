@@ -24,44 +24,57 @@ const definicionGrupos = [
   {
     nombre: 'Ordenes de Compra',
     icono: ShoppingCart,
-    prefijos: ['/dashboard/ordenes', '/dashboard/recepcion'],
+    prefijos: ['/dashboard/ordenes', '/dashboard/recepcion', '/dashboard/proveedores'],
     items: [
       { contiene: '/dashboard/ordenes/nueva', nombre: 'Nueva Orden' },
-      { contiene: '/dashboard/ordenes/listar', nombre: 'Órdenes de Compra' },
-      { contiene: '/dashboard/recepcion', nombre: 'Recepción' }
+      { contiene: '/dashboard/ordenes/listar', nombre: 'Ordenes de Compra' },
+      { contiene: '/dashboard/proveedores', nombre: 'Proveedores' },
+      { contiene: '/dashboard/recepcion', nombre: 'Recepcion' }
     ]
   },
   {
-    nombre: 'Catálogo e Inventario',
+    nombre: 'Reportes',
+    icono: BarChart3,
+    prefijos: ['/dashboard/reportes'],
+    items: [
+      { contiene: '/dashboard/reportes/inventario', nombre: 'Reporte Inventario' },
+      { contiene: '/dashboard/reportes/compras', nombre: 'Reporte Compras' },
+      { contiene: '/dashboard/reportes/vendedores', nombre: 'Reporte Vendedores' }
+    ]
+  },
+  {
+    nombre: 'Ventas',
     icono: Package,
-    prefijos: [
-      '/dashboard/productos',
-      '/dashboard/inventario',
-      '/dashboard/marca',
-      '/dashboard/categorias'
-    ],
+    prefijos: ['/dashboard/pedidos', '/dashboard/preparacion', '/dashboard/despacho', '/dashboard/facturacion', '/dashboard/motivos-no-visita', '/dashboard/planificador', '/dashboard/clientes'],
+    items: [
+      { contiene: '/dashboard/pedidos', nombre: 'Pedidos' },
+      { contiene: '/dashboard/preparacion', nombre: 'Preparacion Pedidos' },
+      { contiene: '/dashboard/despacho', nombre: 'Despacho Pedidos' },
+      { contiene: '/dashboard/facturacion', nombre: 'Facturacion FEL' },
+      { contiene: '/dashboard/motivos-no-visita', nombre: 'Motivos de No Visita' },
+      { contiene: '/dashboard/planificador', nombre: 'Planificador de Rutas' },
+      { contiene: '/dashboard/clientes', nombre: 'Clientes' }
+    ]
+  },
+  {
+    nombre: 'Catalogo e Inventario',
+    icono: Layers,
+    prefijos: ['/dashboard/productos', '/dashboard/inventario', '/dashboard/marca', '/dashboard/categorias'],
     items: [
       { contiene: '/dashboard/productos', nombre: 'Productos' },
       { contiene: '/dashboard/inventario', nombre: 'Inventario' },
       { contiene: '/dashboard/marca', nombre: 'Marca' },
-      { contiene: '/dashboard/categorias', nombre: 'Categorías' }
+      { contiene: '/dashboard/categorias', nombre: 'Categorias' }
     ]
   },
   {
-    nombre: 'Administración',
+    nombre: 'Administracion',
     icono: ShieldUser,
-    prefijos: [
-      '/dashboard/usuarios',
-      '/dashboard/roles',
-      '/dashboard/modulos',
-      '/dashboard/empleados',
-      '/dashboard/puestos',
-      '/dashboard/repartidores'
-    ],
+    prefijos: ['/dashboard/usuarios', '/dashboard/roles', '/dashboard/modulos', '/dashboard/empleados', '/dashboard/puestos', '/dashboard/repartidores'],
     items: [
       { contiene: '/dashboard/usuarios', nombre: 'Usuarios' },
       { contiene: '/dashboard/roles', nombre: 'Roles' },
-      { contiene: '/dashboard/modulos', nombre: 'Módulos' },
+      { contiene: '/dashboard/modulos', nombre: 'Modulos' },
       { contiene: '/dashboard/empleados', nombre: 'Empleados' },
       { contiene: '/dashboard/puestos', nombre: 'Puestos' },
       { contiene: '/dashboard/repartidores', nombre: 'Repartidores' }

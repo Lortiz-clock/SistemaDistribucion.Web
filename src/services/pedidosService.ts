@@ -4,7 +4,6 @@ import type { PedidoConsulta } from '../interfaces/PedidoConsulta'
 import type { PedidoBuscar } from '../interfaces/PedidoBuscar'
 import type { PedidoAgregar, PedidoAgregarRespuesta } from '../interfaces/PedidoAgregar'
 import type { ProductoConStock } from '../interfaces/ProductoConStock'
-import type { SemaforoUtilidad } from '../interfaces/SemaforoUtilidad'
 import type { ClienteRutaPlan } from '../interfaces/ClienteRutaPlan'
 
 // Lee codigoUsuario del token JWT (claim 'codigoUsuario' o 'nameidentifier')
@@ -76,15 +75,6 @@ export const obtenerMisClientesDelDia = async (diaSemana: number) => {
 export const obtenerProductosConStock = async () => {
   const respuesta = await api.get<RespuestaApi<ProductoConStock[]>>(
     '/api/Pedidos/ProductosConStock'
-  )
-  return respuesta.data
-}
-
-// ─── Semáforo de utilidad del vendedor ───
-export const obtenerSemaforoUtilidad = async (fechaDesde: string, fechaHasta: string) => {
-  const respuesta = await api.get<RespuestaApi<SemaforoUtilidad>>(
-    '/api/Pedidos/SemaforoUtilidad',
-    { params: { fechaDesde, fechaHasta } }
   )
   return respuesta.data
 }
