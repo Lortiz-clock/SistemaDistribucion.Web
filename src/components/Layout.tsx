@@ -168,6 +168,8 @@ function Layout() {
   const cerrarSesion = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('nombreUsuario')
+    localStorage.removeItem('nombreRol')
+    localStorage.removeItem('codigoRol')
     localStorage.removeItem('modulos')
     navigate('/')
   }

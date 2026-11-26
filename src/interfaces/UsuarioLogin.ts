@@ -18,5 +18,7 @@ export interface Modulo {
 export interface LoginRespuesta {
   token: string
   nombreCompleto: string
+  codigoRol?: number
+  nombreRol?: string
   modulos: Modulo[]
 }

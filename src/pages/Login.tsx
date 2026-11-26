@@ -33,6 +33,8 @@ function Login() {
       if (respuesta.exito && respuesta.datos?.token) {
         localStorage.setItem('token', respuesta.datos.token)
         localStorage.setItem('nombreUsuario', respuesta.datos.nombreCompleto)
+        localStorage.setItem('nombreRol', respuesta.datos.nombreRol ?? '')
+        localStorage.setItem('codigoRol', String(respuesta.datos.codigoRol ?? ''))
         localStorage.setItem('modulos', JSON.stringify(respuesta.datos.modulos))
         navigate('/dashboard')
       } else {

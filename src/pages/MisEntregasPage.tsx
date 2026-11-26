@@ -1,15 +1,21 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { marcarEntregado, obtenerMiRepartidor, obtenerMisEntregas, registrarRechazo, revertirAEntregado } from '../services/operacionesPedidoService'
 import { buscarPedido } from '../services/pedidosService'
 import { consultarMotivosNoVisita } from '../services/motivoNoVisitaServices'
+import { consultarRepartidores } from '../services/repartidorServices'
 import type { PedidoOperacion } from '../interfaces/OperacionesPedido'
 import type { PedidoDetalle } from '../interfaces/PedidoConsulta'
 import type { MotivoNoVisitaConsulta } from '../interfaces/MotivoNoVisitaConsulta'
+import type { RepartidorConsulta } from '../interfaces/RepartidorConsulta'
+
+type ResumenRep = { repartidor: RepartidorConsulta; pendientes: number; entregados: number; rechazados: number; total: number; error?: string }
 
 export default function MisEntregasPage() {
   const [items, setItems] = useState<PedidoOperacion[]>([])
   const [msg, setMsg] = useState('')
   const [codigoRepartidor, setCodigoRepartidor] = useState<number | null>(null)
+  const [esAdmin, setEsAdmin] = useState(false)
+  const [repartidores, setRepartidores] = useState<ResumenRep[]>([])
   const [cargando, setCargando] = useState(true)
   const [abierto, setAbierto] = useState<number | null>(null)
   const [detalles, setDetalles] = useState<Record<number, PedidoDetalle[]>>({})
@@ -30,14 +36,44 @@ export default function MisEntregasPage() {
     finally { setCargando(false) }
   }
 
+  const cargarRepartidores = async () => {
+    setCargando(true)
+    try {
+      const rr = await consultarRepartidores()
+      if (!rr.exito) { setMsg(rr.mensaje || 'No se pudieron cargar repartidores.'); setRepartidores([]); return }
+      const reps = (rr.datos || []).filter(r => r.estado)
+      const resumen = await Promise.all(reps.map(async rep => {
+        try {
+          const r = await obtenerMisEntregas(rep.codigoRepartidor)
+          if (!r.exito) return { repartidor: rep, pendientes: 0, entregados: 0, rechazados: 0, total: 0, error: r.mensaje }
+          const list = r.datos || []
+          return { repartidor: rep, pendientes: list.filter(x => x.codigoEstadoPedido === 4).length, entregados: list.filter(x => x.codigoEstadoPedido === 7).length, rechazados: list.filter(x => x.codigoEstadoPedido === 6).length, total: list.length }
+        } catch (e: any) { return { repartidor: rep, pendientes: 0, entregados: 0, rechazados: 0, total: 0, error: e?.response?.data?.mensaje || e?.message } }
+      }))
+      const errores = resumen.map(r => r.error).filter(Boolean)
+      if (errores.length) setMsg(`Aviso: ${errores[0]}`)
+      setRepartidores(resumen)
+    } catch (e: any) { setMsg(e?.response?.data?.mensaje || e?.message || 'No se pudieron cargar repartidores.') }
+    finally { setCargando(false) }
+  }
+
   useEffect(() => {
     void (async () => {
       try {
         const [r, m] = await Promise.all([obtenerMiRepartidor(), consultarMotivosNoVisita()])
         if (m.exito && m.datos) setMotivos(m.datos.filter(x => x.estado))
-        if (r.exito) { setCodigoRepartidor(r.datos ?? null); await cargar(r.datos ?? null) }
-        else setMsg(r.mensaje || 'No se pudo identificar el repartidor.')
-      } catch (e: any) { setMsg(e?.response?.data?.mensaje || e?.message || 'No se pudo identificar el repartidor.') }
+        const mi = r.exito ? (r.datos ?? null) : null
+        const rol = (localStorage.getItem('nombreRol') || '').toLowerCase()
+        const admin = rol === 'admin' || rol === 'administradores'
+        if (mi) { setCodigoRepartidor(mi); await cargar(mi) }
+        else if (admin) { setEsAdmin(true); await cargarRepartidores() }
+        else setMsg('Tu usuario no tiene repartidor asociado.')
+      } catch (e: any) {
+        const rol = (localStorage.getItem('nombreRol') || '').toLowerCase()
+        const admin = rol === 'admin' || rol === 'administradores'
+        setMsg(e?.response?.data?.mensaje || e?.message || 'No se pudo identificar el repartidor.')
+        if (admin) { setEsAdmin(true); await cargarRepartidores() }
+      }
       finally { setCargando(false) }
     })()
   }, [])
@@ -90,25 +126,90 @@ export default function MisEntregasPage() {
     finally { setProcesando(null) }
   }
 
+  const pendientes = items.filter(p => p.codigoEstadoPedido === 4)
+  const atendidos = items.filter(p => p.codigoEstadoPedido !== 4)
   const total = items.reduce((a, p) => a + Number(p.totalVenta || 0), 0)
+  const nombreRepartidor = repartidores.find(x => x.repartidor.codigoRepartidor === codigoRepartidor)?.repartidor.nombreEmpleado
+
+  const verEntregasRep = async (cod: number) => { setCodigoRepartidor(cod); setAbierto(null); setDetalles({}); setMsg(''); await cargar(cod) }
+  const volverLista = async () => { setCodigoRepartidor(null); setItems([]); setAbierto(null); setDetalles({}); setMsg(''); await cargarRepartidores() }
+
+  const renderFila = (p: PedidoOperacion) => (<>
+    <tr key={p.codigoPedido}>
+      <td>{p.codigoPedido}</td>
+      <td>{p.nombreCliente}</td>
+      <td>{p.direccion}</td>
+      <td>{p.latitud && p.longitud ? <a href={`https://www.google.com/maps?q=${p.latitud},${p.longitud}`} target="_blank" rel="noreferrer">Ver mapa</a> : ''}</td>
+      <td className="text-end">Q {Number(p.totalVenta).toFixed(2)}</td>
+      <td><span className={`badge ${p.codigoEstadoPedido === 4 ? 'text-bg-warning' : p.codigoEstadoPedido === 7 ? 'text-bg-success' : p.codigoEstadoPedido === 6 ? 'text-bg-danger' : 'text-bg-secondary'}`}>{p.nombreEstado}</span></td>
+      <td><button className="btn btn-sm btn-outline-primary" onClick={() => void verDetalle(p.codigoPedido)}>{abierto === p.codigoPedido ? 'Ocultar' : 'Ver detalle'}</button></td>
+      <td>
+        {p.codigoEstadoPedido === 4 && <div className="d-flex gap-1 flex-wrap">
+          <button className="btn btn-sm btn-success" disabled={procesando === p.codigoPedido} onClick={() => void entregar(p.codigoPedido)}>{procesando === p.codigoPedido ? '...' : 'Entregado'}</button>
+          <button className="btn btn-sm btn-outline-danger" disabled={procesando === p.codigoPedido} onClick={() => abrirRechazo(p.codigoPedido)}>Rechazado</button>
+        </div>}
+        {p.codigoEstadoPedido === 6 && <div className="d-flex gap-1 flex-wrap">
+          <button className="btn btn-sm btn-success" disabled={procesando === p.codigoPedido} onClick={() => void revertir(p.codigoPedido)}>{procesando === p.codigoPedido ? '...' : 'Marcar entregado'}</button>
+        </div>}
+        {p.codigoEstadoPedido !== 4 && p.codigoEstadoPedido !== 6 && <span className="text-muted small">-</span>}
+      </td>
+    </tr>
+    {abierto === p.codigoPedido && <tr key={`${p.codigoPedido}-det`}><td colSpan={8} className="bg-light">
+      <div className="p-2">
+        <div className="fw-semibold mb-2">Detalle pedido #{p.codigoPedido}</div>
+        {cargandoDetalle === p.codigoPedido ? <div className="text-muted">Cargando detalle...</div> :
+          <div className="table-responsive"><table className="table table-sm mb-0 bg-white"><thead><tr><th>Producto</th><th className="text-end">Cantidad</th><th className="text-end">Precio</th><th className="text-end">Subtotal</th></tr></thead><tbody>
+            {(detalles[p.codigoPedido] || []).map(d => <tr key={d.codigoPedidoDetalle}><td>{d.nombreProducto || `Producto ${d.codigoProducto}`}</td><td className="text-end">{d.cantidad}</td><td className="text-end">Q {Number(d.precioVenta).toFixed(2)}</td><td className="text-end">Q {(Number(d.cantidad) * Number(d.precioVenta)).toFixed(2)}</td></tr>)}
+            {!detalles[p.codigoPedido]?.length && <tr><td colSpan={4} className="text-muted">Sin detalle</td></tr>}
+          </tbody></table></div>}
+      </div>
+    </td></tr>}
+  </>)
+
+  if (esAdmin && !codigoRepartidor) {
+    return <div className="container-fluid">
+      <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+        <h3 className="mb-0">Entregas por repartidor</h3>
+        <button className="btn btn-outline-secondary btn-sm" onClick={() => void cargarRepartidores()} disabled={cargando}>Refrescar</button>
+      </div>
+      {msg && <div className="alert alert-info py-2">{msg}</div>}
+      {cargando ? <div className="text-muted">Cargando...</div> :
+      <div className="table-responsive"><table className="table table-sm align-middle"><thead><tr><th>Repartidor</th><th className="text-end">Pendientes</th><th className="text-end">Entregados</th><th className="text-end">Rechazados</th><th className="text-end">Total</th><th></th></tr></thead><tbody>
+        {repartidores.map(r => <tr key={r.repartidor.codigoRepartidor}>
+          <td>{r.repartidor.nombreEmpleado || `Repartidor ${r.repartidor.codigoRepartidor}`}</td>
+          <td className="text-end"><span className="badge text-bg-warning">{r.pendientes}</span></td>
+          <td className="text-end"><span className="badge text-bg-success">{r.entregados}</span></td>
+          <td className="text-end"><span className="badge text-bg-danger">{r.rechazados}</span></td>
+          <td className="text-end">{r.total}</td>
+          <td className="text-end"><button className="btn btn-sm btn-primary" onClick={() => void verEntregasRep(r.repartidor.codigoRepartidor)}>Ver entregas</button></td>
+        </tr>)}
+        {!repartidores.length && <tr><td colSpan={6} className="text-muted">No hay repartidores activos.</td></tr>}
+      </tbody></table></div>}
+    </div>
+  }
 
   return <div className="container-fluid">
     <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-      <h3 className="mb-0">Mis entregas</h3>
-      <div className="d-flex gap-2 align-items-center">
+      <div className="d-flex gap-2 align-items-center flex-wrap">
+        {esAdmin && <button className="btn btn-outline-secondary btn-sm" onClick={() => void volverLista()}>Volver</button>}
+        <h3 className="mb-0">{esAdmin ? `Entregas de ${nombreRepartidor || `repartidor ${codigoRepartidor}`}` : 'Mis entregas'}</h3>
         {codigoRepartidor ? <span className="badge text-bg-secondary">Repartidor {codigoRepartidor}</span> : null}
+      </div>
+      <div className="d-flex gap-2 align-items-center flex-wrap">
+        <span className="badge text-bg-warning">Pendientes {pendientes.length}</span>
+        <span className="badge text-bg-success">Entregados {items.filter(x => x.codigoEstadoPedido === 7).length}</span>
+        <span className="badge text-bg-danger">Rechazados {items.filter(x => x.codigoEstadoPedido === 6).length}</span>
         <button className="btn btn-outline-secondary btn-sm" onClick={() => void cargar()} disabled={cargando}>Refrescar</button>
         <div className="fw-bold">Total a cobrar: Q {total.toFixed(2)}</div>
       </div>
     </div>
     {msg && <div className="alert alert-info py-2">{msg}</div>}
-    {!codigoRepartidor && !cargando && <div className="alert alert-warning">Tu usuario no tiene repartidor asociado. Asocia el usuario al empleado repartidor en la configuraci?n.</div>}
 
     {rechazo && <div className="card mb-3 border-danger"><div className="card-body py-3">
       <div className="fw-semibold mb-2">Rechazar pedido #{rechazo.codigoPedido}</div>
       <div className="row g-2 align-items-end">
         <div className="col-md-6">
-          <label className="form-label small mb-1">Motivo de no recepci?n</label>
+          <label className="form-label small mb-1">Motivo de no recepcion</label>
           <select className="form-select" value={rechazo.motivoSel} onChange={e => setRechazo(r => r ? { ...r, motivoSel: e.target.value } : r)}>
             <option value="">Seleccione un motivo...</option>
             {motivos.map(m => <option key={m.codigoMotivo} value={m.nombre}>{m.nombre}</option>)}
@@ -127,44 +228,26 @@ export default function MisEntregasPage() {
       <div className="text-muted small mt-2">Rechazo total: libera reserva antes de liquidar y queda en historial para reportes.</div>
     </div></div>}
 
-    <div className="table-responsive">
-      <table className="table table-sm align-middle">
-        <thead><tr><th>Pedido</th><th>Cliente</th><th>Direcci?n</th><th>Ubicaci?n</th><th className="text-end">Total</th><th>Estado</th><th>Detalle</th><th>Acci?n</th></tr></thead>
+    <div className="card mb-3"><div className="card-header fw-semibold">Pendientes de entregar</div>
+      <div className="table-responsive"><table className="table table-sm align-middle mb-0">
+        <thead><tr><th>Pedido</th><th>Cliente</th><th>Direccion</th><th>Ubicacion</th><th className="text-end">Total</th><th>Estado</th><th>Detalle</th><th>Accion</th></tr></thead>
         <tbody>
-          {items.map(p => <>
-            <tr key={p.codigoPedido}>
-              <td>{p.codigoPedido}</td>
-              <td>{p.nombreCliente}</td>
-              <td>{p.direccion}</td>
-              <td>{p.latitud && p.longitud ? <a href={`https://www.google.com/maps?q=${p.latitud},${p.longitud}`} target="_blank" rel="noreferrer">Ver mapa</a> : ''}</td>
-              <td className="text-end">Q {Number(p.totalVenta).toFixed(2)}</td>
-              <td><span className={`badge ${p.codigoEstadoPedido === 4 ? 'text-bg-warning' : p.codigoEstadoPedido === 7 ? 'text-bg-success' : p.codigoEstadoPedido === 6 ? 'text-bg-danger' : 'text-bg-secondary'}`}>{p.nombreEstado}</span></td>
-              <td><button className="btn btn-sm btn-outline-primary" onClick={() => void verDetalle(p.codigoPedido)}>{abierto === p.codigoPedido ? 'Ocultar detalle' : 'Ver detalle'}</button></td>
-              <td>
-                {p.codigoEstadoPedido === 4 && <div className="d-flex gap-1 flex-wrap">
-                  <button className="btn btn-sm btn-success" disabled={procesando === p.codigoPedido} onClick={() => void entregar(p.codigoPedido)}>{procesando === p.codigoPedido ? '...' : 'Entregado'}</button>
-                  <button className="btn btn-sm btn-outline-danger" disabled={procesando === p.codigoPedido} onClick={() => abrirRechazo(p.codigoPedido)}>Rechazado</button>
-                </div>}
-                {p.codigoEstadoPedido === 6 && <div className="d-flex gap-1 flex-wrap">
-                  <button className="btn btn-sm btn-success" disabled={procesando === p.codigoPedido} onClick={() => void revertir(p.codigoPedido)}>{procesando === p.codigoPedido ? '...' : 'Marcar entregado'}</button>
-                </div>}
-                {p.codigoEstadoPedido !== 4 && p.codigoEstadoPedido !== 6 && <span className="text-muted small">?</span>}
-              </td>
-            </tr>
-            {abierto === p.codigoPedido && <tr key={`${p.codigoPedido}-det`}><td colSpan={8} className="bg-light">
-              <div className="p-2">
-                <div className="fw-semibold mb-2">Detalle pedido #{p.codigoPedido}</div>
-                {cargandoDetalle === p.codigoPedido ? <div className="text-muted">Cargando detalle...</div> :
-                  <div className="table-responsive"><table className="table table-sm mb-0 bg-white"><thead><tr><th>Producto</th><th className="text-end">Cantidad</th><th className="text-end">Precio</th><th className="text-end">Subtotal</th></tr></thead><tbody>
-                    {(detalles[p.codigoPedido] || []).map(d => <tr key={d.codigoPedidoDetalle}><td>{d.nombreProducto || `Producto ${d.codigoProducto}`}</td><td className="text-end">{d.cantidad}</td><td className="text-end">Q {Number(d.precioVenta).toFixed(2)}</td><td className="text-end">Q {(Number(d.cantidad) * Number(d.precioVenta)).toFixed(2)}</td></tr>)}
-                    {!detalles[p.codigoPedido]?.length && <tr><td colSpan={4} className="text-muted">Sin detalle</td></tr>}
-                  </tbody></table></div>}
-              </div>
-            </td></tr>}
-          </>)}
-          {!items.length && !cargando && <tr><td colSpan={8} className="text-muted">No hay entregas asignadas.</td></tr>}
+          {pendientes.map(renderFila)}
+          {!pendientes.length && !cargando && <tr><td colSpan={8} className="text-muted">No hay pedidos pendientes.</td></tr>}
         </tbody>
-      </table>
+      </table></div>
+    </div>
+
+    <div className="card"><div className="card-header fw-semibold">Entregados y rechazados</div>
+      <div className="table-responsive"><table className="table table-sm align-middle mb-0">
+        <thead><tr><th>Pedido</th><th>Cliente</th><th>Direccion</th><th>Ubicacion</th><th className="text-end">Total</th><th>Estado</th><th>Detalle</th><th>Accion</th></tr></thead>
+        <tbody>
+          {atendidos.map(renderFila)}
+          {!atendidos.length && !cargando && <tr><td colSpan={8} className="text-muted">No hay pedidos entregados o rechazados.</td></tr>}
+        </tbody>
+      </table></div>
     </div>
   </div>
 }
+
+
