@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
+import { Navigation } from 'lucide-react'
 import { marcarEntregado, obtenerMiRepartidor, obtenerMisEntregas, registrarRechazo, revertirAEntregado } from '../services/operacionesPedidoService'
 import { buscarPedido } from '../services/pedidosService'
 import { consultarMotivosNoVisita } from '../services/motivoNoVisitaServices'
@@ -136,14 +137,14 @@ export default function MisEntregasPage() {
 
   const renderFila = (p: PedidoOperacion) => (<>
     <tr key={p.codigoPedido}>
-      <td>{p.codigoPedido}</td>
-      <td>{p.nombreCliente}</td>
-      <td>{p.direccion}</td>
-      <td>{p.latitud && p.longitud ? <a href={`https://www.google.com/maps?q=${p.latitud},${p.longitud}`} target="_blank" rel="noreferrer">Ver mapa</a> : ''}</td>
-      <td className="text-end">Q {Number(p.totalVenta).toFixed(2)}</td>
-      <td><span className={`badge ${p.codigoEstadoPedido === 4 ? 'text-bg-warning' : p.codigoEstadoPedido === 7 ? 'text-bg-success' : p.codigoEstadoPedido === 6 ? 'text-bg-danger' : 'text-bg-secondary'}`}>{p.nombreEstado}</span></td>
-      <td><button className="btn btn-sm btn-outline-primary" onClick={() => void verDetalle(p.codigoPedido)}>{abierto === p.codigoPedido ? 'Ocultar' : 'Ver detalle'}</button></td>
-      <td>
+      <td data-label="Pedido">{p.codigoPedido}</td>
+      <td data-label="Cliente">{p.nombreCliente}</td>
+      <td data-label="Direccion">{p.direccion}</td>
+      <td data-label="Ubicacion">{p.latitud && p.longitud ? <a href={`https://waze.com/ul?ll=${p.latitud},${p.longitud}&navigate=yes`} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-info" title="Navegar con Waze"><Navigation size={14} /></a> : ''}</td>
+      <td data-label="Total" className="text-end">Q {Number(p.totalVenta).toFixed(2)}</td>
+      <td data-label="Estado"><span className={`badge ${p.codigoEstadoPedido === 4 ? 'text-bg-warning' : p.codigoEstadoPedido === 7 ? 'text-bg-success' : p.codigoEstadoPedido === 6 ? 'text-bg-danger' : 'text-bg-secondary'}`}>{p.nombreEstado}</span></td>
+      <td data-label="Detalle"><button className="btn btn-sm btn-outline-primary" onClick={() => void verDetalle(p.codigoPedido)}>{abierto === p.codigoPedido ? 'Ocultar' : 'Ver detalle'}</button></td>
+      <td data-label="Accion" className="col-acciones">
         {p.codigoEstadoPedido === 4 && <div className="d-flex gap-1 flex-wrap">
           <button className="btn btn-sm btn-success" disabled={procesando === p.codigoPedido} onClick={() => void entregar(p.codigoPedido)}>{procesando === p.codigoPedido ? '...' : 'Entregado'}</button>
           <button className="btn btn-sm btn-outline-danger" disabled={procesando === p.codigoPedido} onClick={() => abrirRechazo(p.codigoPedido)}>Rechazado</button>
@@ -154,13 +155,13 @@ export default function MisEntregasPage() {
         {p.codigoEstadoPedido !== 4 && p.codigoEstadoPedido !== 6 && <span className="text-muted small">-</span>}
       </td>
     </tr>
-    {abierto === p.codigoPedido && <tr key={`${p.codigoPedido}-det`}><td colSpan={8} className="bg-light">
+    {abierto === p.codigoPedido && <tr key={`${p.codigoPedido}-det`}><td colSpan={8} className="bg-light" data-label="Detalle pedido">
       <div className="p-2">
         <div className="fw-semibold mb-2">Detalle pedido #{p.codigoPedido}</div>
         {cargandoDetalle === p.codigoPedido ? <div className="text-muted">Cargando detalle...</div> :
           <div className="table-responsive"><table className="table table-sm mb-0 bg-white"><thead><tr><th>Producto</th><th className="text-end">Cantidad</th><th className="text-end">Precio</th><th className="text-end">Subtotal</th></tr></thead><tbody>
             {(detalles[p.codigoPedido] || []).map(d => <tr key={d.codigoPedidoDetalle}><td>{d.nombreProducto || `Producto ${d.codigoProducto}`}</td><td className="text-end">{d.cantidad}</td><td className="text-end">Q {Number(d.precioVenta).toFixed(2)}</td><td className="text-end">Q {(Number(d.cantidad) * Number(d.precioVenta)).toFixed(2)}</td></tr>)}
-            {!detalles[p.codigoPedido]?.length && <tr><td colSpan={4} className="text-muted">Sin detalle</td></tr>}
+            {!detalles[p.codigoPedido]?.length && <tr><td colSpan={4} className="text-muted sin-registros">Sin detalle</td></tr>}
           </tbody></table></div>}
       </div>
     </td></tr>}
@@ -176,14 +177,14 @@ export default function MisEntregasPage() {
       {cargando ? <div className="text-muted">Cargando...</div> :
       <div className="table-responsive"><table className="table table-sm align-middle"><thead><tr><th>Repartidor</th><th className="text-end">Pendientes</th><th className="text-end">Entregados</th><th className="text-end">Rechazados</th><th className="text-end">Total</th><th></th></tr></thead><tbody>
         {repartidores.map(r => <tr key={r.repartidor.codigoRepartidor}>
-          <td>{r.repartidor.nombreEmpleado || `Repartidor ${r.repartidor.codigoRepartidor}`}</td>
-          <td className="text-end"><span className="badge text-bg-warning">{r.pendientes}</span></td>
-          <td className="text-end"><span className="badge text-bg-success">{r.entregados}</span></td>
-          <td className="text-end"><span className="badge text-bg-danger">{r.rechazados}</span></td>
-          <td className="text-end">{r.total}</td>
-          <td className="text-end"><button className="btn btn-sm btn-primary" onClick={() => void verEntregasRep(r.repartidor.codigoRepartidor)}>Ver entregas</button></td>
+          <td data-label="Repartidor">{r.repartidor.nombreEmpleado || `Repartidor ${r.repartidor.codigoRepartidor}`}</td>
+          <td data-label="Pendientes" className="text-end"><span className="badge text-bg-warning">{r.pendientes}</span></td>
+          <td data-label="Entregados" className="text-end"><span className="badge text-bg-success">{r.entregados}</span></td>
+          <td data-label="Rechazados" className="text-end"><span className="badge text-bg-danger">{r.rechazados}</span></td>
+          <td data-label="Total" className="text-end">{r.total}</td>
+          <td data-label="Accion" className="col-acciones text-end"><div className="d-flex justify-content-end"><button className="btn btn-sm btn-primary" onClick={() => void verEntregasRep(r.repartidor.codigoRepartidor)}>Ver entregas</button></div></td>
         </tr>)}
-        {!repartidores.length && <tr><td colSpan={6} className="text-muted">No hay repartidores activos.</td></tr>}
+        {!repartidores.length && <tr><td colSpan={6} className="text-muted sin-registros">No hay repartidores activos.</td></tr>}
       </tbody></table></div>}
     </div>
   }
@@ -233,7 +234,7 @@ export default function MisEntregasPage() {
         <thead><tr><th>Pedido</th><th>Cliente</th><th>Direccion</th><th>Ubicacion</th><th className="text-end">Total</th><th>Estado</th><th>Detalle</th><th>Accion</th></tr></thead>
         <tbody>
           {pendientes.map(renderFila)}
-          {!pendientes.length && !cargando && <tr><td colSpan={8} className="text-muted">No hay pedidos pendientes.</td></tr>}
+          {!pendientes.length && !cargando && <tr><td colSpan={8} className="text-muted sin-registros">No hay pedidos pendientes.</td></tr>}
         </tbody>
       </table></div>
     </div>
@@ -243,7 +244,7 @@ export default function MisEntregasPage() {
         <thead><tr><th>Pedido</th><th>Cliente</th><th>Direccion</th><th>Ubicacion</th><th className="text-end">Total</th><th>Estado</th><th>Detalle</th><th>Accion</th></tr></thead>
         <tbody>
           {atendidos.map(renderFila)}
-          {!atendidos.length && !cargando && <tr><td colSpan={8} className="text-muted">No hay pedidos entregados o rechazados.</td></tr>}
+          {!atendidos.length && !cargando && <tr><td colSpan={8} className="text-muted sin-registros">No hay pedidos entregados o rechazados.</td></tr>}
         </tbody>
       </table></div>
     </div>

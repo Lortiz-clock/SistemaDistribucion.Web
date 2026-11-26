@@ -165,6 +165,48 @@ function Layout() {
     setMenuAbierto(false)
   }, [location.pathname])
 
+
+  // Auto-etiqueta tablas para vista m?vil (usa th -> data-label en td)
+  useEffect(() => {
+    const aplicarEtiquetasMoviles = () => {
+      const tablas = document.querySelectorAll('.layout-content table.table:not(.no-mobile-card)')
+      tablas.forEach((tabla) => {
+        const headers = Array.from(tabla.querySelectorAll('thead th')).map((th) =>
+          (th.textContent || '').replace(/\s+/g, ' ').trim()
+        )
+        tabla.querySelectorAll('tbody tr').forEach((tr) => {
+          const celdas = Array.from(tr.children).filter(
+            (n): n is HTMLTableCellElement => n instanceof HTMLTableCellElement
+          )
+          if (celdas.length === 1 && celdas[0].hasAttribute('colspan')) {
+            celdas[0].classList.add('sin-registros')
+            return
+          }
+          celdas.forEach((td, i) => {
+            if (!td.getAttribute('data-label') && headers[i]) td.setAttribute('data-label', headers[i])
+            const label = (td.getAttribute('data-label') || '').toLowerCase()
+            if (label === 'acciones' || label === 'accion' || label === 'opciones') td.classList.add('col-acciones')
+          })
+        })
+        tabla.querySelectorAll('tfoot tr').forEach((tr) => {
+          const celdas = Array.from(tr.children).filter(
+            (n): n is HTMLTableCellElement => n instanceof HTMLTableCellElement
+          )
+          celdas.forEach((td, i) => {
+            if (!td.getAttribute('data-label') && headers[i]) td.setAttribute('data-label', headers[i])
+          })
+        })
+      })
+    }
+
+    aplicarEtiquetasMoviles()
+    const main = document.querySelector('.layout-content')
+    if (!main) return
+    const observer = new MutationObserver(() => aplicarEtiquetasMoviles())
+    observer.observe(main, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [location.pathname])
+
   const cerrarSesion = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('nombreUsuario')

@@ -413,7 +413,8 @@ export default function PedidosPage() {
                       No hay clientes pendientes por atender.
                     </div>
                   ) : (
-                    <ul className="list-group mb-3">
+                    <div className="mb-3" style={{ maxHeight: '45vh', overflowY: 'auto' }}>
+                    <ul className="list-group">
                       {pendientes.filter(({ c }) => {
                         const p = c.codigoPedido ? pedidosDelDia.find(x => x.codigoPedido === c.codigoPedido) : null
                         return !(p && p.codigoCierre !== null)
@@ -497,6 +498,7 @@ export default function PedidosPage() {
                         </li>
                       ))}
                     </ul>
+                    </div>
                   )}
 
                   {atendidos.length > 0 && (
@@ -506,6 +508,7 @@ export default function PedidosPage() {
                           Atendidos <span className="badge bg-success">{atendidos.length}</span>
                         </h3>
                       </div>
+                      <div style={{ maxHeight: '35vh', overflowY: 'auto' }}>
                       <ul className="list-group">
                         {atendidos.filter(({ c }) => {
                           const p = c.codigoPedido ? pedidosDelDia.find(x => x.codigoPedido === c.codigoPedido) : null
@@ -565,6 +568,7 @@ export default function PedidosPage() {
                           </li>
                         ))}
                       </ul>
+                      </div>
                     </>
                   )}
                 </>

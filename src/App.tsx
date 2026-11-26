@@ -95,6 +95,7 @@ import PreparacionPedidosPage from './pages/PreparacionPedidosPage'
 import DespachoCargaPage from './pages/DespachoCargaPage'
 import MisEntregasPage from './pages/MisEntregasPage'
 import LiquidacionPage from './pages/LiquidacionPage'
+import LiquidacionHistorialPage from './pages/LiquidacionHistorialPage'
 import FacturacionFELPage from './pages/FacturacionFELPage'
 import ReporteVendedoresPage from './pages/ReporteVendedoresPage'
 
@@ -245,6 +246,7 @@ function App() {
           <Route path="entregas" element={<RutaModulo><MisEntregasPage /></RutaModulo>} />
           <Route path="rechazos" element={<Navigate to="/dashboard/liquidacion" replace />} />
           <Route path="liquidacion" element={<RutaModulo><LiquidacionPage /></RutaModulo>} />
+          <Route path="liquidacion/historial" element={<RutaModulo><LiquidacionHistorialPage /></RutaModulo>} />
           <Route path="facturacion" element={<RutaModulo><FacturacionFELPage /></RutaModulo>} />
           <Route path="reportes/vendedores" element={<RutaModulo><ReporteVendedoresPage /></RutaModulo>} />
           <Route path="comisiones" element={<Navigate to="/dashboard/reportes/vendedores" replace />} />
